@@ -41,6 +41,9 @@ service ImageService {
     rpc GetRegionOperationLogList(GetRegionOperationLogListRequest) returns (GetRegionOperationLogListResponse) {}
     rpc UpdateRegion(UpdateRegionRequest) returns (UpdateRegionResponse) {}
     rpc DeleteRegion(DeleteRegionRequest) returns (DeleteRegionResponse) {}
+
+    rpc GetRegionListOfImageAtPublishTime(GetRegionListOfImageAtPublishTimeRequest) returns (GetRegionListOfImageAtPublishTimeResponse) {}
+    rpc GetRegionListOfImageAtVerifyTime(GetRegionListOfImageAtVerifyTimeRequest) returns (GetRegionListOfImageAtVerifyTimeResponse) {}
 }
 
 // Business objects
@@ -464,3 +467,19 @@ message DeleteRegionRequest {
 }
 
 message DeleteRegionResponse {}
+
+message GetRegionListOfImageAtPublishTimeRequest {
+    uint32 of_image_id = 1;
+}
+
+message GetRegionListOfImageAtPublishTimeResponse {
+    repeated Region region_list = 1;
+}
+
+message GetRegionListOfImageAtVerifyTimeRequest {
+    uint32 of_image_id = 1;
+}
+
+message GetRegionListOfImageAtVerifyTimeResponse {
+    repeated Region region_list = 1;
+}
