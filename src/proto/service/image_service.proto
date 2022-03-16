@@ -333,10 +333,9 @@ message CreateImageRequest {
     uint32 upload_by_user_id = 1;
     uint64 upload_time = 2;
     string original_file_name = 3;
-    string image_url = 4;
-    string thumbnail_url = 5;
-    string description = 6;
-    uint32 image_type_id = 7;
+    bytes image_data = 4;
+    string description = 5;
+    uint32 image_type_id = 6;
 }
 
 message CreateImageResponse {
