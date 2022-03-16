@@ -44,6 +44,7 @@
     "nodejs-snowflake": "^2.0.0",
     "pg": "^8.7.3",
     "validator": "^13.7.0",
-    "winston": "^3.6.0"
+    "winston": "^3.6.0",
+    "winston-daily-rotate-file": "^4.6.1"
   }
 }
