@@ -4,8 +4,8 @@ const TabNameImageServiceImageType = "image_service_image_type_tab";
 const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
 const TabNameImageServiceImageTagGroup = "image_service_image_tag_group_tab";
 const TabNameImageServiceImageTag = "image_service_image_tag_tab";
-const TabNameImageServiceImageTypeHasImageTagGroup =
-    "image_service_image_type_has_image_tag_group_tab";
+const TabNameImageServiceImageTagGroupHasImageType =
+    "image_service_image_tag_group_has_image_type_tab";
 const TabNameImageServiceImage = "image_service_image_tab";
 const TabNameImageServiceImageHasTag = "image_service_image_has_tag_tab";
 const TabNameImageServiceRegion = "image_service_region_tab";
@@ -76,32 +76,32 @@ export async function up(knex: Knex): Promise<void> {
 
     if (
         !(await knex.schema.hasTable(
-            TabNameImageServiceImageTypeHasImageTagGroup
+            TabNameImageServiceImageTagGroupHasImageType
         ))
     ) {
         await knex.schema.createTable(
-            TabNameImageServiceImageTypeHasImageTagGroup,
+            TabNameImageServiceImageTagGroupHasImageType,
             (tab) => {
-                tab.integer("image_type_id").notNullable();
                 tab.integer("image_tag_group_id").notNullable();
+                tab.integer("image_type_id").notNullable();
 
-                tab.foreign("image_type_id")
-                    .references("id")
-                    .inTable(TabNameImageServiceImageType)
-                    .onDelete("CASCADE");
                 tab.foreign("image_tag_group_id")
                     .references("id")
                     .inTable(TabNameImageServiceImageTagGroup)
                     .onDelete("CASCADE");
+                tab.foreign("image_type_id")
+                    .references("id")
+                    .inTable(TabNameImageServiceImageType)
+                    .onDelete("CASCADE");
 
-                tab.unique(["image_type_id", "image_tag_group_id"], {
+                tab.unique(["image_tag_group_id", "image_type_id"], {
                     indexName:
-                        "image_service_image_type_has_image_tag_group_image_type_id_image_tag_group_id_idx",
+                        "image_service_image_tag_group_has_image_type_image_tag_group_id_image_type_id_idx",
                 });
 
                 tab.index(
-                    ["image_tag_group_id"],
-                    "image_service_image_type_has_image_tag_group_image_tag_group_id_idx"
+                    ["image_type_id"],
+                    "image_service_image_tag_group_has_image_type_image_type_id_idx"
                 );
             }
         );
@@ -294,7 +294,7 @@ export async function down(knex: Knex): Promise<void> {
     await knex.schema.dropTableIfExists(TabNameImageServiceImageTagGroup);
     await knex.schema.dropTableIfExists(TabNameImageServiceImageTag);
     await knex.schema.dropTableIfExists(
-        TabNameImageServiceImageTypeHasImageTagGroup
+        TabNameImageServiceImageTagGroupHasImageType
     );
     await knex.schema.dropTableIfExists(TabNameImageServiceImage);
     await knex.schema.dropTableIfExists(TabNameImageServiceImageHasTag);

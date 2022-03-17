@@ -19,8 +19,8 @@ service ImageService {
     rpc UpdateImageTag(UpdateImageTagRequest) returns (UpdateImageTagResponse) {}
     rpc DeleteImageTag(DeleteImageTagRequest) returns (DeleteImageTagResponse) {}
 
-    rpc AddImageTagGroupToImageType(AddImageTagGroupToImageTypeRequest) returns (AddImageTagGroupToImageTypeResponse) {}
-    rpc RemoveImageTagGroupFromImageType(RemoveImageTagGroupFromImageTypeRequest) returns (RemoveImageTagGroupFromImageTypeResponse) {}
+    rpc AddImageTypeToImageTagGroup(AddImageTypeToImageTagGroupRequest) returns (AddImageTypeToImageTagGroupResponse) {}
+    rpc RemoveImageTypeFromImageTagGroup(RemoveImageTypeFromImageTagGroupRequest) returns (RemoveImageTypeFromImageTagGroupResponse) {}
     rpc GetImageTagGroupListOfImageType(GetImageTagGroupListOfImageTypeRequest) returns (GetImageTagGroupListOfImageTypeResponse) {}
 
     rpc CreateImage(CreateImageRequest) returns (CreateImageResponse) {}
@@ -306,19 +306,19 @@ message DeleteImageTagRequest {
 
 message DeleteImageTagResponse {}
 
-message AddImageTagGroupToImageTypeRequest {
+message AddImageTypeToImageTagGroupRequest {
     uint32 image_tag_group_id = 1;
     uint32 image_tag_type_id = 2;
 }
 
-message AddImageTagGroupToImageTypeResponse {}
+message AddImageTypeToImageTagGroupResponse {}
 
-message RemoveImageTagGroupFromImageTypeRequest {
+message RemoveImageTypeFromImageTagGroupRequest {
     uint32 image_tag_group_id = 1;
     uint32 image_tag_type_id = 2;
 }
 
-message RemoveImageTagGroupFromImageTypeResponse {}
+message RemoveImageTypeFromImageTagGroupResponse {}
 
 message GetImageTagGroupListOfImageTypeRequest {
     uint32 image_tag_type_id = 1;

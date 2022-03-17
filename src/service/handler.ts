@@ -9,7 +9,7 @@ export class ImageServiceHandlersFactory {
 
     public getImageServiceHandlers(): ImageServiceHandlers {
         const handler: ImageServiceHandlers = {
-            AddImageTagGroupToImageType: function (call, callback): void {
+            AddImageTypeToImageTagGroup: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
             AddImageTagToImage: function (call, callback): void {
@@ -84,7 +84,7 @@ export class ImageServiceHandlersFactory {
             RemoveImageTagFromImage: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
-            RemoveImageTagGroupFromImageType: function (call, callback): void {
+            RemoveImageTypeFromImageTagGroup: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
             UpdateImageImageType: function (call, callback): void {
