@@ -137,6 +137,5 @@ injected(
     LOGGER_TOKEN
 );
 
-export const REGION_DATA_ACCESSOR_TOKEN = token<RegionSnapshotDataAccessor>(
-    "RegionSnapshotDataAccessor"
-);
+export const REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN =
+    token<RegionSnapshotDataAccessor>("RegionSnapshotDataAccessor");

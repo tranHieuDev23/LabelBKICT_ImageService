@@ -86,6 +86,39 @@ export class Region {
     ) {}
 }
 
+export enum RegionOperationType {
+    DRAW = 0,
+    LABEL = 1,
+}
+
+export class RegionOperationLog {
+    constructor(
+        public id: number,
+        public ofRegionID: number,
+        public byUserID: number,
+        public operationTime: number,
+        public operationType: RegionOperationType
+    ) {}
+}
+
+export class RegionOperationLogDrawMetadata {
+    constructor(
+        public ofLogID: number,
+        public oldBorder: Polygon,
+        public oldHoles: Polygon[],
+        public newBorder: Polygon,
+        public newHoles: Polygon[]
+    ) {}
+}
+
+export class RegionOperationLogLabelMetadata {
+    constructor(
+        public ofLogID: number,
+        public oldRegionLabel: RegionLabel | null,
+        public newRegionLabel: RegionLabel | null
+    ) {}
+}
+
 export class RegionSnapshot {
     constructor(
         public id: number,

@@ -501,7 +501,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             row[ColNameImageServiceImageThumbnailURL],
             row[ColNameImageServiceImageDescription],
             imageType,
-            row[ColNameImageServiceImageStatus] as ImageStatus
+            +row[ColNameImageServiceImageStatus]
         );
     }
 }
