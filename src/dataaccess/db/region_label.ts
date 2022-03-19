@@ -4,15 +4,7 @@ import { Knex } from "knex";
 import { Logger } from "winston";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
-
-export class RegionLabel {
-    constructor(
-        public id: number,
-        public ofImageTypeID: number,
-        public displayName: string,
-        public color: string
-    ) {}
-}
+import { RegionLabel } from "./models";
 
 export interface RegionLabelDataAccessor {
     createRegionLabel(

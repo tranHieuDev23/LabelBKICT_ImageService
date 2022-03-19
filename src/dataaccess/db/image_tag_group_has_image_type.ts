@@ -3,9 +3,8 @@ import { injected, token } from "brandi";
 import { Knex } from "knex";
 import { Logger } from "winston";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
-import { ImageTagGroup } from "./image_tag_group";
-import { ImageType } from "./image_type";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
+import { ImageTagGroup, ImageType } from "./models";
 
 export interface ImageTagGroupHasImageTypeDataAccessor {
     createImageTagGroupHasImageType(

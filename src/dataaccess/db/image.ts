@@ -3,44 +3,8 @@ import { injected, token } from "brandi";
 import { Knex } from "knex";
 import { Logger } from "winston";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
-import { ImageType } from "./image_type";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
-
-export enum ImageStatus {
-    UPLOADED = 0,
-    PUBLISHED = 1,
-    VERIFIED = 2,
-    EXCLUDED = 3,
-}
-
-export class Image {
-    constructor(
-        public id: number,
-        public uploadedByUserID: number,
-        public uploadTime: number,
-        public publishedByUserID: number,
-        public publishTime: number,
-        public verifiedByUserID: number,
-        public verifyTime: number,
-        public originalFileName: string,
-        public imageURL: string,
-        public thumbnailURL: string,
-        public description: string,
-        public imageType: ImageType | null,
-        public status: ImageStatus
-    ) {}
-}
-
-export enum ImageListSortOrder {
-    ID_ASCENDING = 0,
-    ID_DESCENDING = 1,
-    UPLOAD_TIME_ASCENDING = 2,
-    UPLOAD_TIME_DESCENDING = 3,
-    PUBLISH_TIME_ASCENDING = 4,
-    PUBLISH_TIME_DESCENDING = 5,
-    VERIFY_TIME_ASCENDING = 6,
-    VERIFY_TIME_DESCENDING = 7,
-}
+import { ImageType, ImageStatus, ImageListSortOrder, Image } from "./models";
 
 export class ImageListFilterOptions {
     public imageIDList: number[] = [];

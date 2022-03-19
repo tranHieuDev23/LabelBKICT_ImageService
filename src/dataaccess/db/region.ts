@@ -3,27 +3,9 @@ import { injected, token } from "brandi";
 import { Knex } from "knex";
 import { Logger } from "winston";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
+import { BinaryConverter, BINARY_CONVERTER_TOKEN } from "./binary_converter";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
-import { RegionLabel } from "./region_label";
-
-export class Vertex {
-    constructor(public x: number, public y: number) {}
-}
-
-export class Polygon {
-    constructor(public vertices: Vertex[]) {}
-}
-
-export class Region {
-    constructor(
-        public id: number,
-        public drawnByUserID: number,
-        public labeledByUserID: number,
-        public border: Polygon,
-        public holes: Polygon[],
-        public label: RegionLabel | null
-    ) {}
-}
+import { Polygon, Region, RegionLabel } from "./models";
 
 export interface CreateRegionArguments {
     ofImageID: number;
@@ -75,6 +57,7 @@ const ColNameImageServiceRegionLabelColor = "color";
 export class RegionDataAccessorImpl implements RegionDataAccessor {
     constructor(
         private readonly knex: Knex<any, any[]>,
+        private readonly binaryConverter: BinaryConverter,
         private readonly logger: Logger
     ) {}
 
@@ -88,9 +71,9 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                     [ColNameImageServiceRegionLabeledByUserID]:
                         args.labeledByUserID,
                     [ColNameImageServiceRegionBorder]:
-                        this.encodeBorderIntoBuffer(args.border),
+                        this.binaryConverter.toBuffer(args.border),
                     [ColNameImageServiceRegionHoles]:
-                        this.encodeHolesIntoBuffer(args.holes),
+                        this.binaryConverter.toBuffer(args.holes),
                     [ColNameImageServiceRegionLabelID]: args.labelID,
                 })
                 .returning(ColNameImageServiceRegionID)
@@ -136,9 +119,9 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                     [ColNameImageServiceRegionLabeledByUserID]:
                         args.labeledByUserID,
                     [ColNameImageServiceRegionBorder]:
-                        this.encodeBorderIntoBuffer(args.border),
+                        this.binaryConverter.toBuffer(args.border),
                     [ColNameImageServiceRegionHoles]:
-                        this.encodeHolesIntoBuffer(args.holes),
+                        this.binaryConverter.toBuffer(args.holes),
                     [ColNameImageServiceRegionLabelID]: args.labelID,
                 })
                 .where({
@@ -198,25 +181,13 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
         executeFunc: (dataAccessor: RegionDataAccessor) => Promise<T>
     ): Promise<T> {
         return this.knex.transaction(async (tx) => {
-            const txDataAccessor = new RegionDataAccessorImpl(tx, this.logger);
+            const txDataAccessor = new RegionDataAccessorImpl(
+                tx,
+                this.binaryConverter,
+                this.logger
+            );
             return executeFunc(txDataAccessor);
         });
-    }
-
-    private encodeBorderIntoBuffer(border: Polygon): Buffer {
-        return Buffer.from(JSON.stringify(border));
-    }
-
-    private encodeHolesIntoBuffer(holes: Polygon[]): Buffer {
-        return Buffer.from(JSON.stringify(holes));
-    }
-
-    private decodeBorderIntoBuffer(buffer: Buffer): Polygon {
-        return JSON.parse(buffer.toString());
-    }
-
-    private decodeHolesIntoBuffer(buffer: Buffer): Polygon[] {
-        return JSON.parse(buffer.toString());
     }
 
     private getRegionFromJoinedRow(row: Record<string, any>): Region {
@@ -233,14 +204,23 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
             +row[ColNameImageServiceRegionID],
             +row[ColNameImageServiceRegionDrawnByUserID],
             +row[ColNameImageServiceRegionLabeledByUserID],
-            this.decodeBorderIntoBuffer(row[ColNameImageServiceRegionBorder]),
-            this.decodeHolesIntoBuffer(row[ColNameImageServiceRegionHoles]),
+            this.binaryConverter.fromBuffer(
+                row[ColNameImageServiceRegionBorder]
+            ),
+            this.binaryConverter.fromBuffer(
+                row[ColNameImageServiceRegionHoles]
+            ),
             label
         );
     }
 }
 
-injected(RegionDataAccessorImpl, KNEX_INSTANCE_TOKEN, LOGGER_TOKEN);
+injected(
+    RegionDataAccessorImpl,
+    KNEX_INSTANCE_TOKEN,
+    BINARY_CONVERTER_TOKEN,
+    LOGGER_TOKEN
+);
 
 export const REGION_DATA_ACCESSOR_TOKEN =
     token<RegionDataAccessor>("RegionDataAccessor");

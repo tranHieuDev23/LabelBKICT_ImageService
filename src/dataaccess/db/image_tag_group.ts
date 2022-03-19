@@ -4,14 +4,7 @@ import { Knex } from "knex";
 import { Logger } from "winston";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
-
-export class ImageTagGroup {
-    constructor(
-        public id: number,
-        public displayName: string,
-        public isSingleValue: boolean
-    ) {}
-}
+import { ImageTagGroup } from "./models";
 
 export interface ImageTagGroupDataAccessor {
     createImageTagGroup(
