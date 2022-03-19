@@ -31,7 +31,10 @@ const ColNameImageServiceImageTagGroupIsSingleValue = "is_single_value";
 export class ImageTagGroupDataAccessorImpl
     implements ImageTagGroupDataAccessor
 {
-    constructor(private readonly knex: Knex, private readonly logger: Logger) {}
+    constructor(
+        private readonly knex: Knex<any, any[]>,
+        private readonly logger: Logger
+    ) {}
 
     public async createImageTagGroup(
         displayName: string,

@@ -32,7 +32,10 @@ const ColNameImageServiceRegionLabelDisplayName = "display_name";
 const ColNameImageServiceRegionLabelColor = "color";
 
 export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
-    constructor(private readonly knex: Knex, private readonly logger: Logger) {}
+    constructor(
+        private readonly knex: Knex<any, any[]>,
+        private readonly logger: Logger
+    ) {}
 
     public async createRegionLabel(
         ofImageTypeID: number,

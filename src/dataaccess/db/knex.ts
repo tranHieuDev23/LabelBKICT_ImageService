@@ -2,7 +2,9 @@ import { injected, token } from "brandi";
 import knex, { Knex } from "knex";
 import { DatabaseConfig, DATABASE_CONFIG_TOKEN } from "../../config";
 
-export function newKnexInstance(databaseConfig: DatabaseConfig): Knex {
+export function newKnexInstance(
+    databaseConfig: DatabaseConfig
+): Knex<any, any[]> {
     return knex({
         client: "pg",
         connection: {
@@ -17,4 +19,4 @@ export function newKnexInstance(databaseConfig: DatabaseConfig): Knex {
 
 injected(newKnexInstance, DATABASE_CONFIG_TOKEN);
 
-export const KNEX_INSTANCE_TOKEN = token<Knex>("Knex");
+export const KNEX_INSTANCE_TOKEN = token<Knex<any, any[]>>("Knex");

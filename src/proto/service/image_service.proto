@@ -166,12 +166,12 @@ message ImageListSortOrder {
 }
 
 message ImageListFilterOptions {
-    repeated uint32 image_type_ids = 1;
-    repeated uint32 image_tag_ids = 2;
-    repeated uint32 region_label_ids = 3;
-    repeated uint32 uploaded_by_user_ids = 4;
-    repeated uint32 published_by_user_ids = 5;
-    repeated uint32 verified_by_user_ids = 6;
+    repeated uint32 image_type_id_list = 1;
+    repeated uint32 image_tag_id_list = 2;
+    repeated uint32 region_label_id_list = 3;
+    repeated uint32 uploaded_by_user_id_list = 4;
+    repeated uint32 published_by_user_id_list = 5;
+    repeated uint32 verified_by_user_id_list = 6;
     uint64 upload_time_start = 7;
     uint64 upload_time_end = 8;
     uint64 publish_time_start = 9;
@@ -179,8 +179,9 @@ message ImageListFilterOptions {
     uint64 verify_time_start = 11;
     uint64 verify_time_end = 12;
     string original_file_name_query = 13;
-    bool must_match_all_image_tags = 14;
-    bool must_match_all_region_labels = 15;
+    repeated uint32 image_status_list = 14;
+    bool must_match_all_image_tags = 15;
+    bool must_match_all_region_labels = 16;
 }
 
 // Request and response bodies of API calls

@@ -29,7 +29,10 @@ const ColNameImageServiceImageTagOfImageTagGroupID = "of_image_tag_group_id";
 const ColNameImageServiceImageTagDisplayName = "display_name";
 
 export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
-    constructor(private readonly knex: Knex, private readonly logger: Logger) {}
+    constructor(
+        private readonly knex: Knex<any, any[]>,
+        private readonly logger: Logger
+    ) {}
 
     public async createImageTag(
         ofImageTypeID: number,
