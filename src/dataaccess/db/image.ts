@@ -153,7 +153,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
                     [ColNameImageServiceImageStatus]: args.status,
                 })
-                .returning([ColNameImageServiceImageID]);
+                .returning([ColNameImageServiceImageID])
+                .into(TabNameImageServiceImage);
             return +rows[0][ColNameImageServiceImageID];
         } catch (error) {
             this.logger.error("failed to create image", { args, error });
