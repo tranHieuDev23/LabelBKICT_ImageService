@@ -206,7 +206,7 @@ injected(
     LOGGER_TOKEN
 );
 
-export const IMAGE_TYPE_HAS_IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN =
+export const IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN =
     token<ImageTagGroupHasImageTypeDataAccessor>(
         "ImageTagGroupHasImageTypeDataAccessor"
     );
