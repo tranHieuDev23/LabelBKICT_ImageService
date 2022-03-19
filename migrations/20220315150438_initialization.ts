@@ -121,7 +121,7 @@ export async function up(knex: Knex): Promise<void> {
             tab.string("thumbnail_url", 256).notNullable();
             tab.string("description", 256).notNullable().defaultTo("");
             tab.integer("image_type_id").defaultTo(null);
-            tab.smallint("status").notNullable().defaultTo(0);
+            tab.tinyint("status").notNullable().defaultTo(0);
 
             tab.foreign("image_type_id")
                 .references("id")
@@ -191,6 +191,7 @@ export async function up(knex: Knex): Promise<void> {
                 tab.integer("of_region_id").notNullable();
                 tab.integer("by_user_id").notNullable().defaultTo(0);
                 tab.bigInteger("operation_time").notNullable();
+                tab.tinyint("operation_type").notNullable();
 
                 tab.foreign("of_region_id")
                     .references("id")
@@ -264,7 +265,7 @@ export async function up(knex: Knex): Promise<void> {
             (tab) => {
                 tab.increments("id", { primaryKey: true });
                 tab.integer("of_image_id").notNullable();
-                tab.smallint("at_status").notNullable();
+                tab.tinyint("at_status").notNullable();
                 tab.integer("drawn_by_user_id").notNullable().defaultTo(0);
                 tab.integer("labeled_by_user_id").notNullable().defaultTo(0);
                 tab.binary("border").notNullable();
@@ -289,22 +290,22 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-    await knex.schema.dropTableIfExists(TabNameImageServiceImageType);
-    await knex.schema.dropTableIfExists(TabNameImageServiceRegionLabel);
-    await knex.schema.dropTableIfExists(TabNameImageServiceImageTagGroup);
-    await knex.schema.dropTableIfExists(TabNameImageServiceImageTag);
-    await knex.schema.dropTableIfExists(
-        TabNameImageServiceImageTagGroupHasImageType
-    );
-    await knex.schema.dropTableIfExists(TabNameImageServiceImage);
-    await knex.schema.dropTableIfExists(TabNameImageServiceImageHasTag);
-    await knex.schema.dropTableIfExists(TabNameImageServiceRegion);
-    await knex.schema.dropTableIfExists(TabNameImageServiceRegionOperationLog);
-    await knex.schema.dropTableIfExists(
-        TabNameImageServiceRegionOperationLogDrawMetadata
-    );
+    await knex.schema.dropTableIfExists(TabNameImageServiceRegionSnapshot);
     await knex.schema.dropTableIfExists(
         TabNameImageServiceRegionOperationLogLabelMetadata
     );
-    await knex.schema.dropTableIfExists(TabNameImageServiceRegionSnapshot);
+    await knex.schema.dropTableIfExists(
+        TabNameImageServiceRegionOperationLogDrawMetadata
+    );
+    await knex.schema.dropTableIfExists(TabNameImageServiceRegionOperationLog);
+    await knex.schema.dropTableIfExists(TabNameImageServiceRegion);
+    await knex.schema.dropTableIfExists(TabNameImageServiceImageHasTag);
+    await knex.schema.dropTableIfExists(TabNameImageServiceImage);
+    await knex.schema.dropTableIfExists(
+        TabNameImageServiceImageTagGroupHasImageType
+    );
+    await knex.schema.dropTableIfExists(TabNameImageServiceImageTag);
+    await knex.schema.dropTableIfExists(TabNameImageServiceImageTagGroup);
+    await knex.schema.dropTableIfExists(TabNameImageServiceRegionLabel);
+    await knex.schema.dropTableIfExists(TabNameImageServiceImageType);
 }
