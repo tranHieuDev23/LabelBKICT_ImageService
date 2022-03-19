@@ -12,7 +12,7 @@ export interface ImageTagGroupHasImageTypeDataAccessor {
         imageTagGroupID: number,
         imageTypeID: number
     ): Promise<void>;
-    deleteImageTypeFromImageTagGroup(
+    deleteImageTagGroupHasImageType(
         imageTagGroupID: number,
         imageTypeID: number
     ): Promise<void>;
@@ -67,7 +67,7 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
         }
     }
 
-    public async deleteImageTypeFromImageTagGroup(
+    public async deleteImageTagGroupHasImageType(
         imageTagGroupID: number,
         imageTypeID: number
     ): Promise<void> {

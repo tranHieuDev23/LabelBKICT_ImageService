@@ -543,5 +543,5 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
 
 injected(ImageDataAccessorImpl, KNEX_INSTANCE_TOKEN, LOGGER_TOKEN);
 
-export const IMAGE_TYPE_HAS_IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN =
+export const IMAGE_DATA_ACCESSOR_TOKEN =
     token<ImageDataAccessor>("ImageDataAccessor");
