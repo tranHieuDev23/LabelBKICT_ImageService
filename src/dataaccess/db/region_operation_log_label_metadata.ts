@@ -132,8 +132,6 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
                 row[`new_label.${ColNameImageServiceRegionLabelColor}`]
             );
         }
-        if (row[ColNameImageServiceRegionOperationLogLabelMetadataNewLabelID]) {
-        }
         return new RegionOperationLogLabelMetadata(
             +row[ColNameImageServiceRegionOperationLogLabelMetadataOfLogID],
             oldLabel,

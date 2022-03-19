@@ -12,13 +12,13 @@ export class ImageListFilterOptions {
     public uploadedByUserIDList: number[] = [];
     public publishedByUserIDList: number[] = [];
     public verifiedByUserIDList: number[] = [];
-    public uploadTimeStart: number = 0;
-    public uploadTimeEnd: number = 0;
-    public publishTimeStart: number = 0;
-    public publishTimeEnd: number = 0;
-    public verifyTimeStart: number = 0;
-    public verifyTimeEnd: number = 0;
-    public originalFileNameQuery: string = "";
+    public uploadTimeStart = 0;
+    public uploadTimeEnd = 0;
+    public publishTimeStart = 0;
+    public publishTimeEnd = 0;
+    public verifyTimeStart = 0;
+    public verifyTimeEnd = 0;
+    public originalFileNameQuery = "";
     public imageStatusList: ImageStatus[] = [];
 }
 
@@ -361,6 +361,13 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             });
         }
         if (filterOptions.uploadTimeEnd !== 0) {
+            queryCallbackList.push((qb) => {
+                qb.where(
+                    ColNameImageServiceImageUploadTime,
+                    "<=",
+                    filterOptions.uploadTimeEnd
+                );
+            });
         }
         if (filterOptions.publishTimeStart !== 0) {
             queryCallbackList.push((qb) => {
@@ -467,7 +474,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 return qb
                     .orderBy(ColNameImageServiceImageVerifyTime, "asc")
                     .orderBy(ColNameImageServiceImageID, "asc");
-            case ImageListSortOrder.VERIFY_TIME_ASCENDING:
+            case ImageListSortOrder.VERIFY_TIME_DESCENDING:
                 return qb
                     .orderBy(ColNameImageServiceImageVerifyTime, "desc")
                     .orderBy(ColNameImageServiceImageID, "desc");
