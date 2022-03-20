@@ -31,6 +31,10 @@ export interface RegionDataAccessor {
     getRegionListOfImage(imageID: number): Promise<Region[]>;
     getRegionListOfImageList(imageIDList: number[]): Promise<Region[][]>;
     updateRegion(args: UpdateRegionArguments): Promise<void>;
+    updateLabelOfRegionOfImage(
+        imageID: number,
+        labelID: number | null
+    ): Promise<void>;
     deleteRegion(id: number): Promise<void>;
     getOfImageIDListOfRegionLabelList(
         regionLabelIDList: number[]
@@ -169,6 +173,27 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 });
         } catch (error) {
             this.logger.error("failed to update region", { args, error });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async updateLabelOfRegionOfImage(
+        imageID: number,
+        labelID: number | null
+    ): Promise<void> {
+        try {
+            await this.knex
+                .table(TabNameImageServiceRegion)
+                .update({
+                    [ColNameImageServiceRegionLabelID]: labelID,
+                })
+                .where({ [ColNameImageServiceRegionOfImageID]: imageID });
+        } catch (error) {
+            this.logger.error("failed to update region list", {
+                imageID,
+                labelID,
+                error,
+            });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }

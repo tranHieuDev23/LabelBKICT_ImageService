@@ -56,7 +56,11 @@ export interface ImageManagementOperator {
         description: string | undefined
     ): Promise<Image>;
     updateImageImageType(id: number, imageTypeID: number): Promise<Image>;
-    updateImageStatus(id: number, status: _ImageStatus_Values): Promise<Image>;
+    updateImageStatus(
+        id: number,
+        status: _ImageStatus_Values,
+        byUserID: number
+    ): Promise<Image>;
     updateImageListImageType(
         idList: number[],
         imageTypeID: number
@@ -415,21 +419,187 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         id: number,
         imageTypeID: number
     ): Promise<Image> {
-        throw new Error("Method not implemented.");
+        const imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        if (imageType === null) {
+            this.logger.error("image type with image_type_id not found", {
+                imageTypeID,
+            });
+            throw new ErrorWithStatus(
+                `image type with image_type_id ${imageTypeID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        return this.imageDM.withTransaction(async (imageDM) => {
+            const image = await imageDM.getImageWithXLock(id);
+            if (image === null) {
+                this.logger.error("image with image_id not found", {
+                    imageID: id,
+                });
+                throw new ErrorWithStatus(
+                    `image with image_id ${id} not found`,
+                    status.NOT_FOUND
+                );
+            }
+
+            return this.regionDM.withTransaction(async (regionDM) => {
+                await regionDM.updateLabelOfRegionOfImage(id, null);
+
+                return this.imageHasImageTagDM.withTransaction(
+                    async (imageHasImageTagDM) => {
+                        await imageHasImageTagDM.deleteImageHasImageTagOfImage(
+                            id
+                        );
+
+                        image.imageType = imageType;
+                        await imageDM.updateImage({
+                            id: id,
+                            publishedByUserID: image.publishedByUserID,
+                            publishTime: image.publishTime,
+                            verifiedByUserID: image.verifiedByUserID,
+                            verifyTime: image.verifyTime,
+                            description: image.description,
+                            imageTypeID: imageTypeID,
+                            status: image.status,
+                        });
+
+                        return image;
+                    }
+                );
+            });
+        });
     }
 
     public async updateImageStatus(
         id: number,
-        status: _ImageStatus_Values
+        newStatus: _ImageStatus_Values,
+        byUserID: number
     ): Promise<Image> {
-        throw new Error("Method not implemented.");
+        const currentTime = this.timer.getCurrentTime();
+        return this.imageDM.withTransaction(async (imageDM) => {
+            const image = await imageDM.getImage(id);
+            if (image === null) {
+                this.logger.error("image with image_id not found", {
+                    imageID: id,
+                });
+                throw new ErrorWithStatus(
+                    `image with image_id ${id} not found`,
+                    status.NOT_FOUND
+                );
+            }
+
+            if (!this.isValidStatusChange(image.status, newStatus)) {
+                this.logger.error("invalid status change", {
+                    oldStatus: image.status,
+                    newStatus: newStatus,
+                });
+                throw new ErrorWithStatus(
+                    "invalid status change",
+                    status.FAILED_PRECONDITION
+                );
+            }
+
+            image.status = newStatus;
+            if (newStatus === _ImageStatus_Values.PUBLISHED) {
+                image.publishedByUserID = byUserID;
+                image.publishTime = currentTime;
+            }
+            if (newStatus === _ImageStatus_Values.VERIFIED) {
+                image.verifiedByUserID = byUserID;
+                image.verifiedByUserID = currentTime;
+            }
+
+            await imageDM.updateImage({
+                id: id,
+                publishedByUserID: image.publishedByUserID,
+                publishTime: image.publishTime,
+                verifiedByUserID: image.verifiedByUserID,
+                verifyTime: image.verifyTime,
+                description: image.description,
+                imageTypeID:
+                    image.imageType === null ? null : image.imageType.id,
+                status: newStatus,
+            });
+
+            return image;
+        });
+    }
+
+    public isValidStatusChange(
+        oldStatus: _ImageStatus_Values,
+        newStatus: _ImageStatus_Values
+    ): boolean {
+        switch (oldStatus) {
+            case _ImageStatus_Values.UPLOADED:
+                return (
+                    newStatus === _ImageStatus_Values.EXCLUDED ||
+                    newStatus === _ImageStatus_Values.PUBLISHED
+                );
+            case _ImageStatus_Values.EXCLUDED:
+                return newStatus === _ImageStatus_Values.UPLOADED;
+            case _ImageStatus_Values.PUBLISHED:
+                return newStatus === _ImageStatus_Values.VERIFIED;
+            default:
+                return false;
+        }
     }
 
     public async updateImageListImageType(
         idList: number[],
         imageTypeID: number
     ): Promise<void> {
-        throw new Error("Method not implemented.");
+        const imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        if (imageType === null) {
+            this.logger.error("image type with image_type_id not found", {
+                imageTypeID,
+            });
+            throw new ErrorWithStatus(
+                `image type with image_type_id ${imageTypeID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        return this.imageDM.withTransaction(async (imageDM) => {
+            return this.regionDM.withTransaction(async (regionDM) => {
+                return this.imageHasImageTagDM.withTransaction(
+                    async (imageHasImageTagDM) => {
+                        for (const imageID of idList) {
+                            const image = await imageDM.getImageWithXLock(
+                                imageID
+                            );
+                            if (image === null) {
+                                this.logger.error(
+                                    "image with image_id not found",
+                                    { imageID }
+                                );
+                                throw new ErrorWithStatus(
+                                    `image with image_id ${imageID} not found`,
+                                    status.NOT_FOUND
+                                );
+                            }
+                            await regionDM.updateLabelOfRegionOfImage(
+                                imageID,
+                                null
+                            );
+                            await imageHasImageTagDM.deleteImageHasImageTagOfImage(
+                                imageID
+                            );
+                            image.imageType = imageType;
+                            await imageDM.updateImage({
+                                id: imageID,
+                                publishedByUserID: image.publishedByUserID,
+                                publishTime: image.publishTime,
+                                verifiedByUserID: image.verifiedByUserID,
+                                verifyTime: image.verifyTime,
+                                description: image.description,
+                                imageTypeID: imageTypeID,
+                                status: image.status,
+                            });
+                        }
+                    }
+                );
+            });
+        });
     }
 
     public async deleteImage(id: number): Promise<void> {

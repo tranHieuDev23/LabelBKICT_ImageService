@@ -52,6 +52,7 @@ export interface UpdateImageArguments {
 export interface ImageDataAccessor {
     createImage(args: CreateImageArguments): Promise<number>;
     getImage(id: number): Promise<Image | null>;
+    getImageWithXLock(id: number): Promise<Image | null>;
     getImageList(
         offset: number,
         limit: number,
@@ -140,6 +141,44 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .where({
                     [ColNameImageServiceImageID]: id,
                 });
+        } catch (error) {
+            this.logger.error("failed to get image", { imageID: id, error });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+
+        if (rows.length === 0) {
+            this.logger.debug("no image with image_id found", { imageID: id });
+            return null;
+        }
+
+        if (rows.length > 1) {
+            this.logger.error("more than one image with image_id found", {
+                imageID: id,
+            });
+            throw new ErrorWithStatus(
+                "more than one image was found",
+                status.INTERNAL
+            );
+        }
+
+        return this.getImageFrowJoinedRow(rows[0]);
+    }
+
+    public async getImageWithXLock(id: number): Promise<Image | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImage)
+                .leftOuterJoin(
+                    TabNameImageServiceImageType,
+                    ColNameImageServiceImageImageTypeID,
+                    ColNameImageServiceImageTypeID
+                )
+                .where({
+                    [ColNameImageServiceImageID]: id,
+                })
+                .forUpdate();
         } catch (error) {
             this.logger.error("failed to get image", { imageID: id, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);

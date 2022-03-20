@@ -9,8 +9,12 @@ import { ImageTag } from "./models";
 export interface ImageHasImageTagDataAccessor {
     createImageHasImageTag(imageID: number, imageTagID: number): Promise<void>;
     deleteImageHasImageTag(imageID: number, imageTagID: number): Promise<void>;
+    deleteImageHasImageTagOfImage(imageID: number): Promise<void>;
     getImageTagListOfImageList(imageIDList: number[]): Promise<ImageTag[][]>;
     getImageIDListOfImageTagList(imageTagIDList: number[]): Promise<number[]>;
+    withTransaction<T>(
+        executeFunc: (dataAccessor: ImageHasImageTagDataAccessor) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceImageHasImageTag =
@@ -64,10 +68,11 @@ export class ImageHasImageTagDataAccessorImpl
                     [ColNameImageServiceImageHasImageTagImageTagID]: imageTagID,
                 });
         } catch (error) {
-            this.logger.error(
-                "failed to delete new image has image tag relation",
-                { imageID, imageTagID, error }
-            );
+            this.logger.error("failed to delete image has image tag relation", {
+                imageID,
+                imageTagID,
+                error,
+            });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deleteCount === 0) {
@@ -79,6 +84,24 @@ export class ImageHasImageTagDataAccessorImpl
                 `no image has image relation found with image_id ${imageID} and image_tag_id ${imageTagID}`,
                 status.NOT_FOUND
             );
+        }
+    }
+
+    public async deleteImageHasImageTagOfImage(imageID: number): Promise<void> {
+        let deleteCount: number;
+        try {
+            deleteCount = await this.knex
+                .delete()
+                .from(TabNameImageServiceImageHasImageTag)
+                .where({
+                    [ColNameImageServiceImageHasImageTagImageID]: imageID,
+                });
+        } catch (error) {
+            this.logger.error(
+                "failed to delete image has image tag relation of image list",
+                { error }
+            );
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 
@@ -150,6 +173,18 @@ export class ImageHasImageTagDataAccessorImpl
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (dataAccessor: ImageHasImageTagDataAccessor) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor = new ImageHasImageTagDataAccessorImpl(
+                tx,
+                this.logger
+            );
+            return executeFunc(txDataAccessor);
+        });
     }
 }
 

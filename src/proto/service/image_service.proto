@@ -395,6 +395,7 @@ message UpdateImageImageTypeResponse {
 message UpdateImageStatusRequest {
     uint32 image_id = 1;
     ImageStatus.Values status = 2;
+    uint32 by_user_id = 3;
 }
 
 message UpdateImageStatusResponse {
