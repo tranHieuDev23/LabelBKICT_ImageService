@@ -1,8 +1,9 @@
 import { status } from "@grpc/grpc-js";
+import { injected, token } from "brandi";
 import { join } from "path";
 import validator from "validator";
 import { Logger } from "winston";
-import { ApplicationConfig } from "../../config";
+import { ApplicationConfig, APPLICATION_CONFIG_TOKEN } from "../../config";
 import {
     ImageDataAccessor,
     ImageHasImageTagDataAccessor,
@@ -12,8 +13,15 @@ import {
     ImageListFilterOptions as DMImageListFilterOptions,
     ImageListSortOrder,
     ImageTagDataAccessor,
-    ImageTagGroupHasImageTypeDataAccessorImpl,
     ImageTagGroupDataAccessor,
+    IMAGE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
+    REGION_DATA_ACCESSOR_TOKEN,
+    ImageTagGroupHasImageTypeDataAccessor,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -21,8 +29,15 @@ import { _ImageListSortOrder_Values } from "../../proto/gen/ImageListSortOrder";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { ImageTag } from "../../proto/gen/ImageTag";
 import { Region } from "../../proto/gen/Region";
-import { ErrorWithStatus, IDGenerator, Timer } from "../../utils";
-import { ImageProcessor } from "./image_processor";
+import {
+    ErrorWithStatus,
+    IDGenerator,
+    ID_GENERATOR_TOKEN,
+    LOGGER_TOKEN,
+    Timer,
+    TIMER_TOKEN,
+} from "../../utils";
+import { ImageProcessor, IMAGE_PROCESSOR_TOKEN } from "./image_processor";
 
 export interface ImageManagementOperator {
     createImage(
@@ -85,7 +100,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         private readonly imageTypeDM: ImageTypeDataAccessor,
         private readonly imageTagGroupDM: ImageTagGroupDataAccessor,
         private readonly imageTagDM: ImageTagDataAccessor,
-        private readonly imageTagGroupHasImageTypeDM: ImageTagGroupHasImageTypeDataAccessorImpl,
+        private readonly imageTagGroupHasImageTypeDM: ImageTagGroupHasImageTypeDataAccessor,
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
         private readonly idGenerator: IDGenerator,
@@ -766,3 +781,23 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         );
     }
 }
+
+injected(
+    ImageManagementOperatorImpl,
+    IMAGE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
+    REGION_DATA_ACCESSOR_TOKEN,
+    ID_GENERATOR_TOKEN,
+    TIMER_TOKEN,
+    IMAGE_PROCESSOR_TOKEN,
+    APPLICATION_CONFIG_TOKEN,
+    LOGGER_TOKEN
+);
+
+export const IMAGE_MANAGEMENT_OPERATOR = token<ImageManagementOperator>(
+    "ImageManagementOperator"
+);
