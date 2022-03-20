@@ -73,6 +73,7 @@ export class Polygon {
 export class Region {
     constructor(
         public id: number,
+        public ofImageID: number,
         public drawnByUserID: number,
         public labeledByUserID: number,
         public border: Polygon,

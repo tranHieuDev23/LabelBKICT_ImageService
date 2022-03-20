@@ -18,7 +18,6 @@ export interface CreateRegionArguments {
 
 export interface UpdateRegionArguments {
     id: number;
-    ofImageID: number;
     drawnByUserID: number;
     labeledByUserID: number;
     border: Polygon;
@@ -30,6 +29,8 @@ export interface RegionDataAccessor {
     createRegion(args: CreateRegionArguments): Promise<number>;
     getRegionListOfImage(imageID: number): Promise<Region[]>;
     getRegionListOfImageList(imageIDList: number[]): Promise<Region[][]>;
+    getRegion(id: number): Promise<Region | null>;
+    getRegionWithXLock(id: number): Promise<Region | null>;
     updateRegion(args: UpdateRegionArguments): Promise<void>;
     updateLabelOfRegionOfImage(
         imageID: number,
@@ -152,12 +153,86 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
         }
     }
 
+    public async getRegion(id: number): Promise<Region | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceRegion)
+                .leftOuterJoin(
+                    TabNameImageServiceRegionLabel,
+                    ColNameImageServiceRegionLabelID,
+                    ColNameImageServiceRegionLabelRegionLabelID
+                )
+                .where({
+                    [ColNameImageServiceRegionID]: id,
+                });
+        } catch (error) {
+            this.logger.error("failed to get region", {
+                regionID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info("no region with region_id found", { id });
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error("more than one region with region_id found", {
+                id,
+            });
+            throw new ErrorWithStatus(
+                `more than one region with region_id ${id}`,
+                status.INTERNAL
+            );
+        }
+        return this.getRegionFromJoinedRow(rows[0]);
+    }
+
+    public async getRegionWithXLock(id: number): Promise<Region | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceRegion)
+                .leftOuterJoin(
+                    TabNameImageServiceRegionLabel,
+                    ColNameImageServiceRegionLabelID,
+                    ColNameImageServiceRegionLabelRegionLabelID
+                )
+                .where({
+                    [ColNameImageServiceRegionID]: id,
+                })
+                .forUpdate();
+        } catch (error) {
+            this.logger.error("failed to get region", {
+                regionID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info("no region with region_id found", { id });
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error("more than one region with region_id found", {
+                id,
+            });
+            throw new ErrorWithStatus(
+                `more than one region with region_id ${id}`,
+                status.INTERNAL
+            );
+        }
+        return this.getRegionFromJoinedRow(rows[0]);
+    }
+
     public async updateRegion(args: UpdateRegionArguments): Promise<void> {
         try {
             await this.knex
                 .table(TabNameImageServiceRegion)
                 .update({
-                    [ColNameImageServiceRegionOfImageID]: args.ofImageID,
                     [ColNameImageServiceRegionDrawnByUserID]:
                         args.drawnByUserID,
                     [ColNameImageServiceRegionLabeledByUserID]:
@@ -267,6 +342,7 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
         }
         return new Region(
             +row[ColNameImageServiceRegionID],
+            +row[ColNameImageServiceRegionOfImageID],
             +row[ColNameImageServiceRegionDrawnByUserID],
             +row[ColNameImageServiceRegionLabeledByUserID],
             this.binaryConverter.fromBuffer(

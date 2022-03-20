@@ -36,14 +36,18 @@ export interface RegionManagementOperator {
         ofImageID: number,
         regionID: number
     ): Promise<RegionOperationLog[]>;
-    updateRegion(
+    updateRegionBoundary(
         ofImageID: number,
         regionID: number,
-        drawnByUserID: number | undefined,
-        labeledByUserId: number | undefined,
-        border: Polygon | undefined,
-        holes: Polygon[] | undefined,
-        labelID: number | undefined
+        drawnByUserID: number,
+        border: Polygon,
+        holes: Polygon[]
+    ): Promise<Region>;
+    updateRegionLabel(
+        ofImageID: number,
+        regionID: number,
+        labeledByUserID: number,
+        labelID: number
     ): Promise<Region>;
     deleteRegion(ofImageID: number, regionID: number): Promise<void>;
     getRegionSnapshotListOfImage(
@@ -86,29 +90,17 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
             );
         }
 
-        let regionLabel: RegionLabel | null = null;
-        if (labelID !== undefined) {
-            regionLabel = await this.regionLabelDM.getRegionLabel(labelID);
-            if (regionLabel === null) {
-                this.logger.error("region label with label_id not found", {
-                    labelID,
-                });
-                throw new ErrorWithStatus(
-                    `region label with label_id ${labelID} not found`,
-                    status.NOT_FOUND
-                );
-            }
-
-            if (image.imageType?.id !== regionLabel.ofImageTypeID) {
-                this.logger.error(
-                    "region label with label_id is not allowed for the image type of image with image_id",
-                    { labelID, imageID: ofImageID }
-                );
-                throw new ErrorWithStatus(
-                    `region label with label_id ${labelID} is not allowed for the image type of image with image_id ${ofImageID}`,
-                    status.FAILED_PRECONDITION
-                );
-            }
+        const regionLabel: RegionLabel | null =
+            await this.getOptionalRegionLabel(labelID);
+        if (regionLabel && image.imageType?.id !== regionLabel.ofImageTypeID) {
+            this.logger.error(
+                "region label with label_id is not allowed for the image type of image with image_id",
+                { labelID, imageID: ofImageID }
+            );
+            throw new ErrorWithStatus(
+                `region label with label_id ${labelID} is not allowed for the image type of image with image_id ${ofImageID}`,
+                status.FAILED_PRECONDITION
+            );
         }
 
         const normalizedBorderAndHoles = this.regionNormalizer.normalizeRegion(
@@ -195,9 +187,32 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         });
     }
 
+    private async getOptionalRegionLabel(
+        labelID: number | undefined
+    ): Promise<RegionLabel | null> {
+        if (labelID === undefined) {
+            return null;
+        }
+        const regionLabel = await this.regionLabelDM.getRegionLabel(labelID);
+        if (regionLabel === null) {
+            this.logger.error("region label with label_id not found", {
+                labelID,
+            });
+            throw new ErrorWithStatus(
+                `region label with label_id ${labelID} not found`,
+                status.NOT_FOUND
+            );
+        }
+        return regionLabel;
+    }
+
     private getDMPolygonFromPolygon(polygon: Polygon): DMPolygon {
         if (polygon.vertices === undefined) {
-            return new DMPolygon([]);
+            this.logger.error("polygon without vertices");
+            throw new ErrorWithStatus(
+                "polygon without vertices",
+                status.INVALID_ARGUMENT
+            );
         }
         const dmVertices = polygon.vertices.map(
             (vertex) =>
@@ -216,23 +231,273 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         throw new Error("Method not implemented.");
     }
 
-    public async updateRegion(
+    public async updateRegionBoundary(
         ofImageID: number,
         regionID: number,
-        drawnByUserID: number | undefined,
-        labeledByUserId: number | undefined,
-        border: Polygon | undefined,
-        holes: Polygon[] | undefined,
-        labelID: number | undefined
+        drawnByUserID: number,
+        border: Polygon,
+        holes: Polygon[]
     ): Promise<Region> {
-        throw new Error("Method not implemented.");
+        const currentTime = this.timer.getCurrentTime();
+
+        const image = await this.imageDM.getImage(ofImageID);
+        if (image === null) {
+            this.logger.error("image with image_id not found", {
+                imageID: ofImageID,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${ofImageID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        const normalizedBorderAndHoles = this.regionNormalizer.normalizeRegion(
+            border,
+            holes
+        );
+        border = normalizedBorderAndHoles.border;
+        holes = normalizedBorderAndHoles.holes;
+
+        const dmBorder = this.getDMPolygonFromPolygon(border);
+        const dmHoles = holes.map((hole) => this.getDMPolygonFromPolygon(hole));
+
+        return this.regionDM.withTransaction(async (regionDM) => {
+            const region = await this.regionDM.getRegionWithXLock(regionID);
+            if (region === null) {
+                this.logger.error("no region with region_id found", {
+                    regionID,
+                });
+                throw new ErrorWithStatus(
+                    `no region with region_id ${regionID} found`,
+                    status.NOT_FOUND
+                );
+            }
+
+            if (region.ofImageID !== ofImageID) {
+                this.logger.error(
+                    "region with region_id not found in image with image_id",
+                    {
+                        imageID: ofImageID,
+                        regionID,
+                    }
+                );
+                throw new ErrorWithStatus(
+                    `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                    status.NOT_FOUND
+                );
+            }
+
+            const oldBorder = region.border;
+            const oldHoles = region.holes;
+            region.border = dmBorder;
+            region.holes = dmHoles;
+
+            await regionDM.updateRegion({
+                id: region.id,
+                drawnByUserID: drawnByUserID,
+                labeledByUserID: region.labeledByUserID,
+                border: dmBorder,
+                holes: dmHoles,
+                labelID: region.label === null ? null : region.label.id,
+            });
+
+            return this.regionOperationLogDM.withTransaction(
+                async (regionOperationLogDM) => {
+                    return this.regionOperationLogDrawMetadataDM.withTransaction(
+                        async (regionOperationLogDrawMetadataDM) => {
+                            const drawLogID =
+                                await regionOperationLogDM.createRegionOperationLog(
+                                    {
+                                        ofRegionID: regionID,
+                                        byUserID: drawnByUserID,
+                                        operationTime: currentTime,
+                                        operationType: RegionOperationType.DRAW,
+                                    }
+                                );
+                            await regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
+                                {
+                                    ofLogID: drawLogID,
+                                    oldBorder: oldBorder,
+                                    oldHoles: oldHoles,
+                                    newBorder: dmBorder,
+                                    newHoles: dmHoles,
+                                }
+                            );
+
+                            return {
+                                id: regionID,
+                                drawnByUserId: drawnByUserID,
+                                labeledByUserId: region.labeledByUserID,
+                                border: border,
+                                holes: holes,
+                                label: region.label,
+                            };
+                        }
+                    );
+                }
+            );
+        });
+    }
+
+    public async updateRegionLabel(
+        ofImageID: number,
+        regionID: number,
+        labeledByUserID: number,
+        labelID: number
+    ): Promise<Region> {
+        const currentTime = this.timer.getCurrentTime();
+
+        const image = await this.imageDM.getImage(ofImageID);
+        if (image === null) {
+            this.logger.error("image with image_id not found", {
+                imageID: ofImageID,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${ofImageID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        const newLabel = await this.regionLabelDM.getRegionLabel(labelID);
+        if (newLabel === null) {
+            this.logger.error("region label with label_id not found", {
+                labelID,
+            });
+            throw new ErrorWithStatus(
+                `region label with label_id ${labelID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        if (newLabel.ofImageTypeID !== image.imageType?.id) {
+            this.logger.error(
+                "region label with label_id is not allowed for the image type of image with image_id",
+                { labelID, imageID: ofImageID }
+            );
+            throw new ErrorWithStatus(
+                `region label with label_id ${labelID} is not allowed for the image type of image with image_id ${ofImageID}`,
+                status.FAILED_PRECONDITION
+            );
+        }
+
+        return this.regionDM.withTransaction(async (regionDM) => {
+            const region = await this.regionDM.getRegionWithXLock(regionID);
+            if (region === null) {
+                this.logger.error("no region with region_id found", {
+                    regionID,
+                });
+                throw new ErrorWithStatus(
+                    `no region with region_id ${regionID} found`,
+                    status.NOT_FOUND
+                );
+            }
+
+            if (region.ofImageID !== ofImageID) {
+                this.logger.error(
+                    "region with region_id not found in image with image_id",
+                    {
+                        imageID: ofImageID,
+                        regionID,
+                    }
+                );
+                throw new ErrorWithStatus(
+                    `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                    status.NOT_FOUND
+                );
+            }
+
+            const oldLabel = region.label;
+            region.label = newLabel;
+
+            await regionDM.updateRegion({
+                id: region.id,
+                drawnByUserID: region.drawnByUserID,
+                labeledByUserID: labeledByUserID,
+                border: region.border,
+                holes: region.holes,
+                labelID: labelID,
+            });
+
+            return this.regionOperationLogDM.withTransaction(
+                async (regionOperationLogDM) => {
+                    return this.regionOperationLogLabelMetadataDM.withTransaction(
+                        async (regionOperationLogLabelMetadataDM) => {
+                            const drawLogID =
+                                await regionOperationLogDM.createRegionOperationLog(
+                                    {
+                                        ofRegionID: regionID,
+                                        byUserID: labeledByUserID,
+                                        operationTime: currentTime,
+                                        operationType:
+                                            RegionOperationType.LABEL,
+                                    }
+                                );
+                            await regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
+                                {
+                                    ofLogID: drawLogID,
+                                    oldLabelID:
+                                        oldLabel === null ? null : oldLabel.id,
+                                    newLabelID: newLabel.id,
+                                }
+                            );
+
+                            return {
+                                id: regionID,
+                                drawnByUserId: region.drawnByUserID,
+                                labeledByUserId: labeledByUserID,
+                                border: region.border,
+                                holes: region.holes,
+                                label: newLabel,
+                            };
+                        }
+                    );
+                }
+            );
+        });
     }
 
     public async deleteRegion(
         ofImageID: number,
         regionID: number
     ): Promise<void> {
-        throw new Error("Method not implemented.");
+        const image = await this.imageDM.getImage(ofImageID);
+        if (image === null) {
+            this.logger.error("image with image_id not found", {
+                imageID: ofImageID,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${ofImageID} not found`,
+                status.NOT_FOUND
+            );
+        }
+        return this.regionDM.withTransaction(async (regionDM) => {
+            const region = await regionDM.getRegionWithXLock(regionID);
+            if (region === null) {
+                this.logger.error("region with region_id not found", {
+                    regionID,
+                });
+                throw new ErrorWithStatus(
+                    `region with region_id ${regionID} not found`,
+                    status.NOT_FOUND
+                );
+            }
+
+            if (region.ofImageID !== ofImageID) {
+                this.logger.error(
+                    "region with region_id not found in image with image_id",
+                    {
+                        imageID: ofImageID,
+                        regionID,
+                    }
+                );
+                throw new ErrorWithStatus(
+                    `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                    status.NOT_FOUND
+                );
+            }
+
+            await regionDM.deleteRegion(regionID);
+        });
     }
 
     public async getRegionSnapshotListOfImage(
