@@ -29,6 +29,7 @@ export interface UpdateRegionArguments {
 export interface RegionDataAccessor {
     createRegion(args: CreateRegionArguments): Promise<number>;
     getRegionListOfImage(imageID: number): Promise<Region[]>;
+    getRegionListOfImageList(imageIDList: number[]): Promise<Region[][]>;
     updateRegion(args: UpdateRegionArguments): Promise<void>;
     deleteRegion(id: number): Promise<void>;
     getOfImageIDListOfRegionLabelList(
@@ -102,6 +103,45 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
         } catch (error) {
             this.logger.error("failed to get region list of image", {
                 imageID,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getRegionListOfImageList(
+        imageIDList: number[]
+    ): Promise<Region[][]> {
+        try {
+            const rows = await this.knex
+                .select()
+                .from(TabNameImageServiceRegion)
+                .leftOuterJoin(
+                    TabNameImageServiceRegionLabel,
+                    ColNameImageServiceRegionLabelID,
+                    ColNameImageServiceRegionLabelRegionLabelID
+                )
+                .whereIn(ColNameImageServiceRegionOfImageID, imageIDList);
+
+            const imageIDToRegionList = new Map<number, Region[]>();
+            for (const row of rows) {
+                const imageID = +row[ColNameImageServiceRegionOfImageID];
+                if (!imageIDToRegionList.has(imageID)) {
+                    imageIDToRegionList.set(imageID, []);
+                }
+                imageIDToRegionList
+                    .get(imageID)
+                    ?.push(this.getRegionFromJoinedRow(row));
+            }
+
+            const results: Region[][] = [];
+            for (const imageID of imageIDList) {
+                results.push(imageIDToRegionList.get(imageID) || []);
+            }
+            return results;
+        } catch (error) {
+            this.logger.error("failed to get region list of image list", {
+                imageID: imageIDList,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);

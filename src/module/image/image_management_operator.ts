@@ -6,9 +6,11 @@ import { ApplicationConfig } from "../../config";
 import {
     ImageDataAccessor,
     ImageHasImageTagDataAccessor,
-    ImageStatus,
     ImageType,
     ImageTypeDataAccessor,
+    RegionDataAccessor,
+    ImageListFilterOptions as DMImageListFilterOptions,
+    ImageListSortOrder,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -75,6 +77,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         private readonly imageDM: ImageDataAccessor,
         private readonly imageTypeDM: ImageTypeDataAccessor,
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
+        private readonly regionDM: RegionDataAccessor,
         private readonly idGenerator: IDGenerator,
         private readonly timer: Timer,
         private readonly imageProcessor: ImageProcessor,
@@ -166,7 +169,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             thumbnailImageFilename: thumbnailImageFileName,
             description: description,
             imageTypeID: imageTypeID === undefined ? null : imageTypeID,
-            status: ImageStatus.UPLOADED,
+            status: _ImageStatus_Values.UPLOADED,
         });
 
         return {
@@ -215,7 +218,28 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         imageTagList: ImageTag[] | undefined;
         regionList: Region[] | undefined;
     }> {
-        throw new Error("Method not implemented.");
+        const image = await this.imageDM.getImage(id);
+        if (image === null) {
+            this.logger.error("no image with image_id found", { imageID: id });
+            throw new ErrorWithStatus(
+                `no image with image_id ${id} found`,
+                status.NOT_FOUND
+            );
+        }
+
+        let imageTagList: ImageTag[] | undefined = undefined;
+        if (withImageTag) {
+            imageTagList = (
+                await this.imageHasImageTagDM.getImageTagListOfImageList([id])
+            )[0];
+        }
+
+        let regionList: Region[] | undefined = undefined;
+        if (withRegion) {
+            regionList = await this.regionDM.getRegionListOfImage(id);
+        }
+
+        return { image, imageTagList, regionList };
     }
 
     public async getImageList(
@@ -231,7 +255,122 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
     }> {
-        throw new Error("Method not implemented.");
+        const dmFilterOptions = await this.getDMImageListFilterOptions(
+            filterOptions
+        );
+        const totalImageCount = await this.imageDM.getImageCount(
+            dmFilterOptions
+        );
+        const imageList = await this.imageDM.getImageList(
+            offset,
+            limit,
+            this.getImageListSortOrder(sortOrder),
+            dmFilterOptions
+        );
+        const imageIDList = imageList.map((image) => image.id);
+
+        let imageTagList: ImageTag[][] | undefined = undefined;
+        if (withImageTag) {
+            imageTagList =
+                await this.imageHasImageTagDM.getImageTagListOfImageList(
+                    imageIDList
+                );
+        }
+
+        let regionList: Region[][] | undefined = undefined;
+        if (withRegion) {
+            regionList = await this.regionDM.getRegionListOfImageList(
+                imageIDList
+            );
+        }
+
+        return { totalImageCount, imageList, imageTagList, regionList };
+    }
+
+    private async getDMImageListFilterOptions(
+        filterOptions: ImageListFilterOptions
+    ): Promise<DMImageListFilterOptions> {
+        const dmFilterOptions = new DMImageListFilterOptions();
+
+        dmFilterOptions.uploadedByUserIDList =
+            filterOptions.uploadedByUserIdList || [];
+        dmFilterOptions.uploadTimeStart = +(filterOptions.uploadTimeStart || 0);
+        dmFilterOptions.uploadTimeEnd = +(filterOptions.uploadTimeEnd || 0);
+
+        dmFilterOptions.publishedByUserIDList =
+            filterOptions.publishedByUserIdList || [];
+        dmFilterOptions.publishTimeStart = +(
+            filterOptions.publishTimeStart || 0
+        );
+        dmFilterOptions.publishTimeEnd = +(filterOptions.publishTimeEnd || 0);
+
+        dmFilterOptions.verifiedByUserIDList =
+            filterOptions.verifiedByUserIdList || [];
+        dmFilterOptions.verifyTimeStart = +(filterOptions.verifyTimeStart || 0);
+        dmFilterOptions.verifyTimeEnd = +(filterOptions.verifyTimeEnd || 0);
+
+        dmFilterOptions.imageTypeIDList = filterOptions.imageTypeIdList || [];
+        dmFilterOptions.originalFileNameQuery =
+            filterOptions.originalFileNameQuery || "";
+        dmFilterOptions.imageStatusList = filterOptions.imageStatusList || [];
+
+        const imageIDSet = new Set<number>();
+        if (
+            filterOptions.imageTagIdList !== undefined &&
+            filterOptions.imageTagIdList.length > 0
+        ) {
+            const imageIDList =
+                await this.imageHasImageTagDM.getImageIDListOfImageTagList(
+                    filterOptions.imageTagIdList
+                );
+            for (const imageID of imageIDList) {
+                imageIDSet.add(imageID);
+            }
+        }
+        if (
+            filterOptions.regionLabelIdList !== undefined &&
+            filterOptions.regionLabelIdList.length > 0
+        ) {
+            const imageIDList =
+                await this.regionDM.getOfImageIDListOfRegionLabelList(
+                    filterOptions.regionLabelIdList
+                );
+            for (const imageID of imageIDList) {
+                imageIDSet.add(imageID);
+            }
+        }
+        dmFilterOptions.imageIDList = Array.from(imageIDSet);
+
+        return dmFilterOptions;
+    }
+
+    private getImageListSortOrder(
+        sortOrder: _ImageListSortOrder_Values
+    ): ImageListSortOrder {
+        switch (sortOrder) {
+            case _ImageListSortOrder_Values.ID_ASCENDING:
+                return ImageListSortOrder.ID_ASCENDING;
+            case _ImageListSortOrder_Values.ID_DESCENDING:
+                return ImageListSortOrder.ID_DESCENDING;
+            case _ImageListSortOrder_Values.UPLOAD_TIME_ASCENDING:
+                return ImageListSortOrder.UPLOAD_TIME_ASCENDING;
+            case _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING:
+                return ImageListSortOrder.UPLOAD_TIME_DESCENDING;
+            case _ImageListSortOrder_Values.PUBLISH_TIME_ASCENDING:
+                return ImageListSortOrder.PUBLISH_TIME_ASCENDING;
+            case _ImageListSortOrder_Values.PUBLISH_TIME_DESCENDING:
+                return ImageListSortOrder.PUBLISH_TIME_DESCENDING;
+            case _ImageListSortOrder_Values.VERIFY_TIME_ASCENDING:
+                return ImageListSortOrder.VERIFY_TIME_ASCENDING;
+            case _ImageListSortOrder_Values.VERIFY_TIME_DESCENDING:
+                return ImageListSortOrder.VERIFY_TIME_DESCENDING;
+            default:
+                this.logger.error("invalid sort_order value", { sortOrder });
+                throw new ErrorWithStatus(
+                    `invalid sort_order value ${sortOrder}`,
+                    status.INVALID_ARGUMENT
+                );
+        }
     }
 
     public async updateImageMetadata(

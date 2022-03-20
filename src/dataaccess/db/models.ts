@@ -1,3 +1,5 @@
+import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
+
 export class ImageType {
     constructor(
         public id: number,
@@ -31,13 +33,6 @@ export class ImageTag {
     ) {}
 }
 
-export enum ImageStatus {
-    UPLOADED = 0,
-    PUBLISHED = 1,
-    VERIFIED = 2,
-    EXCLUDED = 3,
-}
-
 export class Image {
     constructor(
         public id: number,
@@ -52,7 +47,7 @@ export class Image {
         public thumbnailURL: string,
         public description: string,
         public imageType: ImageType | null,
-        public status: ImageStatus
+        public status: _ImageStatus_Values
     ) {}
 }
 
