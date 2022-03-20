@@ -33,9 +33,6 @@ export class ImageServiceHandlersFactory {
             CreateRegionLabel: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
-            CreateRegionList: function (call, callback): void {
-                throw new Error("Function not implemented.");
-            },
             DeleteImage: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
@@ -75,10 +72,7 @@ export class ImageServiceHandlersFactory {
             GetRegionOperationLogList: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
-            GetRegionListOfImageAtPublishTime: function (call, callback): void {
-                throw new Error("Function not implemented.");
-            },
-            GetRegionListOfImageAtVerifyTime: function (call, callback): void {
+            GetRegionSnapshotListOfImage: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
             RemoveImageTagFromImage: function (call, callback): void {

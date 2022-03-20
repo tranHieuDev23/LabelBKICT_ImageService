@@ -37,13 +37,11 @@ service ImageService {
     rpc RemoveImageTagFromImage(RemoveImageTagFromImageRequest) returns (RemoveImageTagFromImageResponse) {}
 
     rpc CreateRegion(CreateRegionRequest) returns (CreateRegionResponse) {}
-    rpc CreateRegionList(CreateRegionListRequest) returns (CreateRegionListResponse) {}
     rpc GetRegionOperationLogList(GetRegionOperationLogListRequest) returns (GetRegionOperationLogListResponse) {}
     rpc UpdateRegion(UpdateRegionRequest) returns (UpdateRegionResponse) {}
     rpc DeleteRegion(DeleteRegionRequest) returns (DeleteRegionResponse) {}
 
-    rpc GetRegionListOfImageAtPublishTime(GetRegionListOfImageAtPublishTimeRequest) returns (GetRegionListOfImageAtPublishTimeResponse) {}
-    rpc GetRegionListOfImageAtVerifyTime(GetRegionListOfImageAtVerifyTimeRequest) returns (GetRegionListOfImageAtVerifyTimeResponse) {}
+    rpc GetRegionSnapshotListOfImage(GetRegionSnapshotListOfImageRequest) returns (GetRegionSnapshotListOfImageResponse) {}
 }
 
 // Business objects
@@ -337,12 +335,11 @@ message GetImageTagGroupListOfImageTypeResponse {
 }
 
 message CreateImageRequest {
-    uint32 upload_by_user_id = 1;
-    uint64 upload_time = 2;
-    string original_file_name = 3;
-    bytes image_data = 4;
-    string description = 5;
-    uint32 image_type_id = 6;
+    uint32 uploaded_by_user_id = 1;
+    string original_file_name = 2;
+    bytes image_data = 3;
+    string description = 4;
+    uint32 image_type_id = 5;
 }
 
 message CreateImageResponse {
@@ -350,6 +347,18 @@ message CreateImageResponse {
 }
 
 message GetImageRequest {
+    uint32 id = 1;
+    bool with_image_tag = 2;
+    bool with_region= 3;
+}
+
+message GetImageResponse {
+    Image image = 1;
+    repeated ImageTag image_tag_list = 2;
+    repeated Region region_list = 3;
+}
+
+message GetImageListRequest {
     uint32 offset = 1;
     uint32 limit = 2;
     ImageListSortOrder.Values sort_order = 3;
@@ -358,23 +367,11 @@ message GetImageRequest {
     bool with_region= 6;
 }
 
-message GetImageResponse {
+message GetImageListResponse {
     uint32 total_image_count = 1;
     repeated Image image_list = 2;
     repeated ImageTagList image_tag_list_of_image_list = 3;
     repeated RegionList region_list_of_image_list = 4;
-}
-
-message GetImageListRequest {
-    uint32 id = 1;
-    bool with_image_tag = 2;
-    bool with_region= 3;
-}
-
-message GetImageListResponse {
-    Image image = 1;
-    repeated ImageTag image_tag_list = 2;
-    repeated Region region_list = 3;
 }
 
 message UpdateImageMetadataRequest {
@@ -459,14 +456,6 @@ message GetRegionOperationLogListResponse {
     repeated RegionOperationLog region_operation_log_list = 1;
 }
 
-message CreateRegionListRequest {
-    repeated CreateImageRequest request_list = 1;
-}
-
-message CreateRegionListResponse {
-    repeated CreateImageResponse response_list = 1;
-}
-
 message UpdateRegionRequest {
     uint32 of_image_id = 1;
     uint32 region_id = 2;
@@ -488,18 +477,11 @@ message DeleteRegionRequest {
 
 message DeleteRegionResponse {}
 
-message GetRegionListOfImageAtPublishTimeRequest {
+message GetRegionSnapshotListOfImageRequest {
     uint32 of_image_id = 1;
+    uint32 at_status = 2;
 }
 
-message GetRegionListOfImageAtPublishTimeResponse {
-    repeated Region region_list = 1;
-}
-
-message GetRegionListOfImageAtVerifyTimeRequest {
-    uint32 of_image_id = 1;
-}
-
-message GetRegionListOfImageAtVerifyTimeResponse {
+message GetRegionSnapshotListOfImageResponse {
     repeated Region region_list = 1;
 }
