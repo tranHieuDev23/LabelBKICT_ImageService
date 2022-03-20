@@ -157,4 +157,4 @@ export class TurfRegionNormalizer implements RegionNormalizer {
 injected(TurfRegionNormalizer);
 
 export const REGION_NORMALIZER_TOKEN =
-    token<RegionNormalizer>("RegionNormalized");
+    token<RegionNormalizer>("RegionNormalizer");

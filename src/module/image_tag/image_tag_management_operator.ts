@@ -445,5 +445,5 @@ injected(
     LOGGER_TOKEN
 );
 
-export const IMAGE_TYPE_MANAGEMENT_OPERATOR_TOKEN =
+export const IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN =
     token<ImageTagManagementOperator>("ImageTagManagementOperator");

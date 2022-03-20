@@ -880,6 +880,6 @@ injected(
     LOGGER_TOKEN
 );
 
-export const IMAGE_MANAGEMENT_OPERATOR = token<ImageManagementOperator>(
+export const IMAGE_MANAGEMENT_OPERATOR_TOKEN = token<ImageManagementOperator>(
     "ImageManagementOperator"
 );

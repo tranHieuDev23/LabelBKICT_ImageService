@@ -3,9 +3,30 @@ import { sendUnaryData, status } from "@grpc/grpc-js";
 
 import { ImageServiceHandlers } from "../proto/gen/ImageService";
 import { ErrorWithStatus } from "../utils";
+import {
+    ImageTypeManagementOperator,
+    IMAGE_TYPE_MANAGEMENT_OPERATOR_TOKEN,
+} from "../module/image_type";
+import {
+    ImageManagementOperator,
+    IMAGE_MANAGEMENT_OPERATOR_TOKEN,
+} from "../module/image";
+import {
+    ImageTagManagementOperator,
+    IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN,
+} from "../module/image_tag";
+import {
+    RegionManagementOperator,
+    REGION_MANAGEMENT_OPERATOR_TOKEN,
+} from "../module/region";
 
 export class ImageServiceHandlersFactory {
-    constructor() {}
+    constructor(
+        private readonly imageTypeManagementOperator: ImageTypeManagementOperator,
+        private readonly imageTagManagementOperator: ImageTagManagementOperator,
+        private readonly imageManagementOperator: ImageManagementOperator,
+        private readonly regionManagementOperator: RegionManagementOperator
+    ) {}
 
     public getImageServiceHandlers(): ImageServiceHandlers {
         const handler: ImageServiceHandlers = {
@@ -131,7 +152,13 @@ export class ImageServiceHandlersFactory {
     }
 }
 
-injected(ImageServiceHandlersFactory);
+injected(
+    ImageServiceHandlersFactory,
+    IMAGE_TYPE_MANAGEMENT_OPERATOR_TOKEN,
+    IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN,
+    IMAGE_MANAGEMENT_OPERATOR_TOKEN,
+    REGION_MANAGEMENT_OPERATOR_TOKEN
+);
 
 export const IMAGE_SERVICE_HANDLERS_FACTORY_TOKEN =
     token<ImageServiceHandlersFactory>("ImageServiceHandlersFactory");

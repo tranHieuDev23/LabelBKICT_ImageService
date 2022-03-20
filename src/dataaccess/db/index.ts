@@ -38,6 +38,10 @@ import {
     RegionOperationLogLabelMetadataDataAccessorImpl,
     REGION_OPERATION_LOG_LABEL_METADATA_DATA_ACCESSOR_TOKEN,
 } from "./region_operation_log_label_metadata";
+import {
+    REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
+    RegionSnapshotDataAccessorImpl,
+} from "./region_snapshot";
 
 export * from "./image_has_image_tag";
 export * from "./image_tag_group_has_image_type";
@@ -101,5 +105,9 @@ export function bindToContainer(container: Container): void {
     container
         .bind(REGION_DATA_ACCESSOR_TOKEN)
         .toInstance(RegionDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN)
+        .toInstance(RegionSnapshotDataAccessorImpl)
         .inSingletonScope();
 }

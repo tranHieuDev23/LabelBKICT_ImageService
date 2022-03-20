@@ -1,4 +1,5 @@
 import { status } from "@grpc/grpc-js";
+import { injected, token } from "brandi";
 import { Logger } from "winston";
 import {
     ImageDataAccessor,
@@ -10,6 +11,12 @@ import {
     RegionOperationLogDataAccessor,
     RegionOperationLogLabelMetadataDataAccessor,
     RegionOperationLogDrawMetadataDataAccessor,
+    REGION_DATA_ACCESSOR_TOKEN,
+    IMAGE_DATA_ACCESSOR_TOKEN,
+    REGION_LABEL_DATA_ACCESSOR_TOKEN,
+    REGION_OPERATION_LOG_DATA_ACCESSOR_TOKEN,
+    REGION_OPERATION_LOG_DRAW_METADATA_DATA_ACCESSOR_TOKEN,
+    REGION_OPERATION_LOG_LABEL_METADATA_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { Polygon } from "../../proto/gen/Polygon";
@@ -18,11 +25,17 @@ import { RegionOperationLog } from "../../proto/gen/RegionOperationLog";
 import { _RegionOperationType_Values } from "../../proto/gen/RegionOperationType";
 import {
     BinaryConverter,
+    BINARY_CONVERTER_TOKEN,
     convertProtoDoubleToNumber,
     ErrorWithStatus,
+    LOGGER_TOKEN,
     Timer,
+    TIMER_TOKEN,
 } from "../../utils";
-import { RegionNormalizer } from "./polygon_normalizer";
+import {
+    RegionNormalizer,
+    REGION_NORMALIZER_TOKEN,
+} from "./polygon_normalizer";
 
 export interface RegionManagementOperator {
     createRegion(
@@ -566,3 +579,21 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         });
     }
 }
+
+injected(
+    RegionManagementOperatorImpl,
+    REGION_DATA_ACCESSOR_TOKEN,
+    IMAGE_DATA_ACCESSOR_TOKEN,
+    REGION_LABEL_DATA_ACCESSOR_TOKEN,
+    REGION_OPERATION_LOG_DATA_ACCESSOR_TOKEN,
+    REGION_OPERATION_LOG_DRAW_METADATA_DATA_ACCESSOR_TOKEN,
+    REGION_OPERATION_LOG_LABEL_METADATA_DATA_ACCESSOR_TOKEN,
+    REGION_NORMALIZER_TOKEN,
+    TIMER_TOKEN,
+    BINARY_CONVERTER_TOKEN,
+    LOGGER_TOKEN
+);
+
+export const REGION_MANAGEMENT_OPERATOR_TOKEN = token<RegionManagementOperator>(
+    "RegionManagementOperator"
+);
