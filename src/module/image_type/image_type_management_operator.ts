@@ -79,42 +79,17 @@ export class ImageTypeManagementOperatorImpl
         regionLabelList: RegionLabel[][] | null;
     }> {
         const imageTypeList = await this.imageTypeDM.getImageTypeList();
-        if (!withRegionLabel) {
-            return {
-                imageTypeList: imageTypeList.map((imageType) => {
-                    return {
-                        id: imageType.id,
-                        displayName: imageType.displayName,
-                        hasPredictiveModel: imageType.hasPredictiveModel,
-                    };
-                }),
-                regionLabelList: null,
-            };
+        const imageTypeIDList = imageTypeList.map((imageType) => imageType.id);
+
+        let regionLabelList: RegionLabel[][] | null = null;
+        if (withRegionLabel) {
+            regionLabelList =
+                await this.regionLabelDM.getRegionLabelListOfImageTypeIDList(
+                    imageTypeIDList
+                );
         }
 
-        const imageTypeIDList = imageTypeList.map((imageType) => imageType.id);
-        const regionLabelList =
-            await this.regionLabelDM.getRegionLabelListOfImageTypeIDList(
-                imageTypeIDList
-            );
-        return {
-            imageTypeList: imageTypeList.map((imageType) => {
-                return {
-                    id: imageType.id,
-                    displayName: imageType.displayName,
-                    hasPredictiveModel: imageType.hasPredictiveModel,
-                };
-            }),
-            regionLabelList: regionLabelList.map((list) =>
-                list.map((regionLabel) => {
-                    return {
-                        id: regionLabel.id,
-                        displayName: regionLabel.displayName,
-                        color: regionLabel.color,
-                    };
-                })
-            ),
-        };
+        return { imageTypeList, regionLabelList };
     }
 
     public async updateImageType(
@@ -183,9 +158,7 @@ export class ImageTypeManagementOperatorImpl
             );
         }
 
-        const imageType = await this.imageTypeDM.getImageTypeWithXLock(
-            ofImageTypeID
-        );
+        const imageType = await this.imageTypeDM.getImageType(ofImageTypeID);
         if (imageType === null) {
             this.logger.error("no image type with image_type_id found", {
                 imageTypeID: ofImageTypeID,
@@ -267,11 +240,7 @@ export class ImageTypeManagementOperatorImpl
             }
 
             await dm.updateRegionLabel(regionLabel);
-            return {
-                id: id,
-                displayName: displayName,
-                color: color,
-            };
+            return regionLabel;
         });
     }
 

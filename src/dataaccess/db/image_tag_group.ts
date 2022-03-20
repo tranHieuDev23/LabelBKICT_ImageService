@@ -12,8 +12,13 @@ export interface ImageTagGroupDataAccessor {
         isSingleValue: boolean
     ): Promise<number>;
     getImageTagGroupList(): Promise<ImageTagGroup[]>;
+    getImageTagGroup(id: number): Promise<ImageTagGroup | null>;
+    getImageTagGroupWithXLock(id: number): Promise<ImageTagGroup | null>;
     updateImageTagGroup(imageTagGroup: ImageTagGroup): Promise<void>;
     deleteImageTagGroup(id: number): Promise<void>;
+    withTransaction<T>(
+        executeFunc: (dataAccessor: ImageTagGroupDataAccessor) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceImageTagGroup = "image_service_image_tag_group";
@@ -63,6 +68,81 @@ export class ImageTagGroupDataAccessorImpl
             this.logger.error("failed to get image tag group list", { error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async getImageTagGroup(id: number): Promise<ImageTagGroup | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageTagGroup)
+                .where({
+                    [ColNameImageServiceImageTagGroupID]: id,
+                });
+        } catch (error) {
+            this.logger.error("failed to get image tag group", {
+                imageTagGroupID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info(
+                "no image tag group with image_tag_group_id found",
+                { imageTagGroupID: id }
+            );
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error(
+                "more than one image tag group with image_tag_group_id found",
+                { imageTagGroupID: id }
+            );
+            throw new ErrorWithStatus(
+                "more than one image tag group was found",
+                status.INTERNAL
+            );
+        }
+        return this.getImageTagGroupFromRow(rows[0]);
+    }
+
+    public async getImageTagGroupWithXLock(
+        id: number
+    ): Promise<ImageTagGroup | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageTagGroup)
+                .where({
+                    [ColNameImageServiceImageTagGroupID]: id,
+                })
+                .forUpdate();
+        } catch (error) {
+            this.logger.error("failed to get image tag group", {
+                imageTagGroupID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info(
+                "no image tag group with image_tag_group_id found",
+                { imageTagGroupID: id }
+            );
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error(
+                "more than one image tag group with image_tag_group_id found",
+                { imageTagGroupID: id }
+            );
+            throw new ErrorWithStatus(
+                "more than one image tag group was found",
+                status.INTERNAL
+            );
+        }
+        return this.getImageTagGroupFromRow(rows[0]);
     }
 
     public async updateImageTagGroup(
@@ -115,6 +195,18 @@ export class ImageTagGroupDataAccessorImpl
                 status.NOT_FOUND
             );
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (dataAccessor: ImageTagGroupDataAccessor) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor = new ImageTagGroupDataAccessorImpl(
+                tx,
+                this.logger
+            );
+            return executeFunc(txDataAccessor);
+        });
     }
 
     private getImageTagGroupFromRow(row: Record<string, any>): ImageTagGroup {

@@ -11,9 +11,15 @@ export interface ImageTagDataAccessor {
         ofImageTagGroupID: number,
         displayName: string
     ): Promise<number>;
-    getImageTagList(): Promise<ImageTag[]>;
+    getImageTagListOfImageTagGroupIDList(
+        imageTagGroupIDList: number[]
+    ): Promise<ImageTag[][]>;
+    getImageTagWithXLock(id: number): Promise<ImageTag | null>;
     updateImageTag(imageTag: ImageTag): Promise<void>;
     deleteImageTag(id: number): Promise<void>;
+    withTransaction<T>(
+        executeFunc: (dataAccessor: ImageTagDataAccessor) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceImageTag = "image_service_image_tag_tab";
@@ -50,16 +56,80 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
         }
     }
 
-    public async getImageTagList(): Promise<ImageTag[]> {
+    public async getImageTagListOfImageTagGroupIDList(
+        imageTagGroupIDList: number[]
+    ): Promise<ImageTag[][]> {
         try {
             const rows = await this.knex
                 .select()
-                .from(TabNameImageServiceImageTag);
-            return rows.map((row) => this.getImageTagFromRow(row));
+                .from(TabNameImageServiceImageTag)
+                .whereIn(
+                    ColNameImageServiceImageTagOfImageTagGroupID,
+                    imageTagGroupIDList
+                );
+
+            const imageTagGroupIDToImageTagList = new Map<number, ImageTag[]>();
+            for (const row of rows) {
+                const imageTagGroupID =
+                    +row[ColNameImageServiceImageTagOfImageTagGroupID];
+                if (!imageTagGroupIDToImageTagList.has(imageTagGroupID)) {
+                    imageTagGroupIDToImageTagList.set(imageTagGroupID, []);
+                }
+                imageTagGroupIDToImageTagList
+                    .get(imageTagGroupID)
+                    ?.push(this.getImageTagFromRow(row));
+            }
+
+            const results: ImageTag[][] = [];
+            for (const imageTagGroupID of imageTagGroupIDList) {
+                results.push(
+                    imageTagGroupIDToImageTagList.get(imageTagGroupID) || []
+                );
+            }
+            return results;
         } catch (error) {
-            this.logger.error("failed to get image tag list", { error });
+            this.logger.error(
+                "failed to get image tag list of image tag group id list",
+                { error }
+            );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async getImageTagWithXLock(id: number): Promise<ImageTag | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageTag)
+                .where({
+                    [ColNameImageServiceImageTagID]: id,
+                })
+                .forUpdate();
+        } catch (error) {
+            this.logger.error("failed to get image tag", {
+                imageTagID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info("no image tag with image_tag_id found", {
+                imageTagID: id,
+            });
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error(
+                "more than one image tag with image_tag_id found",
+                { imageTagID: id }
+            );
+            throw new ErrorWithStatus(
+                "more than one image tag was found",
+                status.INTERNAL
+            );
+        }
+        return this.getImageTagFromRow(rows[0]);
     }
 
     public async updateImageTag(regionLabel: ImageTag): Promise<void> {
@@ -109,6 +179,18 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
                 status.NOT_FOUND
             );
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (dataAccessor: ImageTagDataAccessor) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor = new ImageTagDataAccessorImpl(
+                tx,
+                this.logger
+            );
+            return executeFunc(txDataAccessor);
+        });
     }
 
     private getImageTagFromRow(row: Record<string, any>): ImageTag {

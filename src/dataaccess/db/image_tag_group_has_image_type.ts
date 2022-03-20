@@ -15,10 +15,22 @@ export interface ImageTagGroupHasImageTypeDataAccessor {
         imageTagGroupID: number,
         imageTypeID: number
     ): Promise<void>;
+    getImageTagGroupHasImageTypeWithXLock(
+        imageTagGroupID: number,
+        imageTypeID: number
+    ): Promise<{
+        imageTagGroupID: number;
+        imageTypeID: number;
+    } | null>;
     getImageTypeListOfImageTagGroupList(
         imageTagGroupIDList: number[]
     ): Promise<ImageType[][]>;
     getImageTagGroupOfImageType(imageTypeID: number): Promise<ImageTagGroup[]>;
+    withTransaction<T>(
+        executeFunc: (
+            dataAccessor: ImageTagGroupHasImageTypeDataAccessor
+        ) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceImageTagGroupHasImageType =
@@ -98,6 +110,49 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                 status.NOT_FOUND
             );
         }
+    }
+
+    public async getImageTagGroupHasImageTypeWithXLock(
+        imageTagGroupID: number,
+        imageTypeID: number
+    ): Promise<{ imageTagGroupID: number; imageTypeID: number } | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageTagGroupHasImageType)
+                .where({
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupID]:
+                        imageTagGroupID,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeID]:
+                        imageTypeID,
+                })
+                .forUpdate();
+        } catch (error) {
+            this.logger.error(
+                "failed to get image tag group has image type relation",
+                { imageTagGroupID, imageTypeID, error }
+            );
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info(
+                "no image tag group has image type relation found found",
+                { imageTagGroupID, imageTypeID }
+            );
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.info(
+                "more than one image tag group has image type relation found found",
+                { imageTagGroupID, imageTypeID }
+            );
+            throw new ErrorWithStatus(
+                "more than one relation was found",
+                status.INTERNAL
+            );
+        }
+        return { imageTagGroupID, imageTypeID };
     }
 
     public async getImageTypeListOfImageTagGroupList(
@@ -197,6 +252,18 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (
+            dataAccessor: ImageTagGroupHasImageTypeDataAccessor
+        ) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor =
+                new ImageTagGroupHasImageTypeDataAccessorImpl(tx, this.logger);
+            return executeFunc(txDataAccessor);
+        });
     }
 }
 

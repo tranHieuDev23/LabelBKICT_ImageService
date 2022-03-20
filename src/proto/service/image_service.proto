@@ -53,6 +53,10 @@ message ImageType {
     bool has_predictive_model = 3;
 }
 
+message ImageTypeList {
+    repeated ImageType image_type_list = 1;
+}
+
 message RegionLabel {
     uint32 id = 1;
     string display_name = 2;
@@ -258,11 +262,13 @@ message CreateImageTagGroupResponse {
 
 message GetImageTagGroupListRequest {
     bool with_image_tag = 1;
+    bool with_image_type = 2;
 }
 
 message GetImageTagGroupListResponse {
     repeated ImageTagGroup image_tag_group_list = 1;
     repeated ImageTagList image_tag_list_of_image_tag_group_list = 2;
+    repeated ImageTypeList image_type_list_of_image_tag_group_list = 3;
 }
 
 message UpdateImageTagGroupRequest {
