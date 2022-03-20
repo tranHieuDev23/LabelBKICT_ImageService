@@ -3,7 +3,10 @@ import { injected, token } from "brandi";
 import { Knex } from "knex";
 import { Logger } from "winston";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
-import { BinaryConverter, BINARY_CONVERTER_TOKEN } from "./binary_converter";
+import {
+    BinaryConverter,
+    BINARY_CONVERTER_TOKEN,
+} from "../../utils/binary_converter";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { Polygon, RegionOperationLogDrawMetadata } from "./models";
 

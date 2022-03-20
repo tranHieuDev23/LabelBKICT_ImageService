@@ -2,10 +2,14 @@ import { status } from "@grpc/grpc-js";
 import { injected, token } from "brandi";
 import { Knex } from "knex";
 import { Logger } from "winston";
+import { ImageStatus } from "../../proto/gen/ImageStatus";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
-import { BinaryConverter, BINARY_CONVERTER_TOKEN } from "./binary_converter";
+import {
+    BinaryConverter,
+    BINARY_CONVERTER_TOKEN,
+} from "../../utils/binary_converter";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
-import { ImageStatus, Polygon, RegionSnapshot, RegionLabel } from "./models";
+import { Polygon, RegionSnapshot, RegionLabel } from "./models";
 
 export interface CreateRegionSnapshotArguments {
     ofImageID: number;

@@ -1,4 +1,5 @@
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
+import { _RegionOperationType_Values } from "../../proto/gen/RegionOperationType";
 
 export class ImageType {
     constructor(
@@ -82,18 +83,13 @@ export class Region {
     ) {}
 }
 
-export enum RegionOperationType {
-    DRAW = 0,
-    LABEL = 1,
-}
-
 export class RegionOperationLog {
     constructor(
         public id: number,
         public ofRegionID: number,
         public byUserID: number,
         public operationTime: number,
-        public operationType: RegionOperationType
+        public operationType: _RegionOperationType_Values
     ) {}
 }
 

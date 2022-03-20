@@ -2,7 +2,7 @@ import { Container } from "brandi";
 import {
     BinaryConverterImpl,
     BINARY_CONVERTER_TOKEN,
-} from "./binary_converter";
+} from "../../utils/binary_converter";
 import { ImageDataAccessorImpl, IMAGE_DATA_ACCESSOR_TOKEN } from "./image";
 import {
     ImageHasImageTagDataAccessorImpl,
@@ -61,10 +61,6 @@ export function bindToContainer(container: Container): void {
     container
         .bind(KNEX_INSTANCE_TOKEN)
         .toInstance(newKnexInstance)
-        .inSingletonScope();
-    container
-        .bind(BINARY_CONVERTER_TOKEN)
-        .toInstance(BinaryConverterImpl)
         .inSingletonScope();
     container
         .bind(IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN)

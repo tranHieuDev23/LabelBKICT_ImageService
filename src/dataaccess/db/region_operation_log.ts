@@ -2,15 +2,16 @@ import { status } from "@grpc/grpc-js";
 import { injected, token } from "brandi";
 import { Knex } from "knex";
 import { Logger } from "winston";
+import { _RegionOperationType_Values } from "../../proto/gen/RegionOperationType";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
 import { KNEX_INSTANCE_TOKEN } from "./knex";
-import { RegionOperationType, RegionOperationLog } from "./models";
+import { RegionOperationLog } from "./models";
 
 export interface CreateRegionOperationLogArguments {
     ofRegionID: number;
     byUserID: number;
     operationTime: number;
-    operationType: RegionOperationType;
+    operationType: _RegionOperationType_Values;
 }
 
 export interface RegionOperationLogDataAccessor {

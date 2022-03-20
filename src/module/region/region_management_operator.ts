@@ -8,7 +8,6 @@ import {
     RegionLabelDataAccessor,
     Vertex,
     RegionOperationLogDataAccessor,
-    RegionOperationType,
     RegionOperationLogLabelMetadataDataAccessor,
     RegionOperationLogDrawMetadataDataAccessor,
 } from "../../dataaccess/db";
@@ -16,7 +15,9 @@ import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { Polygon } from "../../proto/gen/Polygon";
 import { Region } from "../../proto/gen/Region";
 import { RegionOperationLog } from "../../proto/gen/RegionOperationLog";
+import { _RegionOperationType_Values } from "../../proto/gen/RegionOperationType";
 import {
+    BinaryConverter,
     convertProtoDoubleToNumber,
     ErrorWithStatus,
     Timer,
@@ -66,6 +67,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         private readonly regionOperationLogLabelMetadataDM: RegionOperationLogLabelMetadataDataAccessor,
         private readonly regionNormalizer: RegionNormalizer,
         private readonly timer: Timer,
+        private readonly binaryConverter: BinaryConverter,
         private readonly logger: Logger
     ) {}
 
@@ -136,7 +138,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                                 byUserID: drawnByUserID,
                                                 operationTime: currentTime,
                                                 operationType:
-                                                    RegionOperationType.DRAW,
+                                                    _RegionOperationType_Values.DRAW,
                                             }
                                         );
                                     await regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
@@ -156,7 +158,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                                 byUserID: labeledByUserID,
                                                 operationTime: currentTime,
                                                 operationType:
-                                                    RegionOperationType.LABEL,
+                                                    _RegionOperationType_Values.LABEL,
                                             }
                                         );
                                     await regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
@@ -228,7 +230,74 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         ofImageID: number,
         regionID: number
     ): Promise<RegionOperationLog[]> {
-        throw new Error("Method not implemented.");
+        const image = await this.imageDM.getImage(ofImageID);
+        if (image === null) {
+            this.logger.error("image with image_id not found", {
+                imageID: ofImageID,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${ofImageID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        const region = await this.regionDM.getRegion(regionID);
+        if (region === null) {
+            this.logger.error("region with region_id not found", {
+                regionID,
+            });
+            throw new ErrorWithStatus(
+                `region with region_id ${regionID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        if (region.ofImageID !== ofImageID) {
+            this.logger.error(
+                "region with region_id not found in image with image_id",
+                {
+                    imageID: ofImageID,
+                    regionID,
+                }
+            );
+            throw new ErrorWithStatus(
+                `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                status.NOT_FOUND
+            );
+        }
+
+        const regionOperationLogList =
+            await this.regionOperationLogDM.getRegionOperationLogListOfRegion(
+                regionID
+            );
+
+        const resultList: RegionOperationLog[] = [];
+        for (const log of regionOperationLogList) {
+            let operationMetadata: Buffer;
+            if (log.operationType === _RegionOperationType_Values.DRAW) {
+                const drawMetadata =
+                    await this.regionOperationLogDrawMetadataDM.getRegionOperationLogDrawMetadataOfLog(
+                        log.id
+                    );
+                operationMetadata = this.binaryConverter.toBuffer(drawMetadata);
+            } else {
+                const labelMetadata =
+                    await this.regionOperationLogLabelMetadataDM.getRegionOperationLogLabelMetadataOfLog(
+                        log.id
+                    );
+                operationMetadata =
+                    this.binaryConverter.toBuffer(labelMetadata);
+            }
+            resultList.push({
+                id: log.id,
+                byUserId: log.byUserID,
+                operationTime: log.operationTime,
+                operationType: log.operationType,
+                operationMetadata: operationMetadata,
+            });
+        }
+
+        return resultList;
     }
 
     public async updateRegionBoundary(
@@ -311,7 +380,8 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                         ofRegionID: regionID,
                                         byUserID: drawnByUserID,
                                         operationTime: currentTime,
-                                        operationType: RegionOperationType.DRAW,
+                                        operationType:
+                                            _RegionOperationType_Values.DRAW,
                                     }
                                 );
                             await regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
@@ -429,7 +499,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                         byUserID: labeledByUserID,
                                         operationTime: currentTime,
                                         operationType:
-                                            RegionOperationType.LABEL,
+                                            _RegionOperationType_Values.LABEL,
                                     }
                                 );
                             await regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
