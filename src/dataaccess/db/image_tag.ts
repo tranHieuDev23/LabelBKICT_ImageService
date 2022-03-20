@@ -14,6 +14,7 @@ export interface ImageTagDataAccessor {
     getImageTagListOfImageTagGroupIDList(
         imageTagGroupIDList: number[]
     ): Promise<ImageTag[][]>;
+    getImageTag(id: number): Promise<ImageTag | null>;
     getImageTagWithXLock(id: number): Promise<ImageTag | null>;
     updateImageTag(imageTag: ImageTag): Promise<void>;
     deleteImageTag(id: number): Promise<void>;
@@ -94,6 +95,41 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async getImageTag(id: number): Promise<ImageTag | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageTag)
+                .where({
+                    [ColNameImageServiceImageTagID]: id,
+                });
+        } catch (error) {
+            this.logger.error("failed to get image tag", {
+                imageTagID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info("no image tag with image_tag_id found", {
+                imageTagID: id,
+            });
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error(
+                "more than one image tag with image_tag_id found",
+                { imageTagID: id }
+            );
+            throw new ErrorWithStatus(
+                "more than one image tag was found",
+                status.INTERNAL
+            );
+        }
+        return this.getImageTagFromRow(rows[0]);
     }
 
     public async getImageTagWithXLock(id: number): Promise<ImageTag | null> {

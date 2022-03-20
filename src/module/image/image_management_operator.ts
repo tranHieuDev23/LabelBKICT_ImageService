@@ -11,6 +11,9 @@ import {
     RegionDataAccessor,
     ImageListFilterOptions as DMImageListFilterOptions,
     ImageListSortOrder,
+    ImageTagDataAccessor,
+    ImageTagGroupHasImageTypeDataAccessorImpl,
+    ImageTagGroupDataAccessor,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -80,6 +83,9 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     constructor(
         private readonly imageDM: ImageDataAccessor,
         private readonly imageTypeDM: ImageTypeDataAccessor,
+        private readonly imageTagGroupDM: ImageTagGroupDataAccessor,
+        private readonly imageTagDM: ImageTagDataAccessor,
+        private readonly imageTagGroupHasImageTypeDM: ImageTagGroupHasImageTypeDataAccessorImpl,
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
         private readonly idGenerator: IDGenerator,
@@ -614,13 +620,149 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         imageID: number,
         imageTagID: number
     ): Promise<void> {
-        throw new Error("Method not implemented.");
+        const image = await this.imageDM.getImage(imageID);
+        if (image === null) {
+            this.logger.error("image with image_id not found", { imageID });
+            throw new ErrorWithStatus(
+                `image with image_id ${imageID} not found`,
+                status.NOT_FOUND
+            );
+        }
+        if (image.imageType === null) {
+            this.logger.error(
+                "image does not have image type, cannot assign tag",
+                { imageID }
+            );
+            throw new ErrorWithStatus(
+                `image does not have image type, cannot assign tag`,
+                status.FAILED_PRECONDITION
+            );
+        }
+
+        const imageTag = await this.imageTagDM.getImageTag(imageTagID);
+        if (imageTag === null) {
+            this.logger.error("image tag with image_tag_id not found", {
+                imageTagID,
+            });
+            throw new ErrorWithStatus(
+                `image tag with image_tag_id ${imageTagID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        const imageTagListOfImage = (
+            await this.imageHasImageTagDM.getImageTagListOfImageList([imageID])
+        )[0];
+        const imageAlreadyHasTag =
+            imageTagListOfImage.find((item) => item.id === imageTag.id) !==
+            undefined;
+        if (imageAlreadyHasTag) {
+            this.logger.error("image already has image tag", {
+                imageID,
+                imageTagID,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${imageID} already has image tag with image_tag_id ${imageTagID}`,
+                status.FAILED_PRECONDITION
+            );
+        }
+
+        const imageTagGroupID = imageTag.ofImageTagGroupID;
+        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
+            imageTagGroupID
+        );
+        if (imageTagGroup?.isSingleValue) {
+            for (const item of imageTagListOfImage) {
+                if (item.ofImageTagGroupID === imageTagGroupID) {
+                    this.logger.error(
+                        "image with image_id already has tag of image tag group with image_tag_group_id",
+                        { imageID, imageTagGroupID }
+                    );
+                    throw new ErrorWithStatus(
+                        `image with image_id ${imageID} already has tag of image tag group with image_tag_group_id ${imageTagGroupID}`,
+                        status.FAILED_PRECONDITION
+                    );
+                }
+            }
+        }
+
+        const imageTypeID = image.imageType.id;
+        const imageTagGroupHasImageTypeRelation =
+            await this.imageTagGroupHasImageTypeDM.getImageTagGroupHasImageType(
+                imageTagGroupID,
+                imageTypeID
+            );
+        if (imageTagGroupHasImageTypeRelation === null) {
+            this.logger.error("image tag group does not have image type", {
+                imageTagGroupID,
+                imageTypeID,
+            });
+            throw new ErrorWithStatus(
+                `image tag group ${imageTagGroupID} does not have image type ${imageTypeID}`,
+                status.FAILED_PRECONDITION
+            );
+        }
+
+        await this.imageHasImageTagDM.createImageHasImageTag(
+            imageID,
+            imageTagID
+        );
     }
 
     public async removeImageTagFromImage(
         imageID: number,
         imageTagID: number
     ): Promise<void> {
-        throw new Error("Method not implemented.");
+        const image = await this.imageDM.getImage(imageID);
+        if (image === null) {
+            this.logger.error("image with image_id not found", { imageID });
+            throw new ErrorWithStatus(
+                `image with image_id ${imageID} not found`,
+                status.NOT_FOUND
+            );
+        }
+        if (image.imageType === null) {
+            this.logger.error(
+                "image does not have image type, cannot assign tag",
+                { imageID }
+            );
+            throw new ErrorWithStatus(
+                `image does not have image type, cannot assign tag`,
+                status.FAILED_PRECONDITION
+            );
+        }
+
+        const imageTag = await this.imageTagDM.getImageTag(imageTagID);
+        if (imageTag === null) {
+            this.logger.error("image tag with image_tag_id not found", {
+                imageTagID,
+            });
+            throw new ErrorWithStatus(
+                `image tag with image_tag_id ${imageTagID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        const imageTagListOfImage = (
+            await this.imageHasImageTagDM.getImageTagListOfImageList([imageID])
+        )[0];
+        const imageAlreadyHasTag =
+            imageTagListOfImage.find((item) => item.id === imageTag.id) !==
+            undefined;
+        if (!imageAlreadyHasTag) {
+            this.logger.error("image does not have image tag", {
+                imageID,
+                imageTagID,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${imageID} does not have image tag with image_tag_id ${imageTagID}`,
+                status.FAILED_PRECONDITION
+            );
+        }
+
+        await this.imageHasImageTagDM.deleteImageHasImageTag(
+            imageID,
+            imageTagID
+        );
     }
 }

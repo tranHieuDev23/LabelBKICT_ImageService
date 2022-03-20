@@ -15,6 +15,13 @@ export interface ImageTagGroupHasImageTypeDataAccessor {
         imageTagGroupID: number,
         imageTypeID: number
     ): Promise<void>;
+    getImageTagGroupHasImageType(
+        imageTagGroupID: number,
+        imageTypeID: number
+    ): Promise<{
+        imageTagGroupID: number;
+        imageTypeID: number;
+    } | null>;
     getImageTagGroupHasImageTypeWithXLock(
         imageTagGroupID: number,
         imageTypeID: number
@@ -110,6 +117,48 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                 status.NOT_FOUND
             );
         }
+    }
+
+    public async getImageTagGroupHasImageType(
+        imageTagGroupID: number,
+        imageTypeID: number
+    ): Promise<{ imageTagGroupID: number; imageTypeID: number } | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageTagGroupHasImageType)
+                .where({
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupID]:
+                        imageTagGroupID,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeID]:
+                        imageTypeID,
+                });
+        } catch (error) {
+            this.logger.error(
+                "failed to get image tag group has image type relation",
+                { imageTagGroupID, imageTypeID, error }
+            );
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info(
+                "no image tag group has image type relation found found",
+                { imageTagGroupID, imageTypeID }
+            );
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.info(
+                "more than one image tag group has image type relation found found",
+                { imageTagGroupID, imageTypeID }
+            );
+            throw new ErrorWithStatus(
+                "more than one relation was found",
+                status.INTERNAL
+            );
+        }
+        return { imageTagGroupID, imageTypeID };
     }
 
     public async getImageTagGroupHasImageTypeWithXLock(
