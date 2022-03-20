@@ -1,4 +1,5 @@
 import { Container } from "brandi";
+import { APPLICATION_CONFIG_TOKEN } from "./application";
 import { ImageServiceConfig, IMAGE_SERVICE_CONFIG_TOKEN } from "./config";
 import { DATABASE_CONFIG_TOKEN } from "./database";
 import { DISTRIBUTED_CONFIG_TOKEN } from "./distributed";
@@ -9,6 +10,7 @@ export * from "./log";
 export * from "./distributed";
 export * from "./database";
 export * from "./grpc_service";
+export * from "./application";
 export * from "./config";
 
 export function bindToContainer(container: Container): void {
@@ -36,6 +38,12 @@ export function bindToContainer(container: Container): void {
         .bind(GRPC_SERVER_CONFIG)
         .toInstance(
             () => container.get(IMAGE_SERVICE_CONFIG_TOKEN).grpcServerConfig
+        )
+        .inSingletonScope();
+    container
+        .bind(APPLICATION_CONFIG_TOKEN)
+        .toInstance(
+            () => container.get(IMAGE_SERVICE_CONFIG_TOKEN).applicationConfig
         )
         .inSingletonScope();
 }
