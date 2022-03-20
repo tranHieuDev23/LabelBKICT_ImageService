@@ -1,8 +1,4 @@
 import { Container } from "brandi";
-import {
-    BinaryConverterImpl,
-    BINARY_CONVERTER_TOKEN,
-} from "../../utils/binary_converter";
 import { ImageDataAccessorImpl, IMAGE_DATA_ACCESSOR_TOKEN } from "./image";
 import {
     ImageHasImageTagDataAccessorImpl,

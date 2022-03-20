@@ -88,9 +88,8 @@ export class ImageHasImageTagDataAccessorImpl
     }
 
     public async deleteImageHasImageTagOfImage(imageID: number): Promise<void> {
-        let deleteCount: number;
         try {
-            deleteCount = await this.knex
+            await this.knex
                 .delete()
                 .from(TabNameImageServiceImageHasImageTag)
                 .where({

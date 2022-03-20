@@ -10,7 +10,6 @@ import {
     RegionOperationLogDataAccessor,
     RegionOperationLogLabelMetadataDataAccessor,
     RegionOperationLogDrawMetadataDataAccessor,
-    RegionSnapshotDataAccessor,
 } from "../../dataaccess/db";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { Polygon } from "../../proto/gen/Polygon";
