@@ -7,6 +7,7 @@ export * from "./errors";
 export * from "./logging";
 export * from "./id";
 export * from "./time";
+export * from "./double";
 
 export function bindToContainer(container: Container): void {
     container

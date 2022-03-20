@@ -19,6 +19,11 @@ export interface RegionOperationLogLabelMetadataDataAccessor {
     getRegionOperationLogLabelMetadataOfLog(
         logID: number
     ): Promise<RegionOperationLogLabelMetadata | null>;
+    withTransaction<T>(
+        executeFunc: (
+            dataAccessor: RegionOperationLogLabelMetadataDataAccessor
+        ) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceRegionOperationLogLabelMetadata =
@@ -101,6 +106,21 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (
+            dataAccessor: RegionOperationLogLabelMetadataDataAccessor
+        ) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor =
+                new RegionOperationLogLabelMetadataDataAccessorImpl(
+                    tx,
+                    this.logger
+                );
+            return executeFunc(txDataAccessor);
+        });
     }
 
     private getRegionOperationLogLabelMetadataFromJoinedRow(

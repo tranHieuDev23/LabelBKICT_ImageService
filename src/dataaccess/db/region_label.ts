@@ -15,6 +15,7 @@ export interface RegionLabelDataAccessor {
     getRegionLabelListOfImageTypeIDList(
         imageTypeIDList: number[]
     ): Promise<RegionLabel[][]>;
+    getRegionLabel(id: number): Promise<RegionLabel | null>;
     getRegionLabelWithXLock(id: number): Promise<RegionLabel | null>;
     updateRegionLabel(regionLabel: RegionLabel): Promise<void>;
     deleteRegionLabel(id: number): Promise<void>;
@@ -102,6 +103,41 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async getRegionLabel(id: number): Promise<RegionLabel | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceRegionLabel)
+                .where({
+                    [ColNameImageServiceRegionLabelID]: id,
+                });
+        } catch (error) {
+            this.logger.error("failed to get region label", {
+                regionLabelID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info("no region label with region_label_id found", {
+                regionLabelID: id,
+            });
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error(
+                "more than one region label with region_label_id found",
+                { regionLabelID: id }
+            );
+            throw new ErrorWithStatus(
+                "more than one region label was found",
+                status.INTERNAL
+            );
+        }
+        return this.getRegionLabelFromRow(rows[0]);
     }
 
     public async getRegionLabelWithXLock(

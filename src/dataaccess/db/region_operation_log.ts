@@ -20,6 +20,11 @@ export interface RegionOperationLogDataAccessor {
     getRegionOperationLogListOfRegion(
         regionID: number
     ): Promise<RegionOperationLog[]>;
+    withTransaction<T>(
+        executeFunc: (
+            dataAccessor: RegionOperationLogDataAccessor
+        ) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceRegionOperationLog =
@@ -85,6 +90,20 @@ export class RegionOperationLogDataAccessorImpl
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (
+            dataAccessor: RegionOperationLogDataAccessor
+        ) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor = new RegionOperationLogDataAccessorImpl(
+                tx,
+                this.logger
+            );
+            return executeFunc(txDataAccessor);
+        });
     }
 
     private getRegionOperationLogFromRow(

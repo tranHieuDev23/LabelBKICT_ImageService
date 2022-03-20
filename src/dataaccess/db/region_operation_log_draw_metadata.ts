@@ -9,8 +9,8 @@ import { Polygon, RegionOperationLogDrawMetadata } from "./models";
 
 export interface CreateRegionOperationLogDrawMetadataArguments {
     ofLogID: number;
-    oldBorder: Polygon;
-    oldHoles: Polygon[];
+    oldBorder: Polygon | null;
+    oldHoles: Polygon[] | null;
     newBorder: Polygon;
     newHoles: Polygon[];
 }
@@ -22,6 +22,11 @@ export interface RegionOperationLogDrawMetadataDataAccessor {
     getRegionOperationLogDrawMetadataOfLog(
         logID: number
     ): Promise<RegionOperationLogDrawMetadata | null>;
+    withTransaction<T>(
+        executeFunc: (
+            dataAccessor: RegionOperationLogDrawMetadataDataAccessor
+        ) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceRegionOperationLogDrawMetadata =
@@ -45,18 +50,31 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
         args: CreateRegionOperationLogDrawMetadataArguments
     ): Promise<void> {
         try {
+            const oldBorderBinary =
+                args.oldBorder === null
+                    ? null
+                    : this.binaryConverter.toBuffer(args.oldBorder);
+            const oldHolesBinary =
+                args.oldHoles === null
+                    ? null
+                    : this.binaryConverter.toBuffer(args.oldHoles);
+            const newBorderBinary = this.binaryConverter.toBuffer(
+                args.newBorder
+            );
+            const newHolesBinary = this.binaryConverter.toBuffer(args.newHoles);
+
             await this.knex
                 .insert({
                     [ColNameImageServiceRegionOperationLogDrawMetadataOfLogID]:
                         args.ofLogID,
                     [ColNameImageServiceRegionOperationLogDrawMetadataOldBorder]:
-                        args.oldBorder,
+                        oldBorderBinary,
                     [ColNameImageServiceRegionOperationLogDrawMetadataOldHoles]:
-                        args.oldHoles,
+                        oldHolesBinary,
                     [ColNameImageServiceRegionOperationLogDrawMetadataNewBorder]:
-                        args.newBorder,
+                        newBorderBinary,
                     [ColNameImageServiceRegionOperationLogDrawMetadataNewHoles]:
-                        args.newHoles,
+                        newHolesBinary,
                 })
                 .into(TabNameImageServiceRegionOperationLogDrawMetadata);
         } catch (error) {
@@ -93,23 +111,55 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
         }
     }
 
+    public async withTransaction<T>(
+        executeFunc: (
+            dataAccessor: RegionOperationLogDrawMetadataDataAccessor
+        ) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor =
+                new RegionOperationLogDrawMetadataDataAccessorImpl(
+                    tx,
+                    this.binaryConverter,
+                    this.logger
+                );
+            return executeFunc(txDataAccessor);
+        });
+    }
+
     private getRegionOperationLogDrawMetadataFromRow(
         row: Record<string, any>
     ): RegionOperationLogDrawMetadata {
+        const oldBorder =
+            row[ColNameImageServiceRegionOperationLogDrawMetadataOldBorder] ===
+            null
+                ? null
+                : this.binaryConverter.fromBuffer(
+                      row[
+                          ColNameImageServiceRegionOperationLogDrawMetadataOldBorder
+                      ]
+                  );
+        const oldHoles =
+            row[ColNameImageServiceRegionOperationLogDrawMetadataOldHoles] ===
+            null
+                ? null
+                : this.binaryConverter.fromBuffer(
+                      row[
+                          ColNameImageServiceRegionOperationLogDrawMetadataOldHoles
+                      ]
+                  );
+        const newBorder = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionOperationLogDrawMetadataNewBorder]
+        );
+        const newHoles = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionOperationLogDrawMetadataNewHoles]
+        );
         return new RegionOperationLogDrawMetadata(
             +row[ColNameImageServiceRegionOperationLogDrawMetadataOfLogID],
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionOperationLogDrawMetadataOldBorder]
-            ),
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionOperationLogDrawMetadataOldHoles]
-            ),
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionOperationLogDrawMetadataNewBorder]
-            ),
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionOperationLogDrawMetadataNewHoles]
-            )
+            oldBorder,
+            oldHoles,
+            newBorder,
+            newHoles
         );
     }
 }

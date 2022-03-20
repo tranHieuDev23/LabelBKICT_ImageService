@@ -99,8 +99,8 @@ export class RegionOperationLog {
 export class RegionOperationLogDrawMetadata {
     constructor(
         public ofLogID: number,
-        public oldBorder: Polygon,
-        public oldHoles: Polygon[],
+        public oldBorder: Polygon | null,
+        public oldHoles: Polygon[] | null,
         public newBorder: Polygon,
         public newHoles: Polygon[]
     ) {}
