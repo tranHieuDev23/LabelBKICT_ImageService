@@ -123,10 +123,13 @@ export class ImageServiceHandlersFactory {
             UpdateImageType: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
-            UpdateRegion: function (call, callback): void {
+            UpdateRegionBoundary: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
             UpdateRegionLabel: function (call, callback): void {
+                throw new Error("Function not implemented.");
+            },
+            UpdateRegionRegionLabel: function (call, callback): void {
                 throw new Error("Function not implemented.");
             },
         };

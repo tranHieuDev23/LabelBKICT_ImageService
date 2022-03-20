@@ -38,7 +38,8 @@ service ImageService {
 
     rpc CreateRegion(CreateRegionRequest) returns (CreateRegionResponse) {}
     rpc GetRegionOperationLogList(GetRegionOperationLogListRequest) returns (GetRegionOperationLogListResponse) {}
-    rpc UpdateRegion(UpdateRegionRequest) returns (UpdateRegionResponse) {}
+    rpc UpdateRegionBoundary(UpdateRegionBoundaryRequest) returns (UpdateRegionBoundaryResponse) {}
+    rpc UpdateRegionRegionLabel(UpdateRegionRegionLabelRequest) returns (UpdateRegionRegionLabelResponse) {}
     rpc DeleteRegion(DeleteRegionRequest) returns (DeleteRegionResponse) {}
 
     rpc GetRegionSnapshotListOfImage(GetRegionSnapshotListOfImageRequest) returns (GetRegionSnapshotListOfImageResponse) {}
@@ -457,17 +458,26 @@ message GetRegionOperationLogListResponse {
     repeated RegionOperationLog region_operation_log_list = 1;
 }
 
-message UpdateRegionRequest {
+message UpdateRegionBoundaryRequest {
     uint32 of_image_id = 1;
     uint32 region_id = 2;
     uint32 drawn_by_user_id = 3;
-    uint32 labeled_by_user_id = 4;
     Polygon border = 5;
     repeated Polygon holes = 6;
+}
+
+message UpdateRegionBoundaryResponse {
+    Region region = 1;
+}
+
+message UpdateRegionRegionLabelRequest {
+    uint32 of_image_id = 1;
+    uint32 region_id = 2;
+    uint32 labeled_by_user_id = 4;
     uint32 label_id = 7;
 }
 
-message UpdateRegionResponse {
+message UpdateRegionRegionLabelResponse {
     Region region = 1;
 }
 
