@@ -3,7 +3,7 @@ import { Snowflake } from "nodejs-snowflake";
 import { DistributedConfig, DISTRIBUTED_CONFIG_TOKEN } from "../config";
 
 export interface IDGenerator {
-    Generate(): Promise<number>;
+    generate(): Promise<number>;
 }
 
 export class SnowflakeIDGenerator implements IDGenerator {
@@ -15,7 +15,7 @@ export class SnowflakeIDGenerator implements IDGenerator {
         });
     }
 
-    public async Generate(): Promise<number> {
+    public async generate(): Promise<number> {
         return new Promise<number>((resolve) => {
             resolve(+this.snowflake.getUniqueID().toString(10));
         });

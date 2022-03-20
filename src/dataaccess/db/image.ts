@@ -30,10 +30,10 @@ export interface CreateImageArguments {
     verifiedByUserID: number;
     verifyTime: number;
     originalFileName: string;
-    imageURL: string;
-    thumbnailURL: string;
+    originalImageFilename: string;
+    thumbnailImageFilename: string;
     description: string;
-    imageTypeID: number;
+    imageTypeID: number | null;
     status: ImageStatus;
 }
 
@@ -45,8 +45,8 @@ export interface UpdateImageArguments {
     verifiedByUserID: number;
     verifyTime: number;
     originalFileName: string;
-    imageURL: string;
-    thumbnailURL: string;
+    originalImageFilename: string;
+    thumbnailImageFilename: string;
     description: string;
     imageTypeID: number;
     status: ImageStatus;
@@ -79,8 +79,9 @@ const ColNameImageServiceImagePublishTime = "publishTime";
 const ColNameImageServiceImageVerifiedByUserID = "verify_by_user_id";
 const ColNameImageServiceImageVerifyTime = "verifyTime";
 const ColNameImageServiceImageOriginalFileName = "original_file_name";
-const ColNameImageServiceImageImageURL = "image_url";
-const ColNameImageServiceImageThumbnailURL = "thumbnail_url";
+const ColNameImageServiceImageOriginalImageFilename = "original_image_filename";
+const ColNameImageServiceImageThumbnailImageFilename =
+    "thumbnail_image_filename";
 const ColNameImageServiceImageDescription = "description";
 const ColNameImageServiceImageImageTypeID = "image_type_id";
 const ColNameImageServiceImageStatus = "status";
@@ -111,8 +112,10 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     [ColNameImageServiceImageVerifyTime]: args.verifyTime,
                     [ColNameImageServiceImageOriginalFileName]:
                         args.originalFileName,
-                    [ColNameImageServiceImageImageURL]: args.imageURL,
-                    [ColNameImageServiceImageThumbnailURL]: args.thumbnailURL,
+                    [ColNameImageServiceImageOriginalImageFilename]:
+                        args.originalImageFilename,
+                    [ColNameImageServiceImageThumbnailImageFilename]:
+                        args.thumbnailImageFilename,
                     [ColNameImageServiceImageDescription]: args.description,
                     [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
                     [ColNameImageServiceImageStatus]: args.status,
@@ -236,8 +239,10 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 [ColNameImageServiceImageVerifyTime]: args.verifyTime,
                 [ColNameImageServiceImageOriginalFileName]:
                     args.originalFileName,
-                [ColNameImageServiceImageImageURL]: args.imageURL,
-                [ColNameImageServiceImageThumbnailURL]: args.thumbnailURL,
+                [ColNameImageServiceImageOriginalImageFilename]:
+                    args.originalImageFilename,
+                [ColNameImageServiceImageThumbnailImageFilename]:
+                    args.thumbnailImageFilename,
                 [ColNameImageServiceImageDescription]: args.description,
                 [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
                 [ColNameImageServiceImageStatus]: args.status,
@@ -504,8 +509,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             +row[ColNameImageServiceImageVerifiedByUserID],
             row[ColNameImageServiceImageVerifyTime],
             row[ColNameImageServiceImageOriginalFileName],
-            row[ColNameImageServiceImageImageURL],
-            row[ColNameImageServiceImageThumbnailURL],
+            row[ColNameImageServiceImageOriginalImageFilename],
+            row[ColNameImageServiceImageThumbnailImageFilename],
             row[ColNameImageServiceImageDescription],
             imageType,
             +row[ColNameImageServiceImageStatus]

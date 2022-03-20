@@ -98,8 +98,8 @@ message Image {
     uint32 verified_by_user_id = 6;
     uint64 verify_time = 7;
     string original_file_name = 8;
-    string image_url = 9;
-    string thumbnail_url = 10;
+    string original_image_filename = 9;
+    string thumbnail_image_filename = 10;
     string description = 11;
     ImageType image_type = 12;
     ImageStatus.Values status = 13;
