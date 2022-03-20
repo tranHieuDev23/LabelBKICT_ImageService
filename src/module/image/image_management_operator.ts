@@ -603,11 +603,11 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }
 
     public async deleteImage(id: number): Promise<void> {
-        throw new Error("Method not implemented.");
+        return this.imageDM.deleteImage(id);
     }
 
     public async deleteImageList(idList: number[]): Promise<void> {
-        throw new Error("Method not implemented.");
+        return this.imageDM.deleteImageList(idList);
     }
 
     public async addImageTagToImage(
