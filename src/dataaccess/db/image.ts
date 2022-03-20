@@ -39,17 +39,13 @@ export interface CreateImageArguments {
 }
 
 export interface UpdateImageArguments {
-    uploadedByUserID: number;
-    uploadTime: number;
+    id: number;
     publishedByUserID: number;
     publishTime: number;
     verifiedByUserID: number;
     verifyTime: number;
-    originalFileName: string;
-    originalImageFilename: string;
-    thumbnailImageFilename: string;
     description: string;
-    imageTypeID: number;
+    imageTypeID: number | null;
     status: _ImageStatus_Values;
 }
 
@@ -228,26 +224,22 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
 
     public async updateImage(args: UpdateImageArguments): Promise<void> {
         try {
-            await this.knex.table(TabNameImageServiceImage).update({
-                [ColNameImageServiceImageUploadedByUserID]:
-                    args.uploadedByUserID,
-                [ColNameImageServiceImageUploadTime]: args.uploadTime,
-                [ColNameImageServiceImagePublishedByUserID]:
-                    args.publishedByUserID,
-                [ColNameImageServiceImagePublishTime]: args.publishTime,
-                [ColNameImageServiceImageVerifiedByUserID]:
-                    args.verifiedByUserID,
-                [ColNameImageServiceImageVerifyTime]: args.verifyTime,
-                [ColNameImageServiceImageOriginalFileName]:
-                    args.originalFileName,
-                [ColNameImageServiceImageOriginalImageFilename]:
-                    args.originalImageFilename,
-                [ColNameImageServiceImageThumbnailImageFilename]:
-                    args.thumbnailImageFilename,
-                [ColNameImageServiceImageDescription]: args.description,
-                [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
-                [ColNameImageService_ImageStatus_Values]: args.status,
-            });
+            await this.knex
+                .table(TabNameImageServiceImage)
+                .update({
+                    [ColNameImageServiceImagePublishedByUserID]:
+                        args.publishedByUserID,
+                    [ColNameImageServiceImagePublishTime]: args.publishTime,
+                    [ColNameImageServiceImageVerifiedByUserID]:
+                        args.verifiedByUserID,
+                    [ColNameImageServiceImageVerifyTime]: args.verifyTime,
+                    [ColNameImageServiceImageDescription]: args.description,
+                    [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
+                    [ColNameImageService_ImageStatus_Values]: args.status,
+                })
+                .where({
+                    [ColNameImageServiceImageID]: args.id,
+                });
         } catch (error) {
             this.logger.error("failed to update image", { args, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);

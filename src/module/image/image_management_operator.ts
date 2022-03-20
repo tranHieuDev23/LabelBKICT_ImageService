@@ -377,7 +377,38 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         id: number,
         description: string | undefined
     ): Promise<Image> {
-        throw new Error("Method not implemented.");
+        if (description !== undefined) {
+            description = this.sanitizeDescription(description);
+        }
+        return this.imageDM.withTransaction(async (dm) => {
+            const image = await dm.getImage(id);
+            if (image === null) {
+                this.logger.error("no image with image_id found", {
+                    imageID: id,
+                });
+                throw new ErrorWithStatus(
+                    `no image with image_id ${id} found`,
+                    status.NOT_FOUND
+                );
+            }
+
+            if (description !== undefined) {
+                image.description = description;
+            }
+
+            await dm.updateImage({
+                id: id,
+                publishedByUserID: image.publishedByUserID,
+                publishTime: image.publishTime,
+                verifiedByUserID: image.verifiedByUserID,
+                verifyTime: image.verifyTime,
+                description: image.description,
+                imageTypeID:
+                    image.imageType === null ? null : image.imageType.id,
+                status: image.status,
+            });
+            return image;
+        });
     }
 
     public async updateImageImageType(
