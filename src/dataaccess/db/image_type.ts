@@ -12,8 +12,13 @@ export interface ImageTypeDataAccessor {
         hasPredictiveModel: boolean
     ): Promise<number>;
     getImageTypeList(): Promise<ImageType[]>;
+    getImageType(id: number): Promise<ImageType | null>;
+    getImageTypeWithXLock(id: number): Promise<ImageType | null>;
     updateImageType(imageType: ImageType): Promise<void>;
     deleteImageType(id: number): Promise<void>;
+    withTransaction<T>(
+        executeFunc: (dataAccessor: ImageTypeDataAccessor) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
@@ -63,6 +68,77 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
         }
     }
 
+    public async getImageType(id: number): Promise<ImageType | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageType)
+                .where({
+                    [ColNameImageServiceImageTypeID]: id,
+                });
+        } catch (error) {
+            this.logger.error("failed to get image type", {
+                imageTypeID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info("no image type with image_type_id found", {
+                imageTypeID: id,
+            });
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error(
+                "more than one image type with image_type_id found",
+                { imageTypeID: id }
+            );
+            throw new ErrorWithStatus(
+                "more than one image type was found",
+                status.INTERNAL
+            );
+        }
+        return this.getImageTypeFromRow(rows[0]);
+    }
+
+    public async getImageTypeWithXLock(id: number): Promise<ImageType | null> {
+        let rows: Record<string, any>[];
+        try {
+            rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageType)
+                .where({
+                    [ColNameImageServiceImageTypeID]: id,
+                })
+                .forUpdate();
+        } catch (error) {
+            this.logger.error("failed to get image type", {
+                imageTypeID: id,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+        if (rows.length === 0) {
+            this.logger.info("no image type with image_type_id found", {
+                imageTypeID: id,
+            });
+            return null;
+        }
+        if (rows.length > 1) {
+            this.logger.error(
+                "more than one image type with image_type_id found",
+                { imageTypeID: id }
+            );
+            throw new ErrorWithStatus(
+                "more than one image type was found",
+                status.INTERNAL
+            );
+        }
+        return this.getImageTypeFromRow(rows[0]);
+    }
+
     public async updateImageType(imageType: ImageType): Promise<void> {
         try {
             await this.knex
@@ -110,6 +186,18 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
                 status.NOT_FOUND
             );
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (dataAccessor: ImageTypeDataAccessor) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor = new ImageTypeDataAccessorImpl(
+                tx,
+                this.logger
+            );
+            return executeFunc(txDataAccessor);
+        });
     }
 
     private getImageTypeFromRow(row: Record<string, any>): ImageType {

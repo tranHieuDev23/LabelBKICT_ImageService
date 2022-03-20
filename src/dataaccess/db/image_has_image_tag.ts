@@ -101,7 +101,8 @@ export class ImageHasImageTagDataAccessorImpl
 
             const imageIDToImageTagList = new Map<number, ImageTag[]>();
             for (const row of rows) {
-                const imageID = row[ColNameImageServiceImageHasImageTagImageID];
+                const imageID =
+                    +row[ColNameImageServiceImageHasImageTagImageID];
                 if (!imageIDToImageTagList.has(imageID)) {
                     imageIDToImageTagList.set(imageID, []);
                 }

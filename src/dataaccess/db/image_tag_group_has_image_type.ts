@@ -127,7 +127,7 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
             >();
             for (const row of rows) {
                 const imageTagGroupID =
-                    row[
+                    +row[
                         ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupID
                     ];
                 if (!imageTagGroupIDToImageTypeList.has(imageTagGroupID)) {

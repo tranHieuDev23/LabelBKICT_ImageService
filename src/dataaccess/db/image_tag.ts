@@ -12,7 +12,7 @@ export interface ImageTagDataAccessor {
         displayName: string
     ): Promise<number>;
     getImageTagList(): Promise<ImageTag[]>;
-    updateImageTag(regionLabel: ImageTag): Promise<void>;
+    updateImageTag(imageTag: ImageTag): Promise<void>;
     deleteImageTag(id: number): Promise<void>;
 }
 
