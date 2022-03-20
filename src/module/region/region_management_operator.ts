@@ -10,6 +10,7 @@ import {
     RegionOperationLogDataAccessor,
     RegionOperationLogLabelMetadataDataAccessor,
     RegionOperationLogDrawMetadataDataAccessor,
+    RegionSnapshotDataAccessor,
 } from "../../dataaccess/db";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { Polygon } from "../../proto/gen/Polygon";
@@ -51,10 +52,6 @@ export interface RegionManagementOperator {
         labelID: number
     ): Promise<Region>;
     deleteRegion(ofImageID: number, regionID: number): Promise<void>;
-    getRegionSnapshotListOfImage(
-        ofImageID: number,
-        atStatus: _ImageStatus_Values
-    ): Promise<Region[]>;
 }
 
 export class RegionManagementOperatorImpl implements RegionManagementOperator {
@@ -568,12 +565,5 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
 
             await regionDM.deleteRegion(regionID);
         });
-    }
-
-    public async getRegionSnapshotListOfImage(
-        ofImageID: number,
-        atStatus: _ImageStatus_Values
-    ): Promise<Region[]> {
-        throw new Error("Method not implemented.");
     }
 }

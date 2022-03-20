@@ -22,6 +22,9 @@ import {
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
     ImageTagGroupHasImageTypeDataAccessor,
+    RegionSnapshotDataAccessor,
+    Region as DMRegion,
+    REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -87,6 +90,10 @@ export interface ImageManagementOperator {
     deleteImageList(idList: number[]): Promise<void>;
     addImageTagToImage(imageID: number, imageTagID: number): Promise<void>;
     removeImageTagFromImage(imageID: number, imageTagID: number): Promise<void>;
+    getRegionSnapshotListOfImage(
+        ofImageID: number,
+        atStatus: _ImageStatus_Values
+    ): Promise<Region[]>;
 }
 
 const ORIGINAL_WIDTH = 1920;
@@ -103,6 +110,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         private readonly imageTagGroupHasImageTypeDM: ImageTagGroupHasImageTypeDataAccessor,
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
+        private readonly regionSnapshotDM: RegionSnapshotDataAccessor,
         private readonly idGenerator: IDGenerator,
         private readonly timer: Timer,
         private readonly imageProcessor: ImageProcessor,
@@ -509,44 +517,78 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                 );
             }
 
-            if (!this.isValidStatusChange(image.status, newStatus)) {
-                this.logger.error("invalid status change", {
+            if (!this.isValidStatusTransition(image.status, newStatus)) {
+                this.logger.error("invalid status transition", {
                     oldStatus: image.status,
                     newStatus: newStatus,
                 });
                 throw new ErrorWithStatus(
-                    "invalid status change",
+                    "invalid status transition",
                     status.FAILED_PRECONDITION
                 );
             }
 
-            image.status = newStatus;
+            const regionListOfImage = await this.regionDM.getRegionListOfImage(
+                id
+            );
             if (newStatus === _ImageStatus_Values.PUBLISHED) {
-                image.publishedByUserID = byUserID;
-                image.publishTime = currentTime;
-            }
-            if (newStatus === _ImageStatus_Values.VERIFIED) {
-                image.verifiedByUserID = byUserID;
-                image.verifiedByUserID = currentTime;
+                for (const region of regionListOfImage) {
+                    if (region.label === null) {
+                        this.logger.error(
+                            "there are unlabeled regions, image cannot be published",
+                            { imageID: id }
+                        );
+                        throw new ErrorWithStatus(
+                            "there are unlabeled regions, image cannot be published",
+                            status.FAILED_PRECONDITION
+                        );
+                    }
+                }
             }
 
-            await imageDM.updateImage({
-                id: id,
-                publishedByUserID: image.publishedByUserID,
-                publishTime: image.publishTime,
-                verifiedByUserID: image.verifiedByUserID,
-                verifyTime: image.verifyTime,
-                description: image.description,
-                imageTypeID:
-                    image.imageType === null ? null : image.imageType.id,
-                status: newStatus,
-            });
+            return this.regionSnapshotDM.withTransaction(
+                async (regionSnapshotDM) => {
+                    image.status = newStatus;
+                    if (newStatus === _ImageStatus_Values.PUBLISHED) {
+                        image.publishedByUserID = byUserID;
+                        image.publishTime = currentTime;
+                        await this.generateRegionSnapshotOfImage(
+                            regionSnapshotDM,
+                            newStatus,
+                            regionListOfImage
+                        );
+                    }
+                    if (newStatus === _ImageStatus_Values.VERIFIED) {
+                        image.verifiedByUserID = byUserID;
+                        image.verifiedByUserID = currentTime;
+                        await this.generateRegionSnapshotOfImage(
+                            regionSnapshotDM,
+                            newStatus,
+                            regionListOfImage
+                        );
+                    }
 
-            return image;
+                    await imageDM.updateImage({
+                        id: id,
+                        publishedByUserID: image.publishedByUserID,
+                        publishTime: image.publishTime,
+                        verifiedByUserID: image.verifiedByUserID,
+                        verifyTime: image.verifyTime,
+                        description: image.description,
+                        imageTypeID:
+                            image.imageType === null
+                                ? null
+                                : image.imageType.id,
+                        status: newStatus,
+                    });
+
+                    return image;
+                }
+            );
         });
     }
 
-    public isValidStatusChange(
+    private isValidStatusTransition(
         oldStatus: _ImageStatus_Values,
         newStatus: _ImageStatus_Values
     ): boolean {
@@ -562,6 +604,24 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                 return newStatus === _ImageStatus_Values.VERIFIED;
             default:
                 return false;
+        }
+    }
+
+    private async generateRegionSnapshotOfImage(
+        regionSnapshotDM: RegionSnapshotDataAccessor,
+        status: _ImageStatus_Values,
+        regionListOfImage: DMRegion[]
+    ): Promise<void> {
+        for (const region of regionListOfImage) {
+            await regionSnapshotDM.createRegionSnapshot({
+                ofImageID: region.ofImageID,
+                atStatus: status,
+                drawnByUserID: region.drawnByUserID,
+                labeledByUserID: region.labeledByUserID,
+                border: region.border,
+                holes: region.holes,
+                labelID: region.label === null ? null : region.label.id,
+            });
         }
     }
 
@@ -780,6 +840,27 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             imageTagID
         );
     }
+
+    public async getRegionSnapshotListOfImage(
+        ofImageID: number,
+        atStatus: _ImageStatus_Values
+    ): Promise<Region[]> {
+        const image = await this.imageDM.getImage(ofImageID);
+        if (image === null) {
+            this.logger.error("image with image_id not found", {
+                imageID: ofImageID,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${ofImageID} not found`,
+                status.NOT_FOUND
+            );
+        }
+
+        return await this.regionSnapshotDM.getRegionSnapshotListOfImage(
+            ofImageID,
+            atStatus
+        );
+    }
 }
 
 injected(
@@ -791,6 +872,7 @@ injected(
     IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
+    REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
     ID_GENERATOR_TOKEN,
     TIMER_TOKEN,
     IMAGE_PROCESSOR_TOKEN,

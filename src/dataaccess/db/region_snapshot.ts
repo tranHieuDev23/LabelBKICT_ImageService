@@ -27,6 +27,9 @@ export interface RegionSnapshotDataAccessor {
         imageID: number,
         imageStatus: ImageStatus
     ): Promise<RegionSnapshot[]>;
+    withTransaction<T>(
+        executeFunc: (dataAccessor: RegionSnapshotDataAccessor) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceRegionSnapshot = "image_service_region_snapshot_tab";
@@ -107,6 +110,19 @@ export class RegionSnapshotDataAccessorImpl
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+
+    public async withTransaction<T>(
+        executeFunc: (dataAccessor: RegionSnapshotDataAccessor) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor = new RegionSnapshotDataAccessorImpl(
+                tx,
+                this.binaryConverter,
+                this.logger
+            );
+            return executeFunc(txDataAccessor);
+        });
     }
 
     private getRegionFromJoinedRow(row: Record<string, any>): RegionSnapshot {
