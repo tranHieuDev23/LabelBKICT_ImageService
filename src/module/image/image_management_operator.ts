@@ -63,7 +63,7 @@ export interface ImageManagementOperator {
         offset: number,
         limit: number,
         sortOrder: _ImageListSortOrder_Values,
-        filterOptions: ImageListFilterOptions,
+        filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
         withRegion: boolean
     ): Promise<{
@@ -279,7 +279,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         offset: number,
         limit: number,
         sortOrder: _ImageListSortOrder_Values,
-        filterOptions: ImageListFilterOptions,
+        filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
         withRegion: boolean
     ): Promise<{
@@ -321,9 +321,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }
 
     private async getDMImageListFilterOptions(
-        filterOptions: ImageListFilterOptions
+        filterOptions: ImageListFilterOptions | undefined
     ): Promise<DMImageListFilterOptions> {
         const dmFilterOptions = new DMImageListFilterOptions();
+        if (filterOptions === undefined) {
+            return dmFilterOptions;
+        }
 
         dmFilterOptions.uploadedByUserIDList =
             filterOptions.uploadedByUserIdList || [];

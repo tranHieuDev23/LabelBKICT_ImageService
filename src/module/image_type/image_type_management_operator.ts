@@ -23,8 +23,8 @@ export interface ImageTypeManagementOperator {
     }>;
     updateImageType(
         id: number,
-        displayName: string,
-        hasPredictiveModel: boolean
+        displayName: string | undefined,
+        hasPredictiveModel: boolean | undefined
     ): Promise<ImageType>;
     deleteImageType(id: number): Promise<void>;
     createRegionLabel(

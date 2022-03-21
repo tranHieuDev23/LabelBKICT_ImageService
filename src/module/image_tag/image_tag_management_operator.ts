@@ -33,8 +33,8 @@ export interface ImageTagManagementOperator {
     }>;
     updateImageTagGroup(
         id: number,
-        displayName: string,
-        isSingleValue: boolean
+        displayName: string | undefined,
+        isSingleValue: boolean | undefined
     ): Promise<ImageTagGroup>;
     deleteImageTagGroup(id: number): Promise<void>;
     createImageTag(

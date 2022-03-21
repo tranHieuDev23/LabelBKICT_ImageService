@@ -18,7 +18,6 @@ import {
     REGION_OPERATION_LOG_DRAW_METADATA_DATA_ACCESSOR_TOKEN,
     REGION_OPERATION_LOG_LABEL_METADATA_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
-import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { Polygon } from "../../proto/gen/Polygon";
 import { Region } from "../../proto/gen/Region";
 import { RegionOperationLog } from "../../proto/gen/RegionOperationLog";

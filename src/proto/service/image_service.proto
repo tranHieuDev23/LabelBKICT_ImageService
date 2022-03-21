@@ -27,7 +27,7 @@ service ImageService {
     rpc GetImage(GetImageRequest) returns (GetImageResponse) {}
     rpc GetImageList(GetImageListRequest) returns (GetImageListResponse) {}
     rpc UpdateImageMetadata(UpdateImageMetadataRequest) returns (UpdateImageMetadataResponse) {}
-    rpc UpdateImageImageType(UpdateImageTypeRequest) returns (UpdateImageTypeResponse) {}
+    rpc UpdateImageImageType(UpdateImageImageTypeRequest) returns (UpdateImageImageTypeResponse) {}
     rpc UpdateImageStatus(UpdateImageStatusRequest) returns (UpdateImageStatusResponse) {}
     rpc UpdateImageListImageType(UpdateImageListImageTypeRequest) returns (UpdateImageListImageTypeResponse) {}
     rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse) {}
@@ -314,20 +314,20 @@ message DeleteImageTagResponse {}
 
 message AddImageTypeToImageTagGroupRequest {
     uint32 image_tag_group_id = 1;
-    uint32 image_tag_type_id = 2;
+    uint32 image_type_id = 2;
 }
 
 message AddImageTypeToImageTagGroupResponse {}
 
 message RemoveImageTypeFromImageTagGroupRequest {
     uint32 image_tag_group_id = 1;
-    uint32 image_tag_type_id = 2;
+    uint32 image_type_id = 2;
 }
 
 message RemoveImageTypeFromImageTagGroupResponse {}
 
 message GetImageTagGroupListOfImageTypeRequest {
-    uint32 image_tag_type_id = 1;
+    uint32 image_type_id = 1;
 }
 
 message GetImageTagGroupListOfImageTypeResponse {
@@ -385,7 +385,7 @@ message UpdateImageMetadataResponse {
 }
 
 message UpdateImageImageTypeRequest {
-    uint32 image_id = 1;
+    uint32 id = 1;
     uint32 image_type_id = 2;
 }
 
@@ -394,7 +394,7 @@ message UpdateImageImageTypeResponse {
 }
 
 message UpdateImageStatusRequest {
-    uint32 image_id = 1;
+    uint32 id = 1;
     ImageStatus.Values status = 2;
     uint32 by_user_id = 3;
 }
@@ -417,7 +417,7 @@ message DeleteImageRequest {
 message DeleteImageResponse {}
 
 message DeleteImageListRequest {
-    repeated uint32 image_id_list = 1;
+    repeated uint32 id_list = 1;
 }
 
 message DeleteImageListResponse {}
