@@ -181,10 +181,6 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             }
         }
 
-        if (imageType !== null && imageTagIDList.length > 0) {
-            const {} = await this.imageTagGroupHasImageTypeDM;
-        }
-
         const uploadTime = this.timer.getCurrentTime();
         const originalImageFileName =
             this.generateOriginalImageFilename(uploadTime);
