@@ -341,6 +341,7 @@ message CreateImageRequest {
     bytes image_data = 3;
     string description = 4;
     uint32 image_type_id = 5;
+    repeated uint32 image_tag_id_list = 6;
 }
 
 message CreateImageResponse {

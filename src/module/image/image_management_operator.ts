@@ -48,7 +48,8 @@ export interface ImageManagementOperator {
         originalFileName: string,
         imageData: Buffer,
         description: string | undefined,
-        imageTypeID: number | undefined
+        imageTypeID: number | undefined,
+        imageTagIDList: number[]
     ): Promise<Image>;
     getImage(
         id: number,
@@ -123,7 +124,8 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         originalFileName: string,
         imageData: Buffer,
         description: string,
-        imageTypeID: number | undefined
+        imageTypeID: number | undefined,
+        imageTagIDList: number[]
     ): Promise<Image> {
         originalFileName = this.sanitizeOriginalFileName(originalFileName);
         if (!this.isValidOriginalFileName(originalFileName)) {
@@ -150,6 +152,37 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                     status.NOT_FOUND
                 );
             }
+        }
+
+        if (imageTagIDList.length > 0) {
+            if (imageType === null) {
+                this.logger.error(
+                    "no image type provided, but a list of image tag list is requested to be added to the image"
+                );
+                throw new ErrorWithStatus(
+                    "no image type provided, but a list of image tag list is requested to be added to the image",
+                    status.FAILED_PRECONDITION
+                );
+            }
+            if (
+                !this.isImageTagListValidForImageType(
+                    imageType.id,
+                    imageTagIDList
+                )
+            ) {
+                this.logger.error(
+                    "one or more items of the image tag ID list is incompatible with the image type",
+                    { imageTypeID, imageTagIDList }
+                );
+                throw new ErrorWithStatus(
+                    "one or more items of the image tag ID list is incompatible with the image type",
+                    status.FAILED_PRECONDITION
+                );
+            }
+        }
+
+        if (imageType !== null && imageTagIDList.length > 0) {
+            const {} = await this.imageTagGroupHasImageTypeDM;
         }
 
         const uploadTime = this.timer.getCurrentTime();
@@ -190,36 +223,49 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
 
-        const uploadedImageID = await this.imageDM.createImage({
-            uploadedByUserID: uploadedByUserID,
-            uploadTime: uploadTime,
-            publishedByUserID: 0,
-            publishTime: 0,
-            verifiedByUserID: 0,
-            verifyTime: 0,
-            originalFileName: originalFileName,
-            originalImageFilename: originalImageFileName,
-            thumbnailImageFilename: thumbnailImageFileName,
-            description: description,
-            imageTypeID: imageTypeID === undefined ? null : imageTypeID,
-            status: _ImageStatus_Values.UPLOADED,
-        });
+        return this.imageDM.withTransaction(async (imageDM) => {
+            const uploadedImageID = await imageDM.createImage({
+                uploadedByUserID: uploadedByUserID,
+                uploadTime: uploadTime,
+                publishedByUserID: 0,
+                publishTime: 0,
+                verifiedByUserID: 0,
+                verifyTime: 0,
+                originalFileName: originalFileName,
+                originalImageFilename: originalImageFileName,
+                thumbnailImageFilename: thumbnailImageFileName,
+                description: description,
+                imageTypeID: imageTypeID === undefined ? null : imageTypeID,
+                status: _ImageStatus_Values.UPLOADED,
+            });
 
-        return {
-            id: uploadedImageID,
-            uploadedByUserId: uploadedByUserID,
-            uploadTime: uploadTime,
-            publishedByUserId: 0,
-            publishTime: 0,
-            verifiedByUserId: 0,
-            verifyTime: 0,
-            originalFileName: originalFileName,
-            originalImageFilename: originalImageFileName,
-            thumbnailImageFilename: thumbnailImageFileName,
-            description: description,
-            imageType: imageType,
-            status: _ImageStatus_Values.UPLOADED,
-        };
+            return this.imageHasImageTagDM.withTransaction(
+                async (imageHasImageTagDM) => {
+                    for (const imageTagID of imageTagIDList) {
+                        await imageHasImageTagDM.createImageHasImageTag(
+                            uploadedImageID,
+                            imageTagID
+                        );
+                    }
+
+                    return {
+                        id: uploadedImageID,
+                        uploadedByUserId: uploadedByUserID,
+                        uploadTime: uploadTime,
+                        publishedByUserId: 0,
+                        publishTime: 0,
+                        verifiedByUserId: 0,
+                        verifyTime: 0,
+                        originalFileName: originalFileName,
+                        originalImageFilename: originalImageFileName,
+                        thumbnailImageFilename: thumbnailImageFileName,
+                        description: description,
+                        imageType: imageType,
+                        status: _ImageStatus_Values.UPLOADED,
+                    };
+                }
+            );
+        });
     }
 
     private sanitizeOriginalFileName(originalFileName: string): string {
@@ -240,6 +286,37 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
 
     private generateThumbnailImageFilename(uploadTime: number): string {
         return `thumbnail-${uploadTime}-${this.idGenerator.generate()}.jpeg`;
+    }
+
+    private async isImageTagListValidForImageType(
+        imageTypeID: number,
+        imageTagIDList: number[]
+    ): Promise<boolean> {
+        const imageTagGroupList =
+            await this.imageTagGroupHasImageTypeDM.getImageTagGroupOfImageType(
+                imageTypeID
+            );
+        const imageTagGroupIDList = imageTagGroupList.map(
+            (imageTagGroup) => imageTagGroup.id
+        );
+        const imageTagList =
+            await this.imageTagDM.getImageTagListOfImageTagGroupIDList(
+                imageTagGroupIDList
+            );
+
+        const validImageTagIDSet = new Set<number>();
+        for (const imageTagSublist of imageTagList) {
+            for (const imageTag of imageTagSublist) {
+                validImageTagIDSet.add(imageTag.id);
+            }
+        }
+
+        for (const imageTagID of imageTagIDList) {
+            if (!validImageTagIDSet.has(imageTagID)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public async getImage(

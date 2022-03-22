@@ -102,6 +102,7 @@ export class ImageServiceHandlersFactory {
                 }
                 const originalFileName = req.originalFileName || "";
                 const description = req.description || "";
+                const imageTagIDList = req.imageTagIdList || [];
 
                 try {
                     const image =
@@ -110,7 +111,8 @@ export class ImageServiceHandlersFactory {
                             originalFileName,
                             req.imageData,
                             description,
-                            req.imageTypeId
+                            req.imageTypeId,
+                            imageTagIDList
                         );
                     callback(null, { image });
                 } catch (e) {
