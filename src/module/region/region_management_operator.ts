@@ -281,28 +281,62 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
 
         const resultList: RegionOperationLog[] = [];
         for (const log of regionOperationLogList) {
-            let operationMetadata: Buffer;
             if (log.operationType === _RegionOperationType_Values.DRAW) {
                 const drawMetadata =
                     await this.regionOperationLogDrawMetadataDM.getRegionOperationLogDrawMetadataOfLog(
                         log.id
                     );
-                operationMetadata = this.binaryConverter.toBuffer(drawMetadata);
+                if (drawMetadata === null) {
+                    throw new ErrorWithStatus(
+                        `log with log_id ${log.id} does not have draw metadata`,
+                        status.INTERNAL
+                    );
+                }
+
+                resultList.push({
+                    id: log.id,
+                    byUserId: log.byUserID,
+                    operationTime: log.operationTime,
+                    operationType: log.operationType,
+                    drawMetadata: {
+                        oldBorder:
+                            drawMetadata.oldBorder === null
+                                ? undefined
+                                : drawMetadata.oldBorder,
+                        oldHoles:
+                            drawMetadata.oldHoles === null
+                                ? undefined
+                                : drawMetadata.newHoles,
+                        newBorder:
+                            drawMetadata.newBorder === null
+                                ? undefined
+                                : drawMetadata.newBorder,
+                        newHoles:
+                            drawMetadata.oldBorder === null
+                                ? undefined
+                                : drawMetadata.newHoles,
+                    },
+                });
             } else {
                 const labelMetadata =
                     await this.regionOperationLogLabelMetadataDM.getRegionOperationLogLabelMetadataOfLog(
                         log.id
                     );
-                operationMetadata =
-                    this.binaryConverter.toBuffer(labelMetadata);
+                if (labelMetadata === null) {
+                    throw new ErrorWithStatus(
+                        `log with log_id ${log.id} does not have label metadata`,
+                        status.INTERNAL
+                    );
+                }
+
+                resultList.push({
+                    id: log.id,
+                    byUserId: log.byUserID,
+                    operationTime: log.operationTime,
+                    operationType: log.operationType,
+                    labelMetadata: labelMetadata,
+                });
             }
-            resultList.push({
-                id: log.id,
-                byUserId: log.byUserID,
-                operationTime: log.operationTime,
-                operationType: log.operationType,
-                operationMetadata: operationMetadata,
-            });
         }
 
         return resultList;

@@ -140,7 +140,8 @@ message RegionOperationLog {
     uint32 by_user_id = 2;
     uint64 operation_time = 3;
     RegionOperationType.Values operation_type = 4;
-    bytes operation_metadata = 5;
+    RegionOperationLogDrawMetadata draw_metadata = 5;
+    RegionOperatorLogLabelMetadata label_metadata = 6;
 }
 
 message RegionOperationLogDrawMetadata {
@@ -151,8 +152,8 @@ message RegionOperationLogDrawMetadata {
 }
 
 message RegionOperatorLogLabelMetadata {
-    uint32 old_image_type_id = 1;
-    uint32 new_image_type_id = 2;
+    ImageType old_region_label = 1;
+    ImageType new_region_label = 2;
 }
 
 message ImageListSortOrder {
