@@ -141,7 +141,7 @@ message RegionOperationLog {
     uint64 operation_time = 3;
     RegionOperationType.Values operation_type = 4;
     RegionOperationLogDrawMetadata draw_metadata = 5;
-    RegionOperatorLogLabelMetadata label_metadata = 6;
+    RegionOperationLogLabelMetadata label_metadata = 6;
 }
 
 message RegionOperationLogDrawMetadata {
@@ -151,7 +151,7 @@ message RegionOperationLogDrawMetadata {
     repeated Polygon new_holes = 4;
 }
 
-message RegionOperatorLogLabelMetadata {
+message RegionOperationLogLabelMetadata {
     ImageType old_region_label = 1;
     ImageType new_region_label = 2;
 }
