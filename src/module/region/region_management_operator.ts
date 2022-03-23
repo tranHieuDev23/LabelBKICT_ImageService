@@ -23,8 +23,6 @@ import { Region } from "../../proto/gen/Region";
 import { RegionOperationLog } from "../../proto/gen/RegionOperationLog";
 import { _RegionOperationType_Values } from "../../proto/gen/RegionOperationType";
 import {
-    BinaryConverter,
-    BINARY_CONVERTER_TOKEN,
     convertProtoDoubleToNumber,
     ErrorWithStatus,
     LOGGER_TOKEN,
@@ -75,7 +73,6 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         private readonly regionOperationLogLabelMetadataDM: RegionOperationLogLabelMetadataDataAccessor,
         private readonly regionNormalizer: RegionNormalizer,
         private readonly timer: Timer,
-        private readonly binaryConverter: BinaryConverter,
         private readonly logger: Logger
     ) {}
 
@@ -623,7 +620,6 @@ injected(
     REGION_OPERATION_LOG_LABEL_METADATA_DATA_ACCESSOR_TOKEN,
     REGION_NORMALIZER_TOKEN,
     TIMER_TOKEN,
-    BINARY_CONVERTER_TOKEN,
     LOGGER_TOKEN
 );
 
