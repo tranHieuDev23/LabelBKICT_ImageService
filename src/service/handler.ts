@@ -685,6 +685,7 @@ export class ImageServiceHandlersFactory {
                         req.imageId,
                         req.imageTagId
                     );
+                    callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
                 }
@@ -710,6 +711,7 @@ export class ImageServiceHandlersFactory {
                         req.imageTagGroupId,
                         req.imageTypeId
                     );
+                    callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
                 }
@@ -735,6 +737,7 @@ export class ImageServiceHandlersFactory {
                         req.id,
                         req.imageTypeId
                     );
+                    callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
                 }
@@ -755,6 +758,7 @@ export class ImageServiceHandlersFactory {
                         imageIDList,
                         req.imageTypeId
                     );
+                    callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
                 }
