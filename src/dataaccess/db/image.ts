@@ -71,11 +71,11 @@ export interface ImageDataAccessor {
 const TabNameImageServiceImage = "image_service_image_tab";
 const ColNameImageServiceImageID = "id";
 const ColNameImageServiceImageUploadedByUserID = "uploaded_by_user_id";
-const ColNameImageServiceImageUploadTime = "uploadTime";
+const ColNameImageServiceImageUploadTime = "upload_time";
 const ColNameImageServiceImagePublishedByUserID = "published_by_user_id";
-const ColNameImageServiceImagePublishTime = "publishTime";
-const ColNameImageServiceImageVerifiedByUserID = "verify_by_user_id";
-const ColNameImageServiceImageVerifyTime = "verifyTime";
+const ColNameImageServiceImagePublishTime = "publish_time";
+const ColNameImageServiceImageVerifiedByUserID = "verified_by_user_id";
+const ColNameImageServiceImageVerifyTime = "verify_time";
 const ColNameImageServiceImageOriginalFileName = "original_file_name";
 const ColNameImageServiceImageOriginalImageFilename = "original_image_filename";
 const ColNameImageServiceImageThumbnailImageFilename =

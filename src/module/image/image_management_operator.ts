@@ -182,10 +182,11 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         }
 
         const uploadTime = this.timer.getCurrentTime();
-        const originalImageFileName =
-            this.generateOriginalImageFilename(uploadTime);
+        const originalImageFileName = await this.generateOriginalImageFilename(
+            uploadTime
+        );
         const thumbnailImageFileName =
-            this.generateThumbnailImageFilename(uploadTime);
+            await this.generateThumbnailImageFilename(uploadTime);
         const originalImageFilePath = join(
             this.applicationConfig.originalImageDir,
             originalImageFileName
@@ -276,12 +277,16 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         return validator.escape(validator.trim(description));
     }
 
-    private generateOriginalImageFilename(uploadTime: number): string {
-        return `original-${uploadTime}-${this.idGenerator.generate()}.jpeg`;
+    private async generateOriginalImageFilename(
+        uploadTime: number
+    ): Promise<string> {
+        return `original-${uploadTime}-${await this.idGenerator.generate()}.jpeg`;
     }
 
-    private generateThumbnailImageFilename(uploadTime: number): string {
-        return `thumbnail-${uploadTime}-${this.idGenerator.generate()}.jpeg`;
+    private async generateThumbnailImageFilename(
+        uploadTime: number
+    ): Promise<string> {
+        return `thumbnail-${uploadTime}-${await this.idGenerator.generate()}.jpeg`;
     }
 
     private async isImageTagListValidForImageType(
