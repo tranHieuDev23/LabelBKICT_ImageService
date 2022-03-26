@@ -62,7 +62,8 @@ export class ImageTagGroupDataAccessorImpl
         try {
             const rows = await this.knex
                 .select()
-                .from(TabNameImageServiceImageTagGroup);
+                .from(TabNameImageServiceImageTagGroup)
+                .orderBy(ColNameImageServiceImageTagGroupID, "asc");
             return rows.map((row) => this.getImageTagGroupFromRow(row));
         } catch (error) {
             this.logger.error("failed to get image tag group list", { error });

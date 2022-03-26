@@ -60,7 +60,8 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
         try {
             const rows = await this.knex
                 .select()
-                .from(TabNameImageServiceImageType);
+                .from(TabNameImageServiceImageType)
+                .orderBy(ColNameImageServiceImageTypeID, "asc");
             return rows.map((row) => this.getImageTypeFromRow(row));
         } catch (error) {
             this.logger.error("failed to get image type list", { error });
