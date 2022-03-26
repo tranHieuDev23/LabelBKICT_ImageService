@@ -119,7 +119,7 @@ export async function up(knex: Knex): Promise<void> {
             tab.string("original_file_name", 256).notNullable().defaultTo("");
             tab.string("original_image_filename", 256).notNullable();
             tab.string("thumbnail_image_filename", 256).notNullable();
-            tab.string("description", 256).notNullable().defaultTo("");
+            tab.text("description").notNullable().defaultTo("");
             tab.integer("image_type_id").defaultTo(null);
             tab.smallint("status").notNullable().defaultTo(0);
 
