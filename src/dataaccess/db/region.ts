@@ -98,8 +98,8 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    ColNameImageServiceRegionLabelID,
-                    ColNameImageServiceRegionLabelRegionLabelID
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
                 )
                 .where({
                     [ColNameImageServiceRegionOfImageID]: imageID,
@@ -123,8 +123,8 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    ColNameImageServiceRegionLabelID,
-                    ColNameImageServiceRegionLabelRegionLabelID
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
                 )
                 .whereIn(ColNameImageServiceRegionOfImageID, imageIDList);
 
@@ -161,8 +161,8 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    ColNameImageServiceRegionLabelID,
-                    ColNameImageServiceRegionLabelRegionLabelID
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
                 )
                 .where({
                     [ColNameImageServiceRegionID]: id,
@@ -198,8 +198,8 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    ColNameImageServiceRegionLabelID,
-                    ColNameImageServiceRegionLabelRegionLabelID
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
                 )
                 .where({
                     [ColNameImageServiceRegionID]: id,

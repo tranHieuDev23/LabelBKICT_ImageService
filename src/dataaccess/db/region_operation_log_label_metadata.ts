@@ -80,13 +80,13 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
                 .from(TabNameImageServiceRegionOperationLogLabelMetadata)
                 .leftOuterJoin(
                     { old_label: TabNameImageServiceRegionLabel },
-                    ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID,
-                    ColNameImageServiceRegionLabelID
+                    `${TabNameImageServiceRegionOperationLogLabelMetadata}.${ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelID}`
                 )
                 .leftOuterJoin(
                     { new_label: TabNameImageServiceRegionLabel },
-                    ColNameImageServiceRegionOperationLogLabelMetadataNewLabelID,
-                    ColNameImageServiceRegionLabelID
+                    `${TabNameImageServiceRegionOperationLogLabelMetadata}.${ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelID}`
                 )
                 .where(
                     ColNameImageServiceRegionOperationLogLabelMetadataOfLogID,

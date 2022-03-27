@@ -69,7 +69,7 @@ export interface ImageDataAccessor {
 }
 
 const TabNameImageServiceImage = "image_service_image_tab";
-const ColNameImageServiceImageID = "id";
+const ColNameImageServiceImageID = "image_id";
 const ColNameImageServiceImageUploadedByUserID = "uploaded_by_user_id";
 const ColNameImageServiceImageUploadTime = "upload_time";
 const ColNameImageServiceImagePublishedByUserID = "published_by_user_id";
@@ -85,7 +85,7 @@ const ColNameImageServiceImageImageTypeID = "image_type_id";
 const ColNameImageServiceImageStatus = "status";
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
-const ColNameImageServiceImageTypeID = "id";
+const ColNameImageServiceImageTypeID = "image_type_id";
 const ColNameImageServiceImageTypeDisplayName = "display_name";
 const ColNameImageServiceImageTypeHasPredictiveModel = "has_predictive_model";
 
@@ -135,8 +135,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .from(TabNameImageServiceImage)
                 .leftOuterJoin(
                     TabNameImageServiceImageType,
-                    ColNameImageServiceImageImageTypeID,
-                    ColNameImageServiceImageTypeID
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeID}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeID}`
                 )
                 .where({
                     [ColNameImageServiceImageID]: id,
@@ -172,8 +172,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .from(TabNameImageServiceImage)
                 .leftOuterJoin(
                     TabNameImageServiceImageType,
-                    ColNameImageServiceImageImageTypeID,
-                    ColNameImageServiceImageTypeID
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeID}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeID}`
                 )
                 .where({
                     [ColNameImageServiceImageID]: id,
@@ -214,8 +214,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .from(TabNameImageServiceImage)
                 .leftOuterJoin(
                     TabNameImageServiceImageType,
-                    ColNameImageServiceImageImageTypeID,
-                    ColNameImageServiceImageTypeID
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeID}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeID}`
                 )
                 .offset(offset)
                 .limit(limit);

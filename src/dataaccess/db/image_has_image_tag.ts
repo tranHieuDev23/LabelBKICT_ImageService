@@ -113,8 +113,8 @@ export class ImageHasImageTagDataAccessorImpl
                 .from(TabNameImageServiceImageHasImageTag)
                 .join(
                     TabNameImageServiceImageTag,
-                    ColNameImageServiceImageHasImageTagImageTagID,
-                    ColNameImageServiceImageTagID
+                    `${TabNameImageServiceImageHasImageTag}.${ColNameImageServiceImageHasImageTagImageTagID}`,
+                    `${TabNameImageServiceImageTag}.${ColNameImageServiceImageTagID}`
                 )
                 .whereIn(
                     ColNameImageServiceImageHasImageTagImageID,

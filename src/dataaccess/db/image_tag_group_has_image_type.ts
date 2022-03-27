@@ -213,8 +213,8 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                 .from(TabNameImageServiceImageTagGroupHasImageType)
                 .join(
                     TabNameImageServiceImageType,
-                    ColNameImageServiceImageTagGroupHasImageTypeImageTypeID,
-                    ColNameImageServiceImageTypeID
+                    `${TabNameImageServiceImageTagGroupHasImageType}.${ColNameImageServiceImageTagGroupHasImageTypeImageTypeID}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeID}`
                 )
                 .whereIn(
                     ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupID,
@@ -276,8 +276,8 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                 .from(TabNameImageServiceImageTagGroupHasImageType)
                 .join(
                     TabNameImageServiceImageTagGroup,
-                    ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupID,
-                    ColNameImageServiceImageTagGroupID
+                    `${TabNameImageServiceImageTagGroupHasImageType}.${ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupID}`,
+                    `${TabNameImageServiceImageTagGroup}.${ColNameImageServiceImageTagGroupID}`
                 )
                 .where({
                     [ColNameImageServiceImageTagGroupHasImageTypeImageTypeID]:

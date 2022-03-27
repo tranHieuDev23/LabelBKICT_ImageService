@@ -42,11 +42,11 @@ const ColNameImageServiceRegionSnapshotBorder = "border";
 const ColNameImageServiceRegionSnapshotHoles = "holes";
 const ColNameImageServiceRegionSnapshotLabelID = "label_id";
 
-const TabNameImageServiceRegionSnapshotLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionSnapshotLabelRegionLabelID = "region_label_id";
-const ColNameImageServiceRegionSnapshotLabelOfImageTypeID = "of_image_type_id";
-const ColNameImageServiceRegionSnapshotLabelDisplayName = "display_name";
-const ColNameImageServiceRegionSnapshotLabelColor = "color";
+const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
+const ColNameImageServiceRegionLabelRegionLabelID = "region_label_id";
+const ColNameImageServiceRegionLabelOfImageTypeID = "of_image_type_id";
+const ColNameImageServiceRegionLabelDisplayName = "display_name";
+const ColNameImageServiceRegionLabelColor = "color";
 
 export class RegionSnapshotDataAccessorImpl
     implements RegionSnapshotDataAccessor
@@ -94,9 +94,9 @@ export class RegionSnapshotDataAccessorImpl
                 .select()
                 .from(TabNameImageServiceRegionSnapshot)
                 .leftOuterJoin(
-                    TabNameImageServiceRegionSnapshotLabel,
-                    ColNameImageServiceRegionSnapshotLabelID,
-                    ColNameImageServiceRegionSnapshotLabelRegionLabelID
+                    TabNameImageServiceRegionLabel,
+                    `${TabNameImageServiceRegionSnapshot}.${ColNameImageServiceRegionSnapshotLabelID}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
                 )
                 .where({
                     [ColNameImageServiceRegionSnapshotOfImageID]: imageID,
@@ -130,9 +130,9 @@ export class RegionSnapshotDataAccessorImpl
         if (row[ColNameImageServiceRegionSnapshotLabelID]) {
             label = new RegionLabel(
                 +row[ColNameImageServiceRegionSnapshotLabelID],
-                +row[ColNameImageServiceRegionSnapshotLabelOfImageTypeID],
-                row[ColNameImageServiceRegionSnapshotLabelDisplayName],
-                row[ColNameImageServiceRegionSnapshotLabelColor]
+                +row[ColNameImageServiceRegionLabelOfImageTypeID],
+                row[ColNameImageServiceRegionLabelDisplayName],
+                row[ColNameImageServiceRegionLabelColor]
             );
         }
         return new RegionSnapshot(
