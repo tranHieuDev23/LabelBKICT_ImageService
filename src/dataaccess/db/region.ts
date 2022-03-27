@@ -8,37 +8,37 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { Polygon, Region, RegionLabel } from "./models";
 
 export interface CreateRegionArguments {
-    ofImageID: number;
-    drawnByUserID: number;
-    labeledByUserID: number;
+    ofImageId: number;
+    drawnByUserId: number;
+    labeledByUserId: number;
     border: Polygon;
     holes: Polygon[];
-    labelID: number | null;
+    labeId: number | null;
 }
 
 export interface UpdateRegionArguments {
     id: number;
-    drawnByUserID: number;
-    labeledByUserID: number;
+    drawnByUserId: number;
+    labeledByUserId: number;
     border: Polygon;
     holes: Polygon[];
-    labelID: number | null;
+    labelId: number | null;
 }
 
 export interface RegionDataAccessor {
     createRegion(args: CreateRegionArguments): Promise<number>;
-    getRegionListOfImage(imageID: number): Promise<Region[]>;
-    getRegionListOfImageList(imageIDList: number[]): Promise<Region[][]>;
+    getRegionListOfImage(imageId: number): Promise<Region[]>;
+    getRegionListOfImageList(imageIdList: number[]): Promise<Region[][]>;
     getRegion(id: number): Promise<Region | null>;
     getRegionWithXLock(id: number): Promise<Region | null>;
     updateRegion(args: UpdateRegionArguments): Promise<void>;
     updateLabelOfRegionOfImage(
-        imageID: number,
-        labelID: number | null
+        imageId: number,
+        labeId: number | null
     ): Promise<void>;
     deleteRegion(id: number): Promise<void>;
-    getOfImageIDListOfRegionLabelList(
-        regionLabelIDList: number[]
+    getOfImageIdListOfRegionLabelList(
+        regionLabelIdList: number[]
     ): Promise<number[]>;
     withTransaction<T>(
         executeFunc: (dataAccessor: RegionDataAccessor) => Promise<T>
@@ -46,17 +46,17 @@ export interface RegionDataAccessor {
 }
 
 const TabNameImageServiceRegion = "image_service_region_tab";
-const ColNameImageServiceRegionID = "region_id";
-const ColNameImageServiceRegionOfImageID = "of_image_id";
-const ColNameImageServiceRegionDrawnByUserID = "drawn_by_user_id";
-const ColNameImageServiceRegionLabeledByUserID = "labeled_by_user_id";
+const ColNameImageServiceRegionId = "region_id";
+const ColNameImageServiceRegionOfImageId = "of_image_id";
+const ColNameImageServiceRegionDrawnByUserId = "drawn_by_user_id";
+const ColNameImageServiceRegionLabeledByUserId = "labeled_by_user_id";
 const ColNameImageServiceRegionBorder = "border";
 const ColNameImageServiceRegionHoles = "holes";
-const ColNameImageServiceRegionLabelID = "label_id";
+const ColNameImageServiceRegionLabelId = "label_id";
 
 const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionLabelRegionLabelID = "region_label_id";
-const ColNameImageServiceRegionLabelOfImageTypeID = "of_image_type_id";
+const ColNameImageServiceRegionLabelRegionLabelId = "region_label_id";
+const ColNameImageServiceRegionLabelOfImageTypeId = "of_image_type_id";
 const ColNameImageServiceRegionLabelDisplayName = "display_name";
 const ColNameImageServiceRegionLabelColor = "color";
 
@@ -71,43 +71,43 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
         try {
             const rows = await this.knex
                 .insert({
-                    [ColNameImageServiceRegionOfImageID]: args.ofImageID,
-                    [ColNameImageServiceRegionDrawnByUserID]:
-                        args.drawnByUserID,
-                    [ColNameImageServiceRegionLabeledByUserID]:
-                        args.labeledByUserID,
+                    [ColNameImageServiceRegionOfImageId]: args.ofImageId,
+                    [ColNameImageServiceRegionDrawnByUserId]:
+                        args.drawnByUserId,
+                    [ColNameImageServiceRegionLabeledByUserId]:
+                        args.labeledByUserId,
                     [ColNameImageServiceRegionBorder]:
                         this.binaryConverter.toBuffer(args.border),
                     [ColNameImageServiceRegionHoles]:
                         this.binaryConverter.toBuffer(args.holes),
-                    [ColNameImageServiceRegionLabelID]: args.labelID,
+                    [ColNameImageServiceRegionLabelId]: args.labeId,
                 })
-                .returning(ColNameImageServiceRegionID)
+                .returning(ColNameImageServiceRegionId)
                 .into(TabNameImageServiceRegion);
-            return +rows[0][ColNameImageServiceRegionID];
+            return +rows[0][ColNameImageServiceRegionId];
         } catch (error) {
             this.logger.error("failed to create region", { args, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 
-    public async getRegionListOfImage(imageID: number): Promise<Region[]> {
+    public async getRegionListOfImage(imageId: number): Promise<Region[]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelId}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelId}`
                 )
                 .where({
-                    [ColNameImageServiceRegionOfImageID]: imageID,
+                    [ColNameImageServiceRegionOfImageId]: imageId,
                 });
             return rows.map((row) => this.getRegionFromJoinedRow(row));
         } catch (error) {
             this.logger.error("failed to get region list of image", {
-                imageID,
+                imageId,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -115,7 +115,7 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
     }
 
     public async getRegionListOfImageList(
-        imageIDList: number[]
+        imageIdList: number[]
     ): Promise<Region[][]> {
         try {
             const rows = await this.knex
@@ -123,30 +123,30 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelId}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelId}`
                 )
-                .whereIn(ColNameImageServiceRegionOfImageID, imageIDList);
+                .whereIn(ColNameImageServiceRegionOfImageId, imageIdList);
 
-            const imageIDToRegionList = new Map<number, Region[]>();
+            const imageIdToRegionList = new Map<number, Region[]>();
             for (const row of rows) {
-                const imageID = +row[ColNameImageServiceRegionOfImageID];
-                if (!imageIDToRegionList.has(imageID)) {
-                    imageIDToRegionList.set(imageID, []);
+                const imageId = +row[ColNameImageServiceRegionOfImageId];
+                if (!imageIdToRegionList.has(imageId)) {
+                    imageIdToRegionList.set(imageId, []);
                 }
-                imageIDToRegionList
-                    .get(imageID)
+                imageIdToRegionList
+                    .get(imageId)
                     ?.push(this.getRegionFromJoinedRow(row));
             }
 
             const results: Region[][] = [];
-            for (const imageID of imageIDList) {
-                results.push(imageIDToRegionList.get(imageID) || []);
+            for (const imageId of imageIdList) {
+                results.push(imageIdToRegionList.get(imageId) || []);
             }
             return results;
         } catch (error) {
             this.logger.error("failed to get region list of image list", {
-                imageID: imageIDList,
+                imageId: imageIdList,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -161,15 +161,15 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelId}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelId}`
                 )
                 .where({
-                    [ColNameImageServiceRegionID]: id,
+                    [ColNameImageServiceRegionId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to get region", {
-                regionID: id,
+                regionId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -198,16 +198,16 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .from(TabNameImageServiceRegion)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelID}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
+                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelId}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelId}`
                 )
                 .where({
-                    [ColNameImageServiceRegionID]: id,
+                    [ColNameImageServiceRegionId]: id,
                 })
                 .forUpdate();
         } catch (error) {
             this.logger.error("failed to get region", {
-                regionID: id,
+                regionId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -233,18 +233,18 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
             await this.knex
                 .table(TabNameImageServiceRegion)
                 .update({
-                    [ColNameImageServiceRegionDrawnByUserID]:
-                        args.drawnByUserID,
-                    [ColNameImageServiceRegionLabeledByUserID]:
-                        args.labeledByUserID,
+                    [ColNameImageServiceRegionDrawnByUserId]:
+                        args.drawnByUserId,
+                    [ColNameImageServiceRegionLabeledByUserId]:
+                        args.labeledByUserId,
                     [ColNameImageServiceRegionBorder]:
                         this.binaryConverter.toBuffer(args.border),
                     [ColNameImageServiceRegionHoles]:
                         this.binaryConverter.toBuffer(args.holes),
-                    [ColNameImageServiceRegionLabelID]: args.labelID,
+                    [ColNameImageServiceRegionLabelId]: args.labelId,
                 })
                 .where({
-                    [ColNameImageServiceRegionID]: args.id,
+                    [ColNameImageServiceRegionId]: args.id,
                 });
         } catch (error) {
             this.logger.error("failed to update region", { args, error });
@@ -253,20 +253,20 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
     }
 
     public async updateLabelOfRegionOfImage(
-        imageID: number,
-        labelID: number | null
+        imageId: number,
+        labeId: number | null
     ): Promise<void> {
         try {
             await this.knex
                 .table(TabNameImageServiceRegion)
                 .update({
-                    [ColNameImageServiceRegionLabelID]: labelID,
+                    [ColNameImageServiceRegionLabelId]: labeId,
                 })
-                .where({ [ColNameImageServiceRegionOfImageID]: imageID });
+                .where({ [ColNameImageServiceRegionOfImageId]: imageId });
         } catch (error) {
             this.logger.error("failed to update region list", {
-                imageID,
-                labelID,
+                imageId,
+                labeId,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -280,18 +280,18 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 .delete()
                 .from(TabNameImageServiceRegion)
                 .where({
-                    [ColNameImageServiceRegionID]: id,
+                    [ColNameImageServiceRegionId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to delete region", {
-                regionID: id,
+                regionId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deletedCount === 0) {
             this.logger.error("no region with image_id region", {
-                regionID: id,
+                regionId: id,
             });
             throw new ErrorWithStatus(
                 `no region with region_id ${id} found`,
@@ -300,15 +300,15 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
         }
     }
 
-    public async getOfImageIDListOfRegionLabelList(
-        regionLabelIDList: number[]
+    public async getOfImageIdListOfRegionLabelList(
+        regionLabelIdList: number[]
     ): Promise<number[]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceRegion)
-                .whereIn(ColNameImageServiceRegionLabelID, regionLabelIDList);
-            return rows.map((row) => +row[ColNameImageServiceRegionOfImageID]);
+                .whereIn(ColNameImageServiceRegionLabelId, regionLabelIdList);
+            return rows.map((row) => +row[ColNameImageServiceRegionOfImageId]);
         } catch (error) {
             this.logger.error(
                 "failed to get of image id list of region label list"
@@ -332,19 +332,19 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
 
     private getRegionFromJoinedRow(row: Record<string, any>): Region {
         let label: RegionLabel | null = null;
-        if (row[ColNameImageServiceRegionLabelID]) {
+        if (row[ColNameImageServiceRegionLabelId]) {
             label = new RegionLabel(
-                +row[ColNameImageServiceRegionLabelID],
-                +row[ColNameImageServiceRegionLabelOfImageTypeID],
+                +row[ColNameImageServiceRegionLabelId],
+                +row[ColNameImageServiceRegionLabelOfImageTypeId],
                 row[ColNameImageServiceRegionLabelDisplayName],
                 row[ColNameImageServiceRegionLabelColor]
             );
         }
         return new Region(
-            +row[ColNameImageServiceRegionID],
-            +row[ColNameImageServiceRegionOfImageID],
-            +row[ColNameImageServiceRegionDrawnByUserID],
-            +row[ColNameImageServiceRegionLabeledByUserID],
+            +row[ColNameImageServiceRegionId],
+            +row[ColNameImageServiceRegionOfImageId],
+            +row[ColNameImageServiceRegionDrawnByUserId],
+            +row[ColNameImageServiceRegionLabeledByUserId],
             this.binaryConverter.fromBuffer(
                 row[ColNameImageServiceRegionBorder]
             ),

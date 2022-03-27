@@ -22,7 +22,7 @@ export interface ImageTypeDataAccessor {
 }
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
-const ColNameImageServiceImageTypeID = "image_type_id";
+const ColNameImageServiceImageTypeId = "image_type_id";
 const ColNameImageServiceImageTypeDisplayName = "display_name";
 const ColNameImageServiceImageTypeHasPredictiveModel = "has_predictive_model";
 
@@ -43,9 +43,9 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
                     [ColNameImageServiceImageTypeHasPredictiveModel]:
                         hasPredictiveModel,
                 })
-                .returning(ColNameImageServiceImageTypeID)
+                .returning(ColNameImageServiceImageTypeId)
                 .into(TabNameImageServiceImageType);
-            return +rows[0][ColNameImageServiceImageTypeID];
+            return +rows[0][ColNameImageServiceImageTypeId];
         } catch (error) {
             this.logger.error("failed to create image type", {
                 displayName,
@@ -61,7 +61,7 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceImageType)
-                .orderBy(ColNameImageServiceImageTypeID, "asc");
+                .orderBy(ColNameImageServiceImageTypeId, "asc");
             return rows.map((row) => this.getImageTypeFromRow(row));
         } catch (error) {
             this.logger.error("failed to get image type list", { error });
@@ -76,25 +76,25 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
                 .select()
                 .from(TabNameImageServiceImageType)
                 .where({
-                    [ColNameImageServiceImageTypeID]: id,
+                    [ColNameImageServiceImageTypeId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to get image type", {
-                imageTypeID: id,
+                imageTypeId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
             this.logger.info("no image type with image_type_id found", {
-                imageTypeID: id,
+                imageTypeId: id,
             });
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one image type with image_type_id found",
-                { imageTypeID: id }
+                { imageTypeId: id }
             );
             throw new ErrorWithStatus(
                 "more than one image type was found",
@@ -111,26 +111,26 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
                 .select()
                 .from(TabNameImageServiceImageType)
                 .where({
-                    [ColNameImageServiceImageTypeID]: id,
+                    [ColNameImageServiceImageTypeId]: id,
                 })
                 .forUpdate();
         } catch (error) {
             this.logger.error("failed to get image type", {
-                imageTypeID: id,
+                imageTypeId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
             this.logger.info("no image type with image_type_id found", {
-                imageTypeID: id,
+                imageTypeId: id,
             });
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one image type with image_type_id found",
-                { imageTypeID: id }
+                { imageTypeId: id }
             );
             throw new ErrorWithStatus(
                 "more than one image type was found",
@@ -151,7 +151,7 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
                         imageType.hasPredictiveModel,
                 })
                 .where({
-                    [ColNameImageServiceImageTypeID]: imageType.id,
+                    [ColNameImageServiceImageTypeId]: imageType.id,
                 });
         } catch (error) {
             this.logger.error("failed to update image type", {
@@ -169,18 +169,18 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
                 .delete()
                 .from(TabNameImageServiceImageType)
                 .where({
-                    [ColNameImageServiceImageTypeID]: id,
+                    [ColNameImageServiceImageTypeId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to delete image type", {
-                imageTypeID: id,
+                imageTypeId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deletedCount === 0) {
             this.logger.error("no image type with image_type_id found", {
-                imageTypeID: id,
+                imageTypeId: id,
             });
             throw new ErrorWithStatus(
                 `no image type with image_type_id ${id} found`,
@@ -203,7 +203,7 @@ export class ImageTypeDataAccessorImpl implements ImageTypeDataAccessor {
 
     private getImageTypeFromRow(row: Record<string, any>): ImageType {
         return new ImageType(
-            +row[ColNameImageServiceImageTypeID],
+            +row[ColNameImageServiceImageTypeId],
             row[ColNameImageServiceImageTypeDisplayName],
             row[ColNameImageServiceImageTypeHasPredictiveModel]
         );

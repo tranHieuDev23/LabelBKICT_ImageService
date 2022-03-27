@@ -34,8 +34,8 @@ import { ImageTag } from "../../proto/gen/ImageTag";
 import { Region } from "../../proto/gen/Region";
 import {
     ErrorWithStatus,
-    IDGenerator,
-    ID_GENERATOR_TOKEN,
+    IdGenerator,
+    Id_GENERATOR_TOKEN,
     LOGGER_TOKEN,
     Timer,
     TIMER_TOKEN,
@@ -44,12 +44,12 @@ import { ImageProcessor, IMAGE_PROCESSOR_TOKEN } from "./image_processor";
 
 export interface ImageManagementOperator {
     createImage(
-        uploadedByUserID: number,
+        uploadedByUserId: number,
         originalFileName: string,
         imageData: Buffer,
         description: string | undefined,
-        imageTypeID: number | undefined,
-        imageTagIDList: number[]
+        imageTypeId: number | undefined,
+        imageTagIdList: number[]
     ): Promise<Image>;
     getImage(
         id: number,
@@ -77,22 +77,22 @@ export interface ImageManagementOperator {
         id: number,
         description: string | undefined
     ): Promise<Image>;
-    updateImageImageType(id: number, imageTypeID: number): Promise<Image>;
+    updateImageImageType(id: number, imageTypeId: number): Promise<Image>;
     updateImageStatus(
         id: number,
         status: _ImageStatus_Values,
-        byUserID: number
+        byUserId: number
     ): Promise<Image>;
     updateImageListImageType(
         idList: number[],
-        imageTypeID: number
+        imageTypeId: number
     ): Promise<void>;
     deleteImage(id: number): Promise<void>;
     deleteImageList(idList: number[]): Promise<void>;
-    addImageTagToImage(imageID: number, imageTagID: number): Promise<void>;
-    removeImageTagFromImage(imageID: number, imageTagID: number): Promise<void>;
+    addImageTagToImage(imageId: number, imageTagId: number): Promise<void>;
+    removeImageTagFromImage(imageId: number, imageTagId: number): Promise<void>;
     getRegionSnapshotListOfImage(
-        ofImageID: number,
+        ofImageId: number,
         atStatus: _ImageStatus_Values
     ): Promise<Region[]>;
 }
@@ -112,7 +112,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
         private readonly regionSnapshotDM: RegionSnapshotDataAccessor,
-        private readonly idGenerator: IDGenerator,
+        private readonly idGenerator: IdGenerator,
         private readonly timer: Timer,
         private readonly imageProcessor: ImageProcessor,
         private readonly applicationConfig: ApplicationConfig,
@@ -120,12 +120,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     ) {}
 
     public async createImage(
-        uploadedByUserID: number,
+        uploadedByUserId: number,
         originalFileName: string,
         imageData: Buffer,
         description: string,
-        imageTypeID: number | undefined,
-        imageTagIDList: number[]
+        imageTypeId: number | undefined,
+        imageTagIdList: number[]
     ): Promise<Image> {
         originalFileName = this.sanitizeOriginalFileName(originalFileName);
         if (!this.isValidOriginalFileName(originalFileName)) {
@@ -141,20 +141,20 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         description = this.sanitizeDescription(description);
 
         let imageType: ImageType | null = null;
-        if (imageTypeID !== undefined) {
-            imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        if (imageTypeId !== undefined) {
+            imageType = await this.imageTypeDM.getImageType(imageTypeId);
             if (imageType === null) {
                 this.logger.error("image type with image_type_id not found", {
-                    imageTypeID,
+                    imageTypeId,
                 });
                 throw new ErrorWithStatus(
-                    `image type with image_type_id ${imageTypeID} not found`,
+                    `image type with image_type_id ${imageTypeId} not found`,
                     status.NOT_FOUND
                 );
             }
         }
 
-        if (imageTagIDList.length > 0) {
+        if (imageTagIdList.length > 0) {
             if (imageType === null) {
                 this.logger.error(
                     "no image type provided, but a list of image tag list is requested to be added to the image"
@@ -167,15 +167,15 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             if (
                 !this.isImageTagListValidForImageType(
                     imageType.id,
-                    imageTagIDList
+                    imageTagIdList
                 )
             ) {
                 this.logger.error(
-                    "one or more items of the image tag ID list is incompatible with the image type",
-                    { imageTypeID, imageTagIDList }
+                    "one or more items of the image tag Id list is incompatible with the image type",
+                    { imageTypeId, imageTagIdList }
                 );
                 throw new ErrorWithStatus(
-                    "one or more items of the image tag ID list is incompatible with the image type",
+                    "one or more items of the image tag Id list is incompatible with the image type",
                     status.FAILED_PRECONDITION
                 );
             }
@@ -220,33 +220,33 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
 
-        const uploadedImageID = await this.imageDM.createImage({
-            uploadedByUserID: uploadedByUserID,
+        const uploadedImageId = await this.imageDM.createImage({
+            uploadedByUserId: uploadedByUserId,
             uploadTime: uploadTime,
-            publishedByUserID: 0,
+            publishedByUserId: 0,
             publishTime: 0,
-            verifiedByUserID: 0,
+            verifiedByUserId: 0,
             verifyTime: 0,
             originalFileName: originalFileName,
             originalImageFilename: originalImageFileName,
             thumbnailImageFilename: thumbnailImageFileName,
             description: description,
-            imageTypeID: imageTypeID === undefined ? null : imageTypeID,
+            imageTypeId: imageTypeId === undefined ? null : imageTypeId,
             status: _ImageStatus_Values.UPLOADED,
         });
 
         return this.imageHasImageTagDM.withTransaction(
             async (imageHasImageTagDM) => {
-                for (const imageTagID of imageTagIDList) {
+                for (const imageTagId of imageTagIdList) {
                     await imageHasImageTagDM.createImageHasImageTag(
-                        uploadedImageID,
-                        imageTagID
+                        uploadedImageId,
+                        imageTagId
                     );
                 }
 
                 return {
-                    id: uploadedImageID,
-                    uploadedByUserId: uploadedByUserID,
+                    id: uploadedImageId,
+                    uploadedByUserId: uploadedByUserId,
                     uploadTime: uploadTime,
                     publishedByUserId: 0,
                     publishTime: 0,
@@ -288,30 +288,30 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }
 
     private async isImageTagListValidForImageType(
-        imageTypeID: number,
-        imageTagIDList: number[]
+        imageTypeId: number,
+        imageTagIdList: number[]
     ): Promise<boolean> {
         const imageTagGroupList =
             await this.imageTagGroupHasImageTypeDM.getImageTagGroupOfImageType(
-                imageTypeID
+                imageTypeId
             );
-        const imageTagGroupIDList = imageTagGroupList.map(
+        const imageTagGroupIdList = imageTagGroupList.map(
             (imageTagGroup) => imageTagGroup.id
         );
         const imageTagList =
-            await this.imageTagDM.getImageTagListOfImageTagGroupIDList(
-                imageTagGroupIDList
+            await this.imageTagDM.getImageTagListOfImageTagGroupIdList(
+                imageTagGroupIdList
             );
 
-        const validImageTagIDSet = new Set<number>();
+        const validImageTagIdSet = new Set<number>();
         for (const imageTagSublist of imageTagList) {
             for (const imageTag of imageTagSublist) {
-                validImageTagIDSet.add(imageTag.id);
+                validImageTagIdSet.add(imageTag.id);
             }
         }
 
-        for (const imageTagID of imageTagIDList) {
-            if (!validImageTagIDSet.has(imageTagID)) {
+        for (const imageTagId of imageTagIdList) {
+            if (!validImageTagIdSet.has(imageTagId)) {
                 return false;
             }
         }
@@ -329,7 +329,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }> {
         const image = await this.imageDM.getImage(id);
         if (image === null) {
-            this.logger.error("no image with image_id found", { imageID: id });
+            this.logger.error("no image with image_id found", { imageId: id });
             throw new ErrorWithStatus(
                 `no image with image_id ${id} found`,
                 status.NOT_FOUND
@@ -376,20 +376,20 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             this.getImageListSortOrder(sortOrder),
             dmFilterOptions
         );
-        const imageIDList = imageList.map((image) => image.id);
+        const imageIdList = imageList.map((image) => image.id);
 
         let imageTagList: ImageTag[][] | undefined = undefined;
         if (withImageTag) {
             imageTagList =
                 await this.imageHasImageTagDM.getImageTagListOfImageList(
-                    imageIDList
+                    imageIdList
                 );
         }
 
         let regionList: Region[][] | undefined = undefined;
         if (withRegion) {
             regionList = await this.regionDM.getRegionListOfImageList(
-                imageIDList
+                imageIdList
             );
         }
 
@@ -404,54 +404,54 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             return dmFilterOptions;
         }
 
-        dmFilterOptions.uploadedByUserIDList =
+        dmFilterOptions.uploadedByUserIdList =
             filterOptions.uploadedByUserIdList || [];
         dmFilterOptions.uploadTimeStart = +(filterOptions.uploadTimeStart || 0);
         dmFilterOptions.uploadTimeEnd = +(filterOptions.uploadTimeEnd || 0);
 
-        dmFilterOptions.publishedByUserIDList =
+        dmFilterOptions.publishedByUserIdList =
             filterOptions.publishedByUserIdList || [];
         dmFilterOptions.publishTimeStart = +(
             filterOptions.publishTimeStart || 0
         );
         dmFilterOptions.publishTimeEnd = +(filterOptions.publishTimeEnd || 0);
 
-        dmFilterOptions.verifiedByUserIDList =
+        dmFilterOptions.verifiedByUserIdList =
             filterOptions.verifiedByUserIdList || [];
         dmFilterOptions.verifyTimeStart = +(filterOptions.verifyTimeStart || 0);
         dmFilterOptions.verifyTimeEnd = +(filterOptions.verifyTimeEnd || 0);
 
-        dmFilterOptions.imageTypeIDList = filterOptions.imageTypeIdList || [];
+        dmFilterOptions.imageTypeIdList = filterOptions.imageTypeIdList || [];
         dmFilterOptions.originalFileNameQuery =
             filterOptions.originalFileNameQuery || "";
         dmFilterOptions.imageStatusList = filterOptions.imageStatusList || [];
 
-        const imageIDSet = new Set<number>();
+        const imageIdSet = new Set<number>();
         if (
             filterOptions.imageTagIdList !== undefined &&
             filterOptions.imageTagIdList.length > 0
         ) {
-            const imageIDList =
-                await this.imageHasImageTagDM.getImageIDListOfImageTagList(
+            const imageIdList =
+                await this.imageHasImageTagDM.getImageIdListOfImageTagList(
                     filterOptions.imageTagIdList
                 );
-            for (const imageID of imageIDList) {
-                imageIDSet.add(imageID);
+            for (const imageId of imageIdList) {
+                imageIdSet.add(imageId);
             }
         }
         if (
             filterOptions.regionLabelIdList !== undefined &&
             filterOptions.regionLabelIdList.length > 0
         ) {
-            const imageIDList =
-                await this.regionDM.getOfImageIDListOfRegionLabelList(
+            const imageIdList =
+                await this.regionDM.getOfImageIdListOfRegionLabelList(
                     filterOptions.regionLabelIdList
                 );
-            for (const imageID of imageIDList) {
-                imageIDSet.add(imageID);
+            for (const imageId of imageIdList) {
+                imageIdSet.add(imageId);
             }
         }
-        dmFilterOptions.imageIDList = Array.from(imageIDSet);
+        dmFilterOptions.imageIdList = Array.from(imageIdSet);
 
         return dmFilterOptions;
     }
@@ -461,9 +461,9 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     ): ImageListSortOrder {
         switch (sortOrder) {
             case _ImageListSortOrder_Values.ID_ASCENDING:
-                return ImageListSortOrder.ID_ASCENDING;
+                return ImageListSortOrder.Id_ASCENDING;
             case _ImageListSortOrder_Values.ID_DESCENDING:
-                return ImageListSortOrder.ID_DESCENDING;
+                return ImageListSortOrder.Id_DESCENDING;
             case _ImageListSortOrder_Values.UPLOAD_TIME_ASCENDING:
                 return ImageListSortOrder.UPLOAD_TIME_ASCENDING;
             case _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING:
@@ -496,7 +496,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             const image = await dm.getImage(id);
             if (image === null) {
                 this.logger.error("no image with image_id found", {
-                    imageID: id,
+                    imageId: id,
                 });
                 throw new ErrorWithStatus(
                     `no image with image_id ${id} found`,
@@ -510,12 +510,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
 
             await dm.updateImage({
                 id: id,
-                publishedByUserID: image.publishedByUserID,
+                publishedByUserId: image.publishedByUserId,
                 publishTime: image.publishTime,
-                verifiedByUserID: image.verifiedByUserID,
+                verifiedByUserId: image.verifiedByUserId,
                 verifyTime: image.verifyTime,
                 description: image.description,
-                imageTypeID:
+                imageTypeId:
                     image.imageType === null ? null : image.imageType.id,
                 status: image.status,
             });
@@ -525,15 +525,15 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
 
     public async updateImageImageType(
         id: number,
-        imageTypeID: number
+        imageTypeId: number
     ): Promise<Image> {
-        const imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        const imageType = await this.imageTypeDM.getImageType(imageTypeId);
         if (imageType === null) {
             this.logger.error("image type with image_type_id not found", {
-                imageTypeID,
+                imageTypeId,
             });
             throw new ErrorWithStatus(
-                `image type with image_type_id ${imageTypeID} not found`,
+                `image type with image_type_id ${imageTypeId} not found`,
                 status.NOT_FOUND
             );
         }
@@ -542,7 +542,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             const image = await imageDM.getImageWithXLock(id);
             if (image === null) {
                 this.logger.error("image with image_id not found", {
-                    imageID: id,
+                    imageId: id,
                 });
                 throw new ErrorWithStatus(
                     `image with image_id ${id} not found`,
@@ -562,12 +562,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                         image.imageType = imageType;
                         await imageDM.updateImage({
                             id: id,
-                            publishedByUserID: image.publishedByUserID,
+                            publishedByUserId: image.publishedByUserId,
                             publishTime: image.publishTime,
-                            verifiedByUserID: image.verifiedByUserID,
+                            verifiedByUserId: image.verifiedByUserId,
                             verifyTime: image.verifyTime,
                             description: image.description,
-                            imageTypeID: imageTypeID,
+                            imageTypeId: imageTypeId,
                             status: image.status,
                         });
 
@@ -581,14 +581,14 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     public async updateImageStatus(
         id: number,
         newStatus: _ImageStatus_Values,
-        byUserID: number
+        byUserId: number
     ): Promise<Image> {
         const currentTime = this.timer.getCurrentTime();
         return this.imageDM.withTransaction(async (imageDM) => {
             const image = await imageDM.getImage(id);
             if (image === null) {
                 this.logger.error("image with image_id not found", {
-                    imageID: id,
+                    imageId: id,
                 });
                 throw new ErrorWithStatus(
                     `image with image_id ${id} not found`,
@@ -615,7 +615,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                     if (region.label === null) {
                         this.logger.error(
                             "there are unlabeled regions, image cannot be published",
-                            { imageID: id }
+                            { imageId: id }
                         );
                         throw new ErrorWithStatus(
                             "there are unlabeled regions, image cannot be published",
@@ -629,7 +629,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                 async (regionSnapshotDM) => {
                     image.status = newStatus;
                     if (newStatus === _ImageStatus_Values.PUBLISHED) {
-                        image.publishedByUserID = byUserID;
+                        image.publishedByUserId = byUserId;
                         image.publishTime = currentTime;
                         await this.generateRegionSnapshotOfImage(
                             regionSnapshotDM,
@@ -638,8 +638,8 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                         );
                     }
                     if (newStatus === _ImageStatus_Values.VERIFIED) {
-                        image.verifiedByUserID = byUserID;
-                        image.verifiedByUserID = currentTime;
+                        image.verifiedByUserId = byUserId;
+                        image.verifiedByUserId = currentTime;
                         await this.generateRegionSnapshotOfImage(
                             regionSnapshotDM,
                             newStatus,
@@ -649,12 +649,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
 
                     await imageDM.updateImage({
                         id: id,
-                        publishedByUserID: image.publishedByUserID,
+                        publishedByUserId: image.publishedByUserId,
                         publishTime: image.publishTime,
-                        verifiedByUserID: image.verifiedByUserID,
+                        verifiedByUserId: image.verifiedByUserId,
                         verifyTime: image.verifyTime,
                         description: image.description,
-                        imageTypeID:
+                        imageTypeId:
                             image.imageType === null
                                 ? null
                                 : image.imageType.id,
@@ -693,28 +693,28 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     ): Promise<void> {
         for (const region of regionListOfImage) {
             await regionSnapshotDM.createRegionSnapshot({
-                ofImageID: region.ofImageID,
+                ofImageId: region.ofImageId,
                 atStatus: status,
-                drawnByUserID: region.drawnByUserID,
-                labeledByUserID: region.labeledByUserID,
+                drawnByUserId: region.drawnByUserId,
+                labeledByUserId: region.labeledByUserId,
                 border: region.border,
                 holes: region.holes,
-                labelID: region.label === null ? null : region.label.id,
+                labelId: region.label === null ? null : region.label.id,
             });
         }
     }
 
     public async updateImageListImageType(
         idList: number[],
-        imageTypeID: number
+        imageTypeId: number
     ): Promise<void> {
-        const imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        const imageType = await this.imageTypeDM.getImageType(imageTypeId);
         if (imageType === null) {
             this.logger.error("image type with image_type_id not found", {
-                imageTypeID,
+                imageTypeId,
             });
             throw new ErrorWithStatus(
-                `image type with image_type_id ${imageTypeID} not found`,
+                `image type with image_type_id ${imageTypeId} not found`,
                 status.NOT_FOUND
             );
         }
@@ -723,36 +723,36 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             return this.regionDM.withTransaction(async (regionDM) => {
                 return this.imageHasImageTagDM.withTransaction(
                     async (imageHasImageTagDM) => {
-                        for (const imageID of idList) {
+                        for (const imageId of idList) {
                             const image = await imageDM.getImageWithXLock(
-                                imageID
+                                imageId
                             );
                             if (image === null) {
                                 this.logger.error(
                                     "image with image_id not found",
-                                    { imageID }
+                                    { imageId }
                                 );
                                 throw new ErrorWithStatus(
-                                    `image with image_id ${imageID} not found`,
+                                    `image with image_id ${imageId} not found`,
                                     status.NOT_FOUND
                                 );
                             }
                             await regionDM.updateLabelOfRegionOfImage(
-                                imageID,
+                                imageId,
                                 null
                             );
                             await imageHasImageTagDM.deleteImageHasImageTagOfImage(
-                                imageID
+                                imageId
                             );
                             image.imageType = imageType;
                             await imageDM.updateImage({
-                                id: imageID,
-                                publishedByUserID: image.publishedByUserID,
+                                id: imageId,
+                                publishedByUserId: image.publishedByUserId,
                                 publishTime: image.publishTime,
-                                verifiedByUserID: image.verifiedByUserID,
+                                verifiedByUserId: image.verifiedByUserId,
                                 verifyTime: image.verifyTime,
                                 description: image.description,
-                                imageTypeID: imageTypeID,
+                                imageTypeId: imageTypeId,
                                 status: image.status,
                             });
                         }
@@ -771,21 +771,21 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }
 
     public async addImageTagToImage(
-        imageID: number,
-        imageTagID: number
+        imageId: number,
+        imageTagId: number
     ): Promise<void> {
-        const image = await this.imageDM.getImage(imageID);
+        const image = await this.imageDM.getImage(imageId);
         if (image === null) {
-            this.logger.error("image with image_id not found", { imageID });
+            this.logger.error("image with image_id not found", { imageId });
             throw new ErrorWithStatus(
-                `image with image_id ${imageID} not found`,
+                `image with image_id ${imageId} not found`,
                 status.NOT_FOUND
             );
         }
         if (image.imageType === null) {
             this.logger.error(
                 "image does not have image type, cannot assign tag",
-                { imageID }
+                { imageId }
             );
             throw new ErrorWithStatus(
                 `image does not have image type, cannot assign tag`,
@@ -793,92 +793,92 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             );
         }
 
-        const imageTag = await this.imageTagDM.getImageTag(imageTagID);
+        const imageTag = await this.imageTagDM.getImageTag(imageTagId);
         if (imageTag === null) {
             this.logger.error("image tag with image_tag_id not found", {
-                imageTagID,
+                imageTagId,
             });
             throw new ErrorWithStatus(
-                `image tag with image_tag_id ${imageTagID} not found`,
+                `image tag with image_tag_id ${imageTagId} not found`,
                 status.NOT_FOUND
             );
         }
 
         const imageTagListOfImage = (
-            await this.imageHasImageTagDM.getImageTagListOfImageList([imageID])
+            await this.imageHasImageTagDM.getImageTagListOfImageList([imageId])
         )[0];
         const imageAlreadyHasTag =
             imageTagListOfImage.find((item) => item.id === imageTag.id) !==
             undefined;
         if (imageAlreadyHasTag) {
             this.logger.error("image already has image tag", {
-                imageID,
-                imageTagID,
+                imageId,
+                imageTagId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${imageID} already has image tag with image_tag_id ${imageTagID}`,
+                `image with image_id ${imageId} already has image tag with image_tag_id ${imageTagId}`,
                 status.FAILED_PRECONDITION
             );
         }
 
-        const imageTagGroupID = imageTag.ofImageTagGroupID;
+        const imageTagGroupId = imageTag.ofImageTagGroupId;
         const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
-            imageTagGroupID
+            imageTagGroupId
         );
         if (imageTagGroup?.isSingleValue) {
             for (const item of imageTagListOfImage) {
-                if (item.ofImageTagGroupID === imageTagGroupID) {
+                if (item.ofImageTagGroupId === imageTagGroupId) {
                     this.logger.error(
                         "image with image_id already has tag of image tag group with image_tag_group_id",
-                        { imageID, imageTagGroupID }
+                        { imageId, imageTagGroupId }
                     );
                     throw new ErrorWithStatus(
-                        `image with image_id ${imageID} already has tag of image tag group with image_tag_group_id ${imageTagGroupID}`,
+                        `image with image_id ${imageId} already has tag of image tag group with image_tag_group_id ${imageTagGroupId}`,
                         status.FAILED_PRECONDITION
                     );
                 }
             }
         }
 
-        const imageTypeID = image.imageType.id;
+        const imageTypeId = image.imageType.id;
         const imageTagGroupHasImageTypeRelation =
             await this.imageTagGroupHasImageTypeDM.getImageTagGroupHasImageType(
-                imageTagGroupID,
-                imageTypeID
+                imageTagGroupId,
+                imageTypeId
             );
         if (imageTagGroupHasImageTypeRelation === null) {
             this.logger.error("image tag group does not have image type", {
-                imageTagGroupID,
-                imageTypeID,
+                imageTagGroupId,
+                imageTypeId,
             });
             throw new ErrorWithStatus(
-                `image tag group ${imageTagGroupID} does not have image type ${imageTypeID}`,
+                `image tag group ${imageTagGroupId} does not have image type ${imageTypeId}`,
                 status.FAILED_PRECONDITION
             );
         }
 
         await this.imageHasImageTagDM.createImageHasImageTag(
-            imageID,
-            imageTagID
+            imageId,
+            imageTagId
         );
     }
 
     public async removeImageTagFromImage(
-        imageID: number,
-        imageTagID: number
+        imageId: number,
+        imageTagId: number
     ): Promise<void> {
-        const image = await this.imageDM.getImage(imageID);
+        const image = await this.imageDM.getImage(imageId);
         if (image === null) {
-            this.logger.error("image with image_id not found", { imageID });
+            this.logger.error("image with image_id not found", { imageId });
             throw new ErrorWithStatus(
-                `image with image_id ${imageID} not found`,
+                `image with image_id ${imageId} not found`,
                 status.NOT_FOUND
             );
         }
         if (image.imageType === null) {
             this.logger.error(
                 "image does not have image type, cannot assign tag",
-                { imageID }
+                { imageId }
             );
             throw new ErrorWithStatus(
                 `image does not have image type, cannot assign tag`,
@@ -886,57 +886,57 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             );
         }
 
-        const imageTag = await this.imageTagDM.getImageTag(imageTagID);
+        const imageTag = await this.imageTagDM.getImageTag(imageTagId);
         if (imageTag === null) {
             this.logger.error("image tag with image_tag_id not found", {
-                imageTagID,
+                imageTagId,
             });
             throw new ErrorWithStatus(
-                `image tag with image_tag_id ${imageTagID} not found`,
+                `image tag with image_tag_id ${imageTagId} not found`,
                 status.NOT_FOUND
             );
         }
 
         const imageTagListOfImage = (
-            await this.imageHasImageTagDM.getImageTagListOfImageList([imageID])
+            await this.imageHasImageTagDM.getImageTagListOfImageList([imageId])
         )[0];
         const imageAlreadyHasTag =
             imageTagListOfImage.find((item) => item.id === imageTag.id) !==
             undefined;
         if (!imageAlreadyHasTag) {
             this.logger.error("image does not have image tag", {
-                imageID,
-                imageTagID,
+                imageId,
+                imageTagId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${imageID} does not have image tag with image_tag_id ${imageTagID}`,
+                `image with image_id ${imageId} does not have image tag with image_tag_id ${imageTagId}`,
                 status.FAILED_PRECONDITION
             );
         }
 
         await this.imageHasImageTagDM.deleteImageHasImageTag(
-            imageID,
-            imageTagID
+            imageId,
+            imageTagId
         );
     }
 
     public async getRegionSnapshotListOfImage(
-        ofImageID: number,
+        ofImageId: number,
         atStatus: _ImageStatus_Values
     ): Promise<Region[]> {
-        const image = await this.imageDM.getImage(ofImageID);
+        const image = await this.imageDM.getImage(ofImageId);
         if (image === null) {
             this.logger.error("image with image_id not found", {
-                imageID: ofImageID,
+                imageId: ofImageId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${ofImageID} not found`,
+                `image with image_id ${ofImageId} not found`,
                 status.NOT_FOUND
             );
         }
 
         return await this.regionSnapshotDM.getRegionSnapshotListOfImage(
-            ofImageID,
+            ofImageId,
             atStatus
         );
     }
@@ -952,7 +952,7 @@ injected(
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
-    ID_GENERATOR_TOKEN,
+    Id_GENERATOR_TOKEN,
     TIMER_TOKEN,
     IMAGE_PROCESSOR_TOKEN,
     APPLICATION_CONFIG_TOKEN,

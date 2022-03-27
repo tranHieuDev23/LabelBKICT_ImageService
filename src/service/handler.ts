@@ -102,7 +102,7 @@ export class ImageServiceHandlersFactory {
                 }
                 const originalFileName = req.originalFileName || "";
                 const description = req.description || "";
-                const imageTagIDList = req.imageTagIdList || [];
+                const imageTagIdList = req.imageTagIdList || [];
 
                 try {
                     const image =
@@ -112,7 +112,7 @@ export class ImageServiceHandlersFactory {
                             req.imageData,
                             description,
                             req.imageTypeId,
-                            imageTagIDList
+                            imageTagIdList
                         );
                     callback(null, { image });
                 } catch (e) {
@@ -745,7 +745,7 @@ export class ImageServiceHandlersFactory {
 
             UpdateImageListImageType: async (call, callback) => {
                 const req = call.request;
-                const imageIDList = req.imageIdList || [];
+                const imageIdList = req.imageIdList || [];
                 if (req.imageTypeId === undefined) {
                     return callback({
                         message: "image_type_id is required",
@@ -755,7 +755,7 @@ export class ImageServiceHandlersFactory {
 
                 try {
                     await this.imageManagementOperator.updateImageListImageType(
-                        imageIDList,
+                        imageIdList,
                         req.imageTypeId
                     );
                     callback(null, {});

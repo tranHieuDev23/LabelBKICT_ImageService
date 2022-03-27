@@ -7,9 +7,9 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { RegionLabel, RegionOperationLogLabelMetadata } from "./models";
 
 export interface CreateRegionOperationLogLabelMetadataArguments {
-    ofLogID: number;
-    oldLabelID: number | null;
-    newLabelID: number | null;
+    ofLogId: number;
+    oldLabelId: number | null;
+    newLabelId: number | null;
 }
 
 export interface RegionOperationLogLabelMetadataDataAccessor {
@@ -17,7 +17,7 @@ export interface RegionOperationLogLabelMetadataDataAccessor {
         args: CreateRegionOperationLogLabelMetadataArguments
     ): Promise<void>;
     getRegionOperationLogLabelMetadataOfLog(
-        logID: number
+        logId: number
     ): Promise<RegionOperationLogLabelMetadata | null>;
     withTransaction<T>(
         executeFunc: (
@@ -28,15 +28,15 @@ export interface RegionOperationLogLabelMetadataDataAccessor {
 
 const TabNameImageServiceRegionOperationLogLabelMetadata =
     "image_service_region_operation_log_draw_metadata_tab";
-const ColNameImageServiceRegionOperationLogLabelMetadataOfLogID = "of_log_id";
-const ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID =
+const ColNameImageServiceRegionOperationLogLabelMetadataOfLogId = "of_log_id";
+const ColNameImageServiceRegionOperationLogLabelMetadataOldLabelId =
     "old_label_id";
-const ColNameImageServiceRegionOperationLogLabelMetadataNewLabelID =
+const ColNameImageServiceRegionOperationLogLabelMetadataNewLabelId =
     "new_label_id";
 
 const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionLabelID = "region_label_id";
-const ColNameImageServiceRegionLabelOfImageTypeID = "of_image_type_id";
+const ColNameImageServiceRegionLabelId = "region_label_id";
+const ColNameImageServiceRegionLabelOfImageTypeId = "of_image_type_id";
 const ColNameImageServiceRegionLabelDisplayName = "display_name";
 const ColNameImageServiceRegionLabelColor = "color";
 
@@ -54,12 +54,12 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
         try {
             await this.knex
                 .insert({
-                    [ColNameImageServiceRegionOperationLogLabelMetadataOfLogID]:
-                        args.ofLogID,
-                    [ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID]:
-                        args.oldLabelID,
-                    [ColNameImageServiceRegionOperationLogLabelMetadataNewLabelID]:
-                        args.newLabelID,
+                    [ColNameImageServiceRegionOperationLogLabelMetadataOfLogId]:
+                        args.ofLogId,
+                    [ColNameImageServiceRegionOperationLogLabelMetadataOldLabelId]:
+                        args.oldLabelId,
+                    [ColNameImageServiceRegionOperationLogLabelMetadataNewLabelId]:
+                        args.newLabelId,
                 })
                 .into(TabNameImageServiceRegionOperationLogLabelMetadata);
         } catch (error) {
@@ -72,7 +72,7 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
     }
 
     public async getRegionOperationLogLabelMetadataOfLog(
-        logID: number
+        logId: number
     ): Promise<RegionOperationLogLabelMetadata | null> {
         try {
             const rows = await this.knex
@@ -80,18 +80,18 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
                 .from(TabNameImageServiceRegionOperationLogLabelMetadata)
                 .leftOuterJoin(
                     { old_label: TabNameImageServiceRegionLabel },
-                    `${TabNameImageServiceRegionOperationLogLabelMetadata}.${ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelID}`
+                    `${TabNameImageServiceRegionOperationLogLabelMetadata}.${ColNameImageServiceRegionOperationLogLabelMetadataOldLabelId}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelId}`
                 )
                 .leftOuterJoin(
                     { new_label: TabNameImageServiceRegionLabel },
-                    `${TabNameImageServiceRegionOperationLogLabelMetadata}.${ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelID}`
+                    `${TabNameImageServiceRegionOperationLogLabelMetadata}.${ColNameImageServiceRegionOperationLogLabelMetadataOldLabelId}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelId}`
                 )
                 .where(
-                    ColNameImageServiceRegionOperationLogLabelMetadataOfLogID,
+                    ColNameImageServiceRegionOperationLogLabelMetadataOfLogId,
                     "=",
-                    logID
+                    logId
                 );
             if (rows.length === 0) {
                 return null;
@@ -102,7 +102,7 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
         } catch (error) {
             this.logger.error(
                 "failed to get region operation log label metadata of log",
-                { logID, error }
+                { logId, error }
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
@@ -127,33 +127,33 @@ export class RegionOperationLogLabelMetadataDataAccessorImpl
         row: Record<string, any>
     ): RegionOperationLogLabelMetadata {
         let oldLabel: RegionLabel | null = null;
-        if (row[ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID]) {
+        if (row[ColNameImageServiceRegionOperationLogLabelMetadataOldLabelId]) {
             oldLabel = new RegionLabel(
                 +row[
-                    ColNameImageServiceRegionOperationLogLabelMetadataOldLabelID
+                    ColNameImageServiceRegionOperationLogLabelMetadataOldLabelId
                 ],
                 +row[
-                    `old_label.${ColNameImageServiceRegionLabelOfImageTypeID}`
+                    `old_label.${ColNameImageServiceRegionLabelOfImageTypeId}`
                 ],
                 row[`old_label.${ColNameImageServiceRegionLabelDisplayName}`],
                 row[`old_label.${ColNameImageServiceRegionLabelColor}`]
             );
         }
         let newLabel: RegionLabel | null = null;
-        if (row[ColNameImageServiceRegionOperationLogLabelMetadataNewLabelID]) {
+        if (row[ColNameImageServiceRegionOperationLogLabelMetadataNewLabelId]) {
             newLabel = new RegionLabel(
                 +row[
-                    ColNameImageServiceRegionOperationLogLabelMetadataNewLabelID
+                    ColNameImageServiceRegionOperationLogLabelMetadataNewLabelId
                 ],
                 +row[
-                    `new_label.${`old_label.${ColNameImageServiceRegionLabelOfImageTypeID}`}`
+                    `new_label.${`old_label.${ColNameImageServiceRegionLabelOfImageTypeId}`}`
                 ],
                 row[`new_label.${ColNameImageServiceRegionLabelDisplayName}`],
                 row[`new_label.${ColNameImageServiceRegionLabelColor}`]
             );
         }
         return new RegionOperationLogLabelMetadata(
-            +row[ColNameImageServiceRegionOperationLogLabelMetadataOfLogID],
+            +row[ColNameImageServiceRegionOperationLogLabelMetadataOfLogId],
             oldLabel,
             newLabel
         );

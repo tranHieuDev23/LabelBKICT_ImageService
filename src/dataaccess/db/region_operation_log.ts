@@ -8,8 +8,8 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { RegionOperationLog } from "./models";
 
 export interface CreateRegionOperationLogArguments {
-    ofRegionID: number;
-    byUserID: number;
+    ofRegionId: number;
+    byUserId: number;
     operationTime: number;
     operationType: _RegionOperationType_Values;
 }
@@ -19,7 +19,7 @@ export interface RegionOperationLogDataAccessor {
         args: CreateRegionOperationLogArguments
     ): Promise<number>;
     getRegionOperationLogListOfRegion(
-        regionID: number
+        regionId: number
     ): Promise<RegionOperationLog[]>;
     withTransaction<T>(
         executeFunc: (
@@ -30,9 +30,9 @@ export interface RegionOperationLogDataAccessor {
 
 const TabNameImageServiceRegionOperationLog =
     "image_service_region_operation_log_tab";
-const ColNameImageServiceRegionOperationLogID = "region_operation_log_id";
-const ColNameImageServiceRegionOperationLogOfRegionID = "of_region_id";
-const ColNameImageServiceRegionOperationLogByUserID = "by_user_id";
+const ColNameImageServiceRegionOperationLogId = "region_operation_log_id";
+const ColNameImageServiceRegionOperationLogOfRegionId = "of_region_id";
+const ColNameImageServiceRegionOperationLogByUserId = "by_user_id";
 const ColNameImageServiceRegionOperationLogOperationTime = "operation_time";
 const ColNameImageServiceRegionOperationLogOperationType = "operation_type";
 
@@ -50,18 +50,18 @@ export class RegionOperationLogDataAccessorImpl
         try {
             const rows = await this.knex
                 .insert({
-                    [ColNameImageServiceRegionOperationLogOfRegionID]:
-                        args.ofRegionID,
-                    [ColNameImageServiceRegionOperationLogByUserID]:
-                        args.byUserID,
+                    [ColNameImageServiceRegionOperationLogOfRegionId]:
+                        args.ofRegionId,
+                    [ColNameImageServiceRegionOperationLogByUserId]:
+                        args.byUserId,
                     [ColNameImageServiceRegionOperationLogOperationTime]:
                         args.operationTime,
                     [ColNameImageServiceRegionOperationLogOperationType]:
                         args.operationType,
                 })
-                .returning(ColNameImageServiceRegionOperationLogID)
+                .returning(ColNameImageServiceRegionOperationLogId)
                 .into(TabNameImageServiceRegionOperationLog);
-            return +rows[0][ColNameImageServiceRegionOperationLogID];
+            return +rows[0][ColNameImageServiceRegionOperationLogId];
         } catch (error) {
             this.logger.error("failed to create region operation log", {
                 args,
@@ -72,22 +72,22 @@ export class RegionOperationLogDataAccessorImpl
     }
 
     public async getRegionOperationLogListOfRegion(
-        regionID: number
+        regionId: number
     ): Promise<RegionOperationLog[]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceRegionOperationLog)
                 .where(
-                    ColNameImageServiceRegionOperationLogOfRegionID,
+                    ColNameImageServiceRegionOperationLogOfRegionId,
                     "=",
-                    regionID
+                    regionId
                 );
             return rows.map((row) => this.getRegionOperationLogFromRow(row));
         } catch (error) {
             this.logger.error(
                 "failed to get region operation log list of region",
-                { regionID, error }
+                { regionId, error }
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
@@ -111,9 +111,9 @@ export class RegionOperationLogDataAccessorImpl
         row: Record<string, any>
     ): RegionOperationLog {
         return new RegionOperationLog(
-            +row[ColNameImageServiceRegionOperationLogID],
-            +row[ColNameImageServiceRegionOperationLogOfRegionID],
-            +row[ColNameImageServiceRegionOperationLogByUserID],
+            +row[ColNameImageServiceRegionOperationLogId],
+            +row[ColNameImageServiceRegionOperationLogOfRegionId],
+            +row[ColNameImageServiceRegionOperationLogByUserId],
             +row[ColNameImageServiceRegionOperationLogOperationTime],
             +row[ColNameImageServiceRegionOperationLogOperationType]
         );

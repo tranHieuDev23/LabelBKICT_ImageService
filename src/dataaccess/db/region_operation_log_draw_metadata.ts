@@ -11,7 +11,7 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { Polygon, RegionOperationLogDrawMetadata } from "./models";
 
 export interface CreateRegionOperationLogDrawMetadataArguments {
-    ofLogID: number;
+    ofLogId: number;
     oldBorder: Polygon | null;
     oldHoles: Polygon[] | null;
     newBorder: Polygon;
@@ -23,7 +23,7 @@ export interface RegionOperationLogDrawMetadataDataAccessor {
         args: CreateRegionOperationLogDrawMetadataArguments
     ): Promise<void>;
     getRegionOperationLogDrawMetadataOfLog(
-        logID: number
+        logId: number
     ): Promise<RegionOperationLogDrawMetadata | null>;
     withTransaction<T>(
         executeFunc: (
@@ -34,7 +34,7 @@ export interface RegionOperationLogDrawMetadataDataAccessor {
 
 const TabNameImageServiceRegionOperationLogDrawMetadata =
     "image_service_region_operation_log_draw_metadata_tab";
-const ColNameImageServiceRegionOperationLogDrawMetadataOfLogID = "of_log_id";
+const ColNameImageServiceRegionOperationLogDrawMetadataOfLogId = "of_log_id";
 const ColNameImageServiceRegionOperationLogDrawMetadataOldBorder = "old_border";
 const ColNameImageServiceRegionOperationLogDrawMetadataOldHoles = "old_holes";
 const ColNameImageServiceRegionOperationLogDrawMetadataNewBorder = "new_border";
@@ -68,8 +68,8 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
 
             await this.knex
                 .insert({
-                    [ColNameImageServiceRegionOperationLogDrawMetadataOfLogID]:
-                        args.ofLogID,
+                    [ColNameImageServiceRegionOperationLogDrawMetadataOfLogId]:
+                        args.ofLogId,
                     [ColNameImageServiceRegionOperationLogDrawMetadataOldBorder]:
                         oldBorderBinary,
                     [ColNameImageServiceRegionOperationLogDrawMetadataOldHoles]:
@@ -90,16 +90,16 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
     }
 
     public async getRegionOperationLogDrawMetadataOfLog(
-        logID: number
+        logId: number
     ): Promise<RegionOperationLogDrawMetadata | null> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceRegionOperationLogDrawMetadata)
                 .where(
-                    ColNameImageServiceRegionOperationLogDrawMetadataOfLogID,
+                    ColNameImageServiceRegionOperationLogDrawMetadataOfLogId,
                     "=",
-                    logID
+                    logId
                 );
             if (rows.length === 0) {
                 return null;
@@ -108,7 +108,7 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
         } catch (error) {
             this.logger.error(
                 "failed to get region operation log draw metadata of log",
-                { logID, error }
+                { logId, error }
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
@@ -158,7 +158,7 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
             row[ColNameImageServiceRegionOperationLogDrawMetadataNewHoles]
         );
         return new RegionOperationLogDrawMetadata(
-            +row[ColNameImageServiceRegionOperationLogDrawMetadataOfLogID],
+            +row[ColNameImageServiceRegionOperationLogDrawMetadataOfLogId],
             oldBorder,
             oldHoles,
             newBorder,

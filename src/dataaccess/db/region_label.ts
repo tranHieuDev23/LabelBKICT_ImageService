@@ -8,12 +8,12 @@ import { RegionLabel } from "./models";
 
 export interface RegionLabelDataAccessor {
     createRegionLabel(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         displayName: string,
         color: string
     ): Promise<number>;
-    getRegionLabelListOfImageTypeIDList(
-        imageTypeIDList: number[]
+    getRegionLabelListOfImageTypeIdList(
+        imageTypeIdList: number[]
     ): Promise<RegionLabel[][]>;
     getRegionLabel(id: number): Promise<RegionLabel | null>;
     getRegionLabelWithXLock(id: number): Promise<RegionLabel | null>;
@@ -25,8 +25,8 @@ export interface RegionLabelDataAccessor {
 }
 
 const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionLabelID = "region_label_id";
-const ColNameImageServiceRegionLabelOfImageTypeID = "of_image_type_id";
+const ColNameImageServiceRegionLabelId = "region_label_id";
+const ColNameImageServiceRegionLabelOfImageTypeId = "of_image_type_id";
 const ColNameImageServiceRegionLabelDisplayName = "display_name";
 const ColNameImageServiceRegionLabelColor = "color";
 
@@ -37,21 +37,21 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
     ) {}
 
     public async createRegionLabel(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         displayName: string,
         color: string
     ): Promise<number> {
         try {
             const rows = await this.knex
                 .insert({
-                    [ColNameImageServiceRegionLabelOfImageTypeID]:
-                        ofImageTypeID,
+                    [ColNameImageServiceRegionLabelOfImageTypeId]:
+                        ofImageTypeId,
                     [ColNameImageServiceRegionLabelDisplayName]: displayName,
                     [ColNameImageServiceRegionLabelColor]: color,
                 })
-                .returning(ColNameImageServiceRegionLabelID)
+                .returning(ColNameImageServiceRegionLabelId)
                 .into(TabNameImageServiceRegionLabel);
-            return +rows[0][ColNameImageServiceRegionLabelID];
+            return +rows[0][ColNameImageServiceRegionLabelId];
         } catch (error) {
             this.logger.error("failed to create region label", {
                 displayName,
@@ -62,37 +62,37 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
         }
     }
 
-    public async getRegionLabelListOfImageTypeIDList(
-        imageTypeIDList: number[]
+    public async getRegionLabelListOfImageTypeIdList(
+        imageTypeIdList: number[]
     ): Promise<RegionLabel[][]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceRegionLabel)
                 .whereIn(
-                    ColNameImageServiceRegionLabelOfImageTypeID,
-                    imageTypeIDList
+                    ColNameImageServiceRegionLabelOfImageTypeId,
+                    imageTypeIdList
                 );
 
-            const imageTypeIDToRegionLabelList = new Map<
+            const imageTypeIdToRegionLabelList = new Map<
                 number,
                 RegionLabel[]
             >();
             for (const row of rows) {
-                const imageTypeID =
-                    +row[ColNameImageServiceRegionLabelOfImageTypeID];
-                if (!imageTypeIDToRegionLabelList.has(imageTypeID)) {
-                    imageTypeIDToRegionLabelList.set(imageTypeID, []);
+                const imageTypeId =
+                    +row[ColNameImageServiceRegionLabelOfImageTypeId];
+                if (!imageTypeIdToRegionLabelList.has(imageTypeId)) {
+                    imageTypeIdToRegionLabelList.set(imageTypeId, []);
                 }
-                imageTypeIDToRegionLabelList
-                    .get(imageTypeID)
+                imageTypeIdToRegionLabelList
+                    .get(imageTypeId)
                     ?.push(this.getRegionLabelFromRow(row));
             }
 
             const results: RegionLabel[][] = [];
-            for (const imageTypeID of imageTypeIDList) {
+            for (const imageTypeId of imageTypeIdList) {
                 results.push(
-                    imageTypeIDToRegionLabelList.get(imageTypeID) || []
+                    imageTypeIdToRegionLabelList.get(imageTypeId) || []
                 );
             }
             return results;
@@ -112,25 +112,25 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
                 .select()
                 .from(TabNameImageServiceRegionLabel)
                 .where({
-                    [ColNameImageServiceRegionLabelID]: id,
+                    [ColNameImageServiceRegionLabelId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to get region label", {
-                regionLabelID: id,
+                regionLabelId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
             this.logger.info("no region label with region_label_id found", {
-                regionLabelID: id,
+                regionLabelId: id,
             });
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one region label with region_label_id found",
-                { regionLabelID: id }
+                { regionLabelId: id }
             );
             throw new ErrorWithStatus(
                 "more than one region label was found",
@@ -149,26 +149,26 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
                 .select()
                 .from(TabNameImageServiceRegionLabel)
                 .where({
-                    [ColNameImageServiceRegionLabelID]: id,
+                    [ColNameImageServiceRegionLabelId]: id,
                 })
                 .forUpdate();
         } catch (error) {
             this.logger.error("failed to get region label", {
-                regionLabelID: id,
+                regionLabelId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
             this.logger.info("no region label with region_label_id found", {
-                regionLabelID: id,
+                regionLabelId: id,
             });
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one region label with region_label_id found",
-                { regionLabelID: id }
+                { regionLabelId: id }
             );
             throw new ErrorWithStatus(
                 "more than one region label was found",
@@ -183,14 +183,14 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
             await this.knex
                 .table(TabNameImageServiceRegionLabel)
                 .update({
-                    [ColNameImageServiceRegionLabelOfImageTypeID]:
-                        regionLabel.ofImageTypeID,
+                    [ColNameImageServiceRegionLabelOfImageTypeId]:
+                        regionLabel.ofImageTypeId,
                     [ColNameImageServiceRegionLabelDisplayName]:
                         regionLabel.displayName,
                     [ColNameImageServiceRegionLabelColor]: regionLabel.color,
                 })
                 .where({
-                    [ColNameImageServiceRegionLabelID]: regionLabel.id,
+                    [ColNameImageServiceRegionLabelId]: regionLabel.id,
                 });
         } catch (error) {
             this.logger.error("failed to update region label", {
@@ -208,18 +208,18 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
                 .delete()
                 .from(TabNameImageServiceRegionLabel)
                 .where({
-                    [ColNameImageServiceRegionLabelID]: id,
+                    [ColNameImageServiceRegionLabelId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to delete region label", {
-                regionLabelID: id,
+                regionLabelId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deletedCount === 0) {
             this.logger.error("no region label with region_label_id found", {
-                regionLabelID: id,
+                regionLabelId: id,
             });
             throw new ErrorWithStatus(
                 `no region label with region_label_id ${id} found`,
@@ -242,8 +242,8 @@ export class RegionLabelDataAccessorImpl implements RegionLabelDataAccessor {
 
     private getRegionLabelFromRow(row: Record<string, any>): RegionLabel {
         return new RegionLabel(
-            +row[ColNameImageServiceRegionLabelID],
-            +row[ColNameImageServiceRegionLabelOfImageTypeID],
+            +row[ColNameImageServiceRegionLabelId],
+            +row[ColNameImageServiceRegionLabelOfImageTypeId],
             row[ColNameImageServiceRegionLabelDisplayName],
             row[ColNameImageServiceRegionLabelColor]
         );

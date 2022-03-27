@@ -2,16 +2,16 @@ import { injected, token } from "brandi";
 import { Snowflake } from "nodejs-snowflake";
 import { DistributedConfig, DISTRIBUTED_CONFIG_TOKEN } from "../config";
 
-export interface IDGenerator {
+export interface IdGenerator {
     generate(): Promise<number>;
 }
 
-export class SnowflakeIDGenerator implements IDGenerator {
+export class SnowflakeIdGenerator implements IdGenerator {
     private readonly snowflake: Snowflake;
 
     constructor(distributedConfig: DistributedConfig) {
         this.snowflake = new Snowflake({
-            instance_id: distributedConfig.nodeID,
+            instance_id: distributedConfig.nodeId,
         });
     }
 
@@ -22,6 +22,6 @@ export class SnowflakeIDGenerator implements IDGenerator {
     }
 }
 
-injected(SnowflakeIDGenerator, DISTRIBUTED_CONFIG_TOKEN);
+injected(SnowflakeIdGenerator, DISTRIBUTED_CONFIG_TOKEN);
 
-export const ID_GENERATOR_TOKEN = token<IDGenerator>("IDGenerator");
+export const Id_GENERATOR_TOKEN = token<IdGenerator>("IdGenerator");

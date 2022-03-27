@@ -7,11 +7,11 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { ImageTag } from "./models";
 
 export interface ImageHasImageTagDataAccessor {
-    createImageHasImageTag(imageID: number, imageTagID: number): Promise<void>;
-    deleteImageHasImageTag(imageID: number, imageTagID: number): Promise<void>;
-    deleteImageHasImageTagOfImage(imageID: number): Promise<void>;
-    getImageTagListOfImageList(imageIDList: number[]): Promise<ImageTag[][]>;
-    getImageIDListOfImageTagList(imageTagIDList: number[]): Promise<number[]>;
+    createImageHasImageTag(imageId: number, imageTagId: number): Promise<void>;
+    deleteImageHasImageTag(imageId: number, imageTagId: number): Promise<void>;
+    deleteImageHasImageTagOfImage(imageId: number): Promise<void>;
+    getImageTagListOfImageList(imageIdList: number[]): Promise<ImageTag[][]>;
+    getImageIdListOfImageTagList(imageTagIdList: number[]): Promise<number[]>;
     withTransaction<T>(
         executeFunc: (dataAccessor: ImageHasImageTagDataAccessor) => Promise<T>
     ): Promise<T>;
@@ -19,12 +19,12 @@ export interface ImageHasImageTagDataAccessor {
 
 const TabNameImageServiceImageHasImageTag =
     "image_service_image_has_image_tag_tab";
-const ColNameImageServiceImageHasImageTagImageID = "image_id";
-const ColNameImageServiceImageHasImageTagImageTagID = "image_tag_id";
+const ColNameImageServiceImageHasImageTagImageId = "image_id";
+const ColNameImageServiceImageHasImageTagImageTagId = "image_tag_id";
 
 const TabNameImageServiceImageTag = "image_service_image_tag_tab";
-const ColNameImageServiceImageTagID = "image_tag_id";
-const ColNameImageServiceImageTagOfImageTagGroupID = "of_image_tag_group_id";
+const ColNameImageServiceImageTagId = "image_tag_id";
+const ColNameImageServiceImageTagOfImageTagGroupId = "of_image_tag_group_id";
 const ColNameImageServiceImageTagDisplayName = "display_name";
 export class ImageHasImageTagDataAccessorImpl
     implements ImageHasImageTagDataAccessor
@@ -35,28 +35,28 @@ export class ImageHasImageTagDataAccessorImpl
     ) {}
 
     public async createImageHasImageTag(
-        imageID: number,
-        imageTagID: number
+        imageId: number,
+        imageTagId: number
     ): Promise<void> {
         try {
             await this.knex
                 .insert({
-                    [ColNameImageServiceImageHasImageTagImageID]: imageID,
-                    [ColNameImageServiceImageHasImageTagImageTagID]: imageTagID,
+                    [ColNameImageServiceImageHasImageTagImageId]: imageId,
+                    [ColNameImageServiceImageHasImageTagImageTagId]: imageTagId,
                 })
                 .into(TabNameImageServiceImageHasImageTag);
         } catch (error) {
             this.logger.error(
                 "failed to create new image has image tag relation",
-                { imageID, imageTagID, error }
+                { imageId, imageTagId, error }
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 
     public async deleteImageHasImageTag(
-        imageID: number,
-        imageTagID: number
+        imageId: number,
+        imageTagId: number
     ): Promise<void> {
         let deleteCount: number;
         try {
@@ -64,36 +64,36 @@ export class ImageHasImageTagDataAccessorImpl
                 .delete()
                 .from(TabNameImageServiceImageHasImageTag)
                 .where({
-                    [ColNameImageServiceImageHasImageTagImageID]: imageID,
-                    [ColNameImageServiceImageHasImageTagImageTagID]: imageTagID,
+                    [ColNameImageServiceImageHasImageTagImageId]: imageId,
+                    [ColNameImageServiceImageHasImageTagImageTagId]: imageTagId,
                 });
         } catch (error) {
             this.logger.error("failed to delete image has image tag relation", {
-                imageID,
-                imageTagID,
+                imageId,
+                imageTagId,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deleteCount === 0) {
             this.logger.error("no image has image tag relation found", {
-                imageID,
-                imageTagID,
+                imageId,
+                imageTagId,
             });
             throw new ErrorWithStatus(
-                `no image has image relation found with image_id ${imageID} and image_tag_id ${imageTagID}`,
+                `no image has image relation found with image_id ${imageId} and image_tag_id ${imageTagId}`,
                 status.NOT_FOUND
             );
         }
     }
 
-    public async deleteImageHasImageTagOfImage(imageID: number): Promise<void> {
+    public async deleteImageHasImageTagOfImage(imageId: number): Promise<void> {
         try {
             await this.knex
                 .delete()
                 .from(TabNameImageServiceImageHasImageTag)
                 .where({
-                    [ColNameImageServiceImageHasImageTagImageID]: imageID,
+                    [ColNameImageServiceImageHasImageTagImageId]: imageId,
                 });
         } catch (error) {
             this.logger.error(
@@ -105,7 +105,7 @@ export class ImageHasImageTagDataAccessorImpl
     }
 
     public async getImageTagListOfImageList(
-        imageIDList: number[]
+        imageIdList: number[]
     ): Promise<ImageTag[][]> {
         try {
             const rows = await this.knex
@@ -113,35 +113,35 @@ export class ImageHasImageTagDataAccessorImpl
                 .from(TabNameImageServiceImageHasImageTag)
                 .join(
                     TabNameImageServiceImageTag,
-                    `${TabNameImageServiceImageHasImageTag}.${ColNameImageServiceImageHasImageTagImageTagID}`,
-                    `${TabNameImageServiceImageTag}.${ColNameImageServiceImageTagID}`
+                    `${TabNameImageServiceImageHasImageTag}.${ColNameImageServiceImageHasImageTagImageTagId}`,
+                    `${TabNameImageServiceImageTag}.${ColNameImageServiceImageTagId}`
                 )
                 .whereIn(
-                    ColNameImageServiceImageHasImageTagImageID,
-                    imageIDList
+                    ColNameImageServiceImageHasImageTagImageId,
+                    imageIdList
                 );
 
-            const imageIDToImageTagList = new Map<number, ImageTag[]>();
+            const imageIdToImageTagList = new Map<number, ImageTag[]>();
             for (const row of rows) {
-                const imageID =
-                    +row[ColNameImageServiceImageHasImageTagImageID];
-                if (!imageIDToImageTagList.has(imageID)) {
-                    imageIDToImageTagList.set(imageID, []);
+                const imageId =
+                    +row[ColNameImageServiceImageHasImageTagImageId];
+                if (!imageIdToImageTagList.has(imageId)) {
+                    imageIdToImageTagList.set(imageId, []);
                 }
-                imageIDToImageTagList
-                    .get(imageID)
+                imageIdToImageTagList
+                    .get(imageId)
                     ?.push(
                         new ImageTag(
-                            +row[ColNameImageServiceImageHasImageTagImageTagID],
-                            +row[ColNameImageServiceImageTagOfImageTagGroupID],
+                            +row[ColNameImageServiceImageHasImageTagImageTagId],
+                            +row[ColNameImageServiceImageTagOfImageTagGroupId],
                             row[ColNameImageServiceImageTagDisplayName]
                         )
                     );
             }
 
             const results: ImageTag[][] = [];
-            for (const imageID of imageIDList) {
-                results.push(imageIDToImageTagList.get(imageID) || []);
+            for (const imageId of imageIdList) {
+                results.push(imageIdToImageTagList.get(imageId) || []);
             }
             return results;
         } catch (error) {
@@ -152,19 +152,19 @@ export class ImageHasImageTagDataAccessorImpl
         }
     }
 
-    public async getImageIDListOfImageTagList(
-        imageTagIDList: number[]
+    public async getImageIdListOfImageTagList(
+        imageTagIdList: number[]
     ): Promise<number[]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceImageHasImageTag)
                 .whereIn(
-                    ColNameImageServiceImageHasImageTagImageTagID,
-                    imageTagIDList
+                    ColNameImageServiceImageHasImageTagImageTagId,
+                    imageTagIdList
                 );
             return rows.map(
-                (row) => +row[ColNameImageServiceImageHasImageTagImageID]
+                (row) => +row[ColNameImageServiceImageHasImageTagImageId]
             );
         } catch (error) {
             this.logger.error("failed to get image id list of image tag list", {

@@ -38,24 +38,24 @@ export interface ImageTagManagementOperator {
     ): Promise<ImageTagGroup>;
     deleteImageTagGroup(id: number): Promise<void>;
     createImageTag(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         displayName: string
     ): Promise<ImageTag>;
     updateImageTag(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         id: number,
         displayName: string | undefined
     ): Promise<ImageTag>;
-    deleteImageTag(ofImageTagGroupID: number, id: number): Promise<void>;
+    deleteImageTag(ofImageTagGroupId: number, id: number): Promise<void>;
     addImageTypeToImageTagGroup(
-        imageTagGroupID: number,
-        imageTypeID: number
+        imageTagGroupId: number,
+        imageTypeId: number
     ): Promise<void>;
     removeImageTypeFromImageTagGroup(
-        imageTagGroupID: number,
-        imageTypeID: number
+        imageTagGroupId: number,
+        imageTypeId: number
     ): Promise<void>;
-    getImageTagGroupListOfImageType(imageTypeID: number): Promise<{
+    getImageTagGroupListOfImageType(imageTypeId: number): Promise<{
         imageTagGroupList: ImageTagGroup[];
         imageTagList: ImageTag[][];
     }>;
@@ -85,13 +85,13 @@ export class ImageTagManagementOperatorImpl
             );
         }
 
-        const createdImageTagGroupID =
+        const createdImageTagGroupId =
             await this.imageTagGroupDM.createImageTagGroup(
                 displayName,
                 isSingleValue
             );
         return {
-            id: createdImageTagGroupID,
+            id: createdImageTagGroupId,
             displayName: displayName,
             isSingleValue: isSingleValue,
         };
@@ -107,15 +107,15 @@ export class ImageTagManagementOperatorImpl
     }> {
         const imageTagGroupList =
             await this.imageTagGroupDM.getImageTagGroupList();
-        const imageTagGroupIDList = imageTagGroupList.map(
+        const imageTagGroupIdList = imageTagGroupList.map(
             (imageTagGroup) => imageTagGroup.id
         );
 
         let imageTagList: ImageTag[][] | null = null;
         if (withImageTag) {
             imageTagList =
-                await this.imageTagDM.getImageTagListOfImageTagGroupIDList(
-                    imageTagGroupIDList
+                await this.imageTagDM.getImageTagListOfImageTagGroupIdList(
+                    imageTagGroupIdList
                 );
         }
 
@@ -123,7 +123,7 @@ export class ImageTagManagementOperatorImpl
         if (withImageType) {
             imageTypeList =
                 await this.imageTagGroupHasImageTypeDM.getImageTypeListOfImageTagGroupList(
-                    imageTagGroupIDList
+                    imageTagGroupIdList
                 );
         }
 
@@ -151,7 +151,7 @@ export class ImageTagManagementOperatorImpl
             if (imageTagGroup === null) {
                 this.logger.error(
                     "no image tag group with image_tag_group_id found",
-                    { imageTagGroupID: id }
+                    { imageTagGroupId: id }
                 );
                 throw new ErrorWithStatus(
                     `no image tag group with image_tag_group_id ${id} found`,
@@ -176,7 +176,7 @@ export class ImageTagManagementOperatorImpl
     }
 
     public async createImageTag(
-        ofImageTagGroupID: number,
+        ofImageTagGroupId: number,
         displayName: string
     ): Promise<RegionLabel> {
         displayName = this.sanitizeImageTagDisplayName(displayName);
@@ -189,31 +189,31 @@ export class ImageTagManagementOperatorImpl
         }
 
         const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
-            ofImageTagGroupID
+            ofImageTagGroupId
         );
         if (imageTagGroup === null) {
             this.logger.error(
                 "no image tag group with image_tag_group_id found",
-                { imageTagGroupID: ofImageTagGroupID }
+                { imageTagGroupId: ofImageTagGroupId }
             );
             throw new ErrorWithStatus(
-                `no image tag group with image_tag_group_id ${ofImageTagGroupID} found`,
+                `no image tag group with image_tag_group_id ${ofImageTagGroupId} found`,
                 status.NOT_FOUND
             );
         }
 
-        const createdImageTagID = await this.imageTagDM.createImageTag(
-            ofImageTagGroupID,
+        const createdImageTagId = await this.imageTagDM.createImageTag(
+            ofImageTagGroupId,
             displayName
         );
         return {
-            id: createdImageTagID,
+            id: createdImageTagId,
             displayName: displayName,
         };
     }
 
     public async updateImageTag(
-        ofImageTagGroupID: number,
+        ofImageTagGroupId: number,
         id: number,
         displayName: string | undefined
     ): Promise<RegionLabel> {
@@ -232,7 +232,7 @@ export class ImageTagManagementOperatorImpl
             const imageTag = await dm.getImageTagWithXLock(id);
             if (imageTag === null) {
                 this.logger.error("no image tag with image_tag_id found", {
-                    imageTagID: id,
+                    imageTagId: id,
                 });
                 throw new ErrorWithStatus(
                     `no region label with region_label_id ${id} found`,
@@ -240,13 +240,13 @@ export class ImageTagManagementOperatorImpl
                 );
             }
 
-            if (imageTag.ofImageTagGroupID !== ofImageTagGroupID) {
+            if (imageTag.ofImageTagGroupId !== ofImageTagGroupId) {
                 this.logger.error(
                     "image tag group with image_tag_group_id does not have image tag with image_tag_id",
-                    { imageTypeID: ofImageTagGroupID, imageTagID: id }
+                    { imageTypeId: ofImageTagGroupId, imageTagId: id }
                 );
                 throw new ErrorWithStatus(
-                    `image tag group with image_tag_group_id ${ofImageTagGroupID} does not have image tag with image_tag_id ${id}`,
+                    `image tag group with image_tag_group_id ${ofImageTagGroupId} does not have image tag with image_tag_id ${id}`,
                     status.NOT_FOUND
                 );
             }
@@ -261,14 +261,14 @@ export class ImageTagManagementOperatorImpl
     }
 
     public async deleteImageTag(
-        ofImageTagGroupID: number,
+        ofImageTagGroupId: number,
         id: number
     ): Promise<void> {
         return this.imageTagDM.withTransaction(async (dm) => {
             const imageTag = await dm.getImageTagWithXLock(id);
             if (imageTag === null) {
                 this.logger.error("no image tag with image_tag_id found", {
-                    imageTagID: id,
+                    imageTagId: id,
                 });
                 throw new ErrorWithStatus(
                     `no image tag with image_tag_id ${id} found`,
@@ -276,13 +276,13 @@ export class ImageTagManagementOperatorImpl
                 );
             }
 
-            if (imageTag.ofImageTagGroupID !== ofImageTagGroupID) {
+            if (imageTag.ofImageTagGroupId !== ofImageTagGroupId) {
                 this.logger.error(
                     "image tag group with image_tag_group_id does not have image tag with image_tag_id",
-                    { imageTypeID: ofImageTagGroupID, imageTagID: id }
+                    { imageTypeId: ofImageTagGroupId, imageTagId: id }
                 );
                 throw new ErrorWithStatus(
-                    `image type with image_type_id ${ofImageTagGroupID} does not have region label ${id}`,
+                    `image type with image_type_id ${ofImageTagGroupId} does not have region label ${id}`,
                     status.NOT_FOUND
                 );
             }
@@ -292,128 +292,128 @@ export class ImageTagManagementOperatorImpl
     }
 
     public async addImageTypeToImageTagGroup(
-        imageTagGroupID: number,
-        imageTypeID: number
+        imageTagGroupId: number,
+        imageTypeId: number
     ): Promise<void> {
         const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
-            imageTagGroupID
+            imageTagGroupId
         );
         if (imageTagGroup === null) {
             this.logger.error(
                 "no image tag group with image_tag_group_id found",
-                { imageTagGroupID }
+                { imageTagGroupId }
             );
             throw new ErrorWithStatus(
-                `no image tag group with image_tag_group_id ${imageTagGroupID} found`,
+                `no image tag group with image_tag_group_id ${imageTagGroupId} found`,
                 status.NOT_FOUND
             );
         }
-        const imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        const imageType = await this.imageTypeDM.getImageType(imageTypeId);
         if (imageType === null) {
             this.logger.error("no image type with image_type_id found", {
-                imageTypeID,
+                imageTypeId,
             });
             throw new ErrorWithStatus(
-                `no image type with image_type_id ${imageTypeID} found`,
+                `no image type with image_type_id ${imageTypeId} found`,
                 status.NOT_FOUND
             );
         }
         return this.imageTagGroupHasImageTypeDM.withTransaction(async (dm) => {
             const relation = await dm.getImageTagGroupHasImageTypeWithXLock(
-                imageTagGroupID,
-                imageTypeID
+                imageTagGroupId,
+                imageTypeId
             );
             if (relation !== null) {
                 this.logger.error(
                     "image tag group with image_tag_group_id already has image type with image_type_id",
-                    { imageTagGroupID, imageTypeID }
+                    { imageTagGroupId, imageTypeId }
                 );
                 throw new ErrorWithStatus(
-                    `image tag group with image_tag_group_id ${imageTagGroupID} already has image type with image_type_id ${imageTypeID}`,
+                    `image tag group with image_tag_group_id ${imageTagGroupId} already has image type with image_type_id ${imageTypeId}`,
                     status.ALREADY_EXISTS
                 );
             }
             await dm.createImageTagGroupHasImageType(
-                imageTagGroupID,
-                imageTypeID
+                imageTagGroupId,
+                imageTypeId
             );
         });
     }
 
     public async removeImageTypeFromImageTagGroup(
-        imageTagGroupID: number,
-        imageTypeID: number
+        imageTagGroupId: number,
+        imageTypeId: number
     ): Promise<void> {
         const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
-            imageTagGroupID
+            imageTagGroupId
         );
         if (imageTagGroup === null) {
             this.logger.error(
                 "no image tag group with image_tag_group_id found",
-                { imageTagGroupID }
+                { imageTagGroupId }
             );
             throw new ErrorWithStatus(
-                `no image tag group with image_tag_group_id ${imageTagGroupID} found`,
+                `no image tag group with image_tag_group_id ${imageTagGroupId} found`,
                 status.NOT_FOUND
             );
         }
-        const imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        const imageType = await this.imageTypeDM.getImageType(imageTypeId);
         if (imageType === null) {
             this.logger.error("no image type with image_type_id found", {
-                imageTypeID,
+                imageTypeId,
             });
             throw new ErrorWithStatus(
-                `no image type with image_type_id ${imageTypeID} found`,
+                `no image type with image_type_id ${imageTypeId} found`,
                 status.NOT_FOUND
             );
         }
         return this.imageTagGroupHasImageTypeDM.withTransaction(async (dm) => {
             const relation = await dm.getImageTagGroupHasImageTypeWithXLock(
-                imageTagGroupID,
-                imageTypeID
+                imageTagGroupId,
+                imageTypeId
             );
             if (relation === null) {
                 this.logger.error(
                     "image tag group with image_tag_group_id does not have image type with image_type_id",
-                    { imageTagGroupID, imageTypeID }
+                    { imageTagGroupId, imageTypeId }
                 );
                 throw new ErrorWithStatus(
-                    `image tag group with image_tag_group_id ${imageTagGroupID} does not have image type with image_type_id ${imageTypeID}`,
+                    `image tag group with image_tag_group_id ${imageTagGroupId} does not have image type with image_type_id ${imageTypeId}`,
                     status.FAILED_PRECONDITION
                 );
             }
             await dm.deleteImageTagGroupHasImageType(
-                imageTagGroupID,
-                imageTypeID
+                imageTagGroupId,
+                imageTypeId
             );
         });
     }
 
-    public async getImageTagGroupListOfImageType(imageTypeID: number): Promise<{
+    public async getImageTagGroupListOfImageType(imageTypeId: number): Promise<{
         imageTagGroupList: ImageTagGroup[];
         imageTagList: ImageTag[][];
     }> {
-        const imageType = await this.imageTypeDM.getImageType(imageTypeID);
+        const imageType = await this.imageTypeDM.getImageType(imageTypeId);
         if (imageType === null) {
             this.logger.error("no image type with image_type_id found", {
-                imageTypeID,
+                imageTypeId,
             });
             throw new ErrorWithStatus(
-                `no image type with image_type_id ${imageTypeID} found`,
+                `no image type with image_type_id ${imageTypeId} found`,
                 status.NOT_FOUND
             );
         }
         const imageTagGroupList =
             await this.imageTagGroupHasImageTypeDM.getImageTagGroupOfImageType(
-                imageTypeID
+                imageTypeId
             );
 
-        const imageTagGroupIDList = imageTagGroupList.map(
+        const imageTagGroupIdList = imageTagGroupList.map(
             (imageTagGroup) => imageTagGroup.id
         );
         const imageTagList =
-            await this.imageTagDM.getImageTagListOfImageTagGroupIDList(
-                imageTagGroupIDList
+            await this.imageTagDM.getImageTagListOfImageTagGroupIdList(
+                imageTagGroupIdList
             );
 
         return { imageTagGroupList, imageTagList };

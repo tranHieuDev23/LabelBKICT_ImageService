@@ -28,17 +28,17 @@ export interface ImageTypeManagementOperator {
     ): Promise<ImageType>;
     deleteImageType(id: number): Promise<void>;
     createRegionLabel(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         displayName: string,
         color: string
     ): Promise<RegionLabel>;
     updateRegionLabel(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         id: number,
         displayName: string | undefined,
         color: string | undefined
     ): Promise<RegionLabel>;
-    deleteRegionLabel(ofImageTypeID: number, id: number): Promise<void>;
+    deleteRegionLabel(ofImageTypeId: number, id: number): Promise<void>;
 }
 
 export class ImageTypeManagementOperatorImpl
@@ -63,12 +63,12 @@ export class ImageTypeManagementOperatorImpl
             );
         }
 
-        const createdImageTypeID = await this.imageTypeDM.createImageType(
+        const createdImageTypeId = await this.imageTypeDM.createImageType(
             displayName,
             hasPredictiveModel
         );
         return {
-            id: createdImageTypeID,
+            id: createdImageTypeId,
             displayName: displayName,
             hasPredictiveModel: hasPredictiveModel,
         };
@@ -79,13 +79,13 @@ export class ImageTypeManagementOperatorImpl
         regionLabelList: RegionLabel[][] | null;
     }> {
         const imageTypeList = await this.imageTypeDM.getImageTypeList();
-        const imageTypeIDList = imageTypeList.map((imageType) => imageType.id);
+        const imageTypeIdList = imageTypeList.map((imageType) => imageType.id);
 
         let regionLabelList: RegionLabel[][] | null = null;
         if (withRegionLabel) {
             regionLabelList =
-                await this.regionLabelDM.getRegionLabelListOfImageTypeIDList(
-                    imageTypeIDList
+                await this.regionLabelDM.getRegionLabelListOfImageTypeIdList(
+                    imageTypeIdList
                 );
         }
 
@@ -112,7 +112,7 @@ export class ImageTypeManagementOperatorImpl
             const imageType = await dm.getImageTypeWithXLock(id);
             if (imageType === null) {
                 this.logger.error("no image type with image_type_id found", {
-                    imageTypeID: id,
+                    imageTypeId: id,
                 });
                 throw new ErrorWithStatus(
                     `no image type with image_type_id ${id} found`,
@@ -137,7 +137,7 @@ export class ImageTypeManagementOperatorImpl
     }
 
     public async createRegionLabel(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         displayName: string,
         color: string
     ): Promise<RegionLabel> {
@@ -158,31 +158,31 @@ export class ImageTypeManagementOperatorImpl
             );
         }
 
-        const imageType = await this.imageTypeDM.getImageType(ofImageTypeID);
+        const imageType = await this.imageTypeDM.getImageType(ofImageTypeId);
         if (imageType === null) {
             this.logger.error("no image type with image_type_id found", {
-                imageTypeID: ofImageTypeID,
+                imageTypeId: ofImageTypeId,
             });
             throw new ErrorWithStatus(
-                `no image type with image_type_id ${ofImageTypeID} found`,
+                `no image type with image_type_id ${ofImageTypeId} found`,
                 status.NOT_FOUND
             );
         }
 
-        const createdRegionLabelID = await this.regionLabelDM.createRegionLabel(
-            ofImageTypeID,
+        const createdRegionLabelId = await this.regionLabelDM.createRegionLabel(
+            ofImageTypeId,
             displayName,
             color
         );
         return {
-            id: createdRegionLabelID,
+            id: createdRegionLabelId,
             displayName: displayName,
             color: color,
         };
     }
 
     public async updateRegionLabel(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         id: number,
         displayName: string | undefined,
         color: string | undefined
@@ -213,7 +213,7 @@ export class ImageTypeManagementOperatorImpl
             if (regionLabel === null) {
                 this.logger.error(
                     "no region label with region_label_id found",
-                    { regionLabelID: id }
+                    { regionLabelId: id }
                 );
                 throw new ErrorWithStatus(
                     `no region label with region_label_id ${id} found`,
@@ -221,13 +221,13 @@ export class ImageTypeManagementOperatorImpl
                 );
             }
 
-            if (regionLabel.ofImageTypeID !== ofImageTypeID) {
+            if (regionLabel.ofImageTypeId !== ofImageTypeId) {
                 this.logger.error(
                     "image type with image_type_id does not have region label",
-                    { imageTypeID: ofImageTypeID, regionLabelID: id }
+                    { imageTypeId: ofImageTypeId, regionLabelId: id }
                 );
                 throw new ErrorWithStatus(
-                    `image type with image_type_id ${ofImageTypeID} does not have region label ${id}`,
+                    `image type with image_type_id ${ofImageTypeId} does not have region label ${id}`,
                     status.NOT_FOUND
                 );
             }
@@ -245,7 +245,7 @@ export class ImageTypeManagementOperatorImpl
     }
 
     public async deleteRegionLabel(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         id: number
     ): Promise<void> {
         return this.regionLabelDM.withTransaction(async (dm) => {
@@ -253,7 +253,7 @@ export class ImageTypeManagementOperatorImpl
             if (regionLabel === null) {
                 this.logger.error(
                     "no region label with region_label_id found",
-                    { regionLabelID: id }
+                    { regionLabelId: id }
                 );
                 throw new ErrorWithStatus(
                     `no region label with region_label_id ${id} found`,
@@ -261,13 +261,13 @@ export class ImageTypeManagementOperatorImpl
                 );
             }
 
-            if (regionLabel.ofImageTypeID !== ofImageTypeID) {
+            if (regionLabel.ofImageTypeId !== ofImageTypeId) {
                 this.logger.error(
                     "image type with image_type_id does not have region label",
-                    { imageTypeID: ofImageTypeID, regionLabelID: id }
+                    { imageTypeId: ofImageTypeId, regionLabelId: id }
                 );
                 throw new ErrorWithStatus(
-                    `image type with image_type_id ${ofImageTypeID} does not have region label ${id}`,
+                    `image type with image_type_id ${ofImageTypeId} does not have region label ${id}`,
                     status.NOT_FOUND
                 );
             }

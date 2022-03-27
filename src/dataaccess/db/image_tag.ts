@@ -8,11 +8,11 @@ import { ImageTag } from "./models";
 
 export interface ImageTagDataAccessor {
     createImageTag(
-        ofImageTagGroupID: number,
+        ofImageTagGroupId: number,
         displayName: string
     ): Promise<number>;
-    getImageTagListOfImageTagGroupIDList(
-        imageTagGroupIDList: number[]
+    getImageTagListOfImageTagGroupIdList(
+        imageTagGroupIdList: number[]
     ): Promise<ImageTag[][]>;
     getImageTag(id: number): Promise<ImageTag | null>;
     getImageTagWithXLock(id: number): Promise<ImageTag | null>;
@@ -24,8 +24,8 @@ export interface ImageTagDataAccessor {
 }
 
 const TabNameImageServiceImageTag = "image_service_image_tag_tab";
-const ColNameImageServiceImageTagID = "image_tag_id";
-const ColNameImageServiceImageTagOfImageTagGroupID = "of_image_tag_group_id";
+const ColNameImageServiceImageTagId = "image_tag_id";
+const ColNameImageServiceImageTagOfImageTagGroupId = "of_image_tag_group_id";
 const ColNameImageServiceImageTagDisplayName = "display_name";
 
 export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
@@ -35,19 +35,19 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
     ) {}
 
     public async createImageTag(
-        ofImageTypeID: number,
+        ofImageTypeId: number,
         displayName: string
     ): Promise<number> {
         try {
             const rows = await this.knex
                 .insert({
-                    [ColNameImageServiceImageTagOfImageTagGroupID]:
-                        ofImageTypeID,
+                    [ColNameImageServiceImageTagOfImageTagGroupId]:
+                        ofImageTypeId,
                     [ColNameImageServiceImageTagDisplayName]: displayName,
                 })
-                .returning(ColNameImageServiceImageTagID)
+                .returning(ColNameImageServiceImageTagId)
                 .into(TabNameImageServiceImageTag);
-            return +rows[0][ColNameImageServiceImageTagID];
+            return +rows[0][ColNameImageServiceImageTagId];
         } catch (error) {
             this.logger.error("failed to create image tag", {
                 displayName,
@@ -57,34 +57,34 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
         }
     }
 
-    public async getImageTagListOfImageTagGroupIDList(
-        imageTagGroupIDList: number[]
+    public async getImageTagListOfImageTagGroupIdList(
+        imageTagGroupIdList: number[]
     ): Promise<ImageTag[][]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceImageTag)
                 .whereIn(
-                    ColNameImageServiceImageTagOfImageTagGroupID,
-                    imageTagGroupIDList
+                    ColNameImageServiceImageTagOfImageTagGroupId,
+                    imageTagGroupIdList
                 );
 
-            const imageTagGroupIDToImageTagList = new Map<number, ImageTag[]>();
+            const imageTagGroupIdToImageTagList = new Map<number, ImageTag[]>();
             for (const row of rows) {
-                const imageTagGroupID =
-                    +row[ColNameImageServiceImageTagOfImageTagGroupID];
-                if (!imageTagGroupIDToImageTagList.has(imageTagGroupID)) {
-                    imageTagGroupIDToImageTagList.set(imageTagGroupID, []);
+                const imageTagGroupId =
+                    +row[ColNameImageServiceImageTagOfImageTagGroupId];
+                if (!imageTagGroupIdToImageTagList.has(imageTagGroupId)) {
+                    imageTagGroupIdToImageTagList.set(imageTagGroupId, []);
                 }
-                imageTagGroupIDToImageTagList
-                    .get(imageTagGroupID)
+                imageTagGroupIdToImageTagList
+                    .get(imageTagGroupId)
                     ?.push(this.getImageTagFromRow(row));
             }
 
             const results: ImageTag[][] = [];
-            for (const imageTagGroupID of imageTagGroupIDList) {
+            for (const imageTagGroupId of imageTagGroupIdList) {
                 results.push(
-                    imageTagGroupIDToImageTagList.get(imageTagGroupID) || []
+                    imageTagGroupIdToImageTagList.get(imageTagGroupId) || []
                 );
             }
             return results;
@@ -104,25 +104,25 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
                 .select()
                 .from(TabNameImageServiceImageTag)
                 .where({
-                    [ColNameImageServiceImageTagID]: id,
+                    [ColNameImageServiceImageTagId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to get image tag", {
-                imageTagID: id,
+                imageTagId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
             this.logger.info("no image tag with image_tag_id found", {
-                imageTagID: id,
+                imageTagId: id,
             });
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one image tag with image_tag_id found",
-                { imageTagID: id }
+                { imageTagId: id }
             );
             throw new ErrorWithStatus(
                 "more than one image tag was found",
@@ -139,26 +139,26 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
                 .select()
                 .from(TabNameImageServiceImageTag)
                 .where({
-                    [ColNameImageServiceImageTagID]: id,
+                    [ColNameImageServiceImageTagId]: id,
                 })
                 .forUpdate();
         } catch (error) {
             this.logger.error("failed to get image tag", {
-                imageTagID: id,
+                imageTagId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
             this.logger.info("no image tag with image_tag_id found", {
-                imageTagID: id,
+                imageTagId: id,
             });
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one image tag with image_tag_id found",
-                { imageTagID: id }
+                { imageTagId: id }
             );
             throw new ErrorWithStatus(
                 "more than one image tag was found",
@@ -173,13 +173,13 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
             await this.knex
                 .table(TabNameImageServiceImageTag)
                 .update({
-                    [ColNameImageServiceImageTagOfImageTagGroupID]:
-                        regionLabel.ofImageTagGroupID,
+                    [ColNameImageServiceImageTagOfImageTagGroupId]:
+                        regionLabel.ofImageTagGroupId,
                     [ColNameImageServiceImageTagDisplayName]:
                         regionLabel.displayName,
                 })
                 .where({
-                    [ColNameImageServiceImageTagID]: regionLabel.id,
+                    [ColNameImageServiceImageTagId]: regionLabel.id,
                 });
         } catch (error) {
             this.logger.error("failed to update image tag", {
@@ -197,18 +197,18 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
                 .delete()
                 .from(TabNameImageServiceImageTag)
                 .where({
-                    [ColNameImageServiceImageTagID]: id,
+                    [ColNameImageServiceImageTagId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to delete image tag", {
-                imageTagID: id,
+                imageTagId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deletedCount === 0) {
             this.logger.error("no image tag with image_tag_id found", {
-                imageTagID: id,
+                imageTagId: id,
             });
             throw new ErrorWithStatus(
                 `no image tag with image_tag_id ${id} found`,
@@ -231,8 +231,8 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
 
     private getImageTagFromRow(row: Record<string, any>): ImageTag {
         return new ImageTag(
-            +row[ColNameImageServiceImageTagID],
-            +row[ColNameImageServiceImageTagOfImageTagGroupID],
+            +row[ColNameImageServiceImageTagId],
+            +row[ColNameImageServiceImageTagOfImageTagGroupId],
             row[ColNameImageServiceImageTagDisplayName]
         );
     }

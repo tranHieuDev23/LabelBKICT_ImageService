@@ -36,31 +36,31 @@ import {
 
 export interface RegionManagementOperator {
     createRegion(
-        ofImageID: number,
-        drawnByUserID: number,
+        ofImageId: number,
+        drawnByUserId: number,
         labeledByUserId: number,
         border: Polygon,
         holes: Polygon[],
-        labelID: number | undefined
+        labeId: number | undefined
     ): Promise<Region>;
     getRegionOperationLogList(
-        ofImageID: number,
-        regionID: number
+        ofImageId: number,
+        regionId: number
     ): Promise<RegionOperationLog[]>;
     updateRegionBoundary(
-        ofImageID: number,
-        regionID: number,
-        drawnByUserID: number,
+        ofImageId: number,
+        regionId: number,
+        drawnByUserId: number,
         border: Polygon,
         holes: Polygon[]
     ): Promise<Region>;
     updateRegionLabel(
-        ofImageID: number,
-        regionID: number,
-        labeledByUserID: number,
-        labelID: number
+        ofImageId: number,
+        regionId: number,
+        labeledByUserId: number,
+        labeId: number
     ): Promise<Region>;
-    deleteRegion(ofImageID: number, regionID: number): Promise<void>;
+    deleteRegion(ofImageId: number, regionId: number): Promise<void>;
 }
 
 export class RegionManagementOperatorImpl implements RegionManagementOperator {
@@ -77,35 +77,35 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
     ) {}
 
     public async createRegion(
-        ofImageID: number,
-        drawnByUserID: number,
-        labeledByUserID: number,
+        ofImageId: number,
+        drawnByUserId: number,
+        labeledByUserId: number,
         border: Polygon,
         holes: Polygon[],
-        labelID: number | undefined
+        labeId: number | undefined
     ): Promise<Region> {
         const currentTime = this.timer.getCurrentTime();
 
-        const image = await this.imageDM.getImage(ofImageID);
+        const image = await this.imageDM.getImage(ofImageId);
         if (image === null) {
             this.logger.error("image with image_id not found", {
-                imageID: ofImageID,
+                imageId: ofImageId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${ofImageID} not found`,
+                `image with image_id ${ofImageId} not found`,
                 status.NOT_FOUND
             );
         }
 
         const regionLabel: RegionLabel | null =
-            await this.getOptionalRegionLabel(labelID);
-        if (regionLabel && image.imageType?.id !== regionLabel.ofImageTypeID) {
+            await this.getOptionalRegionLabel(labeId);
+        if (regionLabel && image.imageType?.id !== regionLabel.ofImageTypeId) {
             this.logger.error(
                 "region label with label_id is not allowed for the image type of image with image_id",
-                { labelID, imageID: ofImageID }
+                { labeId, imageId: ofImageId }
             );
             throw new ErrorWithStatus(
-                `region label with label_id ${labelID} is not allowed for the image type of image with image_id ${ofImageID}`,
+                `region label with label_id ${labeId} is not allowed for the image type of image with image_id ${ofImageId}`,
                 status.FAILED_PRECONDITION
             );
         }
@@ -121,13 +121,13 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         const dmHoles = holes.map((hole) => this.getDMPolygonFromPolygon(hole));
 
         return this.regionDM.withTransaction(async (regionDM) => {
-            const createdRegionID = await regionDM.createRegion({
-                ofImageID,
-                drawnByUserID,
-                labeledByUserID,
+            const createdRegionId = await regionDM.createRegion({
+                ofImageId,
+                drawnByUserId: drawnByUserId,
+                labeledByUserId: labeledByUserId,
                 border: dmBorder,
                 holes: dmHoles,
-                labelID: labelID === undefined ? null : labelID,
+                labeId: labeId === undefined ? null : labeId,
             });
 
             return this.regionOperationLogDM.withTransaction(
@@ -136,11 +136,11 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                         async (regionOperationLogDrawMetadataDM) => {
                             return this.regionOperationLogLabelMetadataDM.withTransaction(
                                 async (regionOperationLogLabelMetadataDM) => {
-                                    const drawLogID =
+                                    const drawLogId =
                                         await regionOperationLogDM.createRegionOperationLog(
                                             {
-                                                ofRegionID: createdRegionID,
-                                                byUserID: drawnByUserID,
+                                                ofRegionId: createdRegionId,
+                                                byUserId: drawnByUserId,
                                                 operationTime: currentTime,
                                                 operationType:
                                                     _RegionOperationType_Values.DRAW,
@@ -148,7 +148,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                         );
                                     await regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
                                         {
-                                            ofLogID: drawLogID,
+                                            ofLogId: drawLogId,
                                             oldBorder: null,
                                             oldHoles: null,
                                             newBorder: dmBorder,
@@ -156,11 +156,11 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                         }
                                     );
 
-                                    const labelLogID =
+                                    const labelLogId =
                                         await regionOperationLogDM.createRegionOperationLog(
                                             {
-                                                ofRegionID: createdRegionID,
-                                                byUserID: labeledByUserID,
+                                                ofRegionId: createdRegionId,
+                                                byUserId: labeledByUserId,
                                                 operationTime: currentTime,
                                                 operationType:
                                                     _RegionOperationType_Values.LABEL,
@@ -168,19 +168,19 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                         );
                                     await regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
                                         {
-                                            ofLogID: labelLogID,
-                                            oldLabelID: null,
-                                            newLabelID:
-                                                labelID === undefined
+                                            ofLogId: labelLogId,
+                                            oldLabelId: null,
+                                            newLabelId:
+                                                labeId === undefined
                                                     ? null
-                                                    : labelID,
+                                                    : labeId,
                                         }
                                     );
 
                                     return {
-                                        id: createdRegionID,
-                                        drawnByUserId: drawnByUserID,
-                                        labeledByUserId: labeledByUserID,
+                                        id: createdRegionId,
+                                        drawnByUserId: drawnByUserId,
+                                        labeledByUserId: labeledByUserId,
                                         border: border,
                                         holes: holes,
                                         label: regionLabel,
@@ -195,18 +195,18 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
     }
 
     private async getOptionalRegionLabel(
-        labelID: number | undefined
+        labeId: number | undefined
     ): Promise<RegionLabel | null> {
-        if (labelID === undefined) {
+        if (labeId === undefined) {
             return null;
         }
-        const regionLabel = await this.regionLabelDM.getRegionLabel(labelID);
+        const regionLabel = await this.regionLabelDM.getRegionLabel(labeId);
         if (regionLabel === null) {
             this.logger.error("region label with label_id not found", {
-                labelID,
+                labeId,
             });
             throw new ErrorWithStatus(
-                `region label with label_id ${labelID} not found`,
+                `region label with label_id ${labeId} not found`,
                 status.NOT_FOUND
             );
         }
@@ -232,48 +232,48 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
     }
 
     public async getRegionOperationLogList(
-        ofImageID: number,
-        regionID: number
+        ofImageId: number,
+        regionId: number
     ): Promise<RegionOperationLog[]> {
-        const image = await this.imageDM.getImage(ofImageID);
+        const image = await this.imageDM.getImage(ofImageId);
         if (image === null) {
             this.logger.error("image with image_id not found", {
-                imageID: ofImageID,
+                imageId: ofImageId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${ofImageID} not found`,
+                `image with image_id ${ofImageId} not found`,
                 status.NOT_FOUND
             );
         }
 
-        const region = await this.regionDM.getRegion(regionID);
+        const region = await this.regionDM.getRegion(regionId);
         if (region === null) {
             this.logger.error("region with region_id not found", {
-                regionID,
+                regionId,
             });
             throw new ErrorWithStatus(
-                `region with region_id ${regionID} not found`,
+                `region with region_id ${regionId} not found`,
                 status.NOT_FOUND
             );
         }
 
-        if (region.ofImageID !== ofImageID) {
+        if (region.ofImageId !== ofImageId) {
             this.logger.error(
                 "region with region_id not found in image with image_id",
                 {
-                    imageID: ofImageID,
-                    regionID,
+                    imageId: ofImageId,
+                    regionId,
                 }
             );
             throw new ErrorWithStatus(
-                `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                `region with region_id ${regionId} not found in image with image_id ${ofImageId}`,
                 status.NOT_FOUND
             );
         }
 
         const regionOperationLogList =
             await this.regionOperationLogDM.getRegionOperationLogListOfRegion(
-                regionID
+                regionId
             );
 
         const resultList: RegionOperationLog[] = [];
@@ -292,7 +292,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
 
                 resultList.push({
                     id: log.id,
-                    byUserId: log.byUserID,
+                    byUserId: log.byUserId,
                     operationTime: log.operationTime,
                     operationType: log.operationType,
                     drawMetadata: {
@@ -328,7 +328,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
 
                 resultList.push({
                     id: log.id,
-                    byUserId: log.byUserID,
+                    byUserId: log.byUserId,
                     operationTime: log.operationTime,
                     operationType: log.operationType,
                     labelMetadata: labelMetadata,
@@ -340,21 +340,21 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
     }
 
     public async updateRegionBoundary(
-        ofImageID: number,
-        regionID: number,
-        drawnByUserID: number,
+        ofImageId: number,
+        regionId: number,
+        drawnByUserId: number,
         border: Polygon,
         holes: Polygon[]
     ): Promise<Region> {
         const currentTime = this.timer.getCurrentTime();
 
-        const image = await this.imageDM.getImage(ofImageID);
+        const image = await this.imageDM.getImage(ofImageId);
         if (image === null) {
             this.logger.error("image with image_id not found", {
-                imageID: ofImageID,
+                imageId: ofImageId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${ofImageID} not found`,
+                `image with image_id ${ofImageId} not found`,
                 status.NOT_FOUND
             );
         }
@@ -370,27 +370,27 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         const dmHoles = holes.map((hole) => this.getDMPolygonFromPolygon(hole));
 
         return this.regionDM.withTransaction(async (regionDM) => {
-            const region = await this.regionDM.getRegionWithXLock(regionID);
+            const region = await this.regionDM.getRegionWithXLock(regionId);
             if (region === null) {
                 this.logger.error("no region with region_id found", {
-                    regionID,
+                    regionId,
                 });
                 throw new ErrorWithStatus(
-                    `no region with region_id ${regionID} found`,
+                    `no region with region_id ${regionId} found`,
                     status.NOT_FOUND
                 );
             }
 
-            if (region.ofImageID !== ofImageID) {
+            if (region.ofImageId !== ofImageId) {
                 this.logger.error(
                     "region with region_id not found in image with image_id",
                     {
-                        imageID: ofImageID,
-                        regionID,
+                        imageId: ofImageId,
+                        regionId,
                     }
                 );
                 throw new ErrorWithStatus(
-                    `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                    `region with region_id ${regionId} not found in image with image_id ${ofImageId}`,
                     status.NOT_FOUND
                 );
             }
@@ -402,22 +402,22 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
 
             await regionDM.updateRegion({
                 id: region.id,
-                drawnByUserID: drawnByUserID,
-                labeledByUserID: region.labeledByUserID,
+                drawnByUserId: drawnByUserId,
+                labeledByUserId: region.labeledByUserId,
                 border: dmBorder,
                 holes: dmHoles,
-                labelID: region.label === null ? null : region.label.id,
+                labelId: region.label === null ? null : region.label.id,
             });
 
             return this.regionOperationLogDM.withTransaction(
                 async (regionOperationLogDM) => {
                     return this.regionOperationLogDrawMetadataDM.withTransaction(
                         async (regionOperationLogDrawMetadataDM) => {
-                            const drawLogID =
+                            const drawLogId =
                                 await regionOperationLogDM.createRegionOperationLog(
                                     {
-                                        ofRegionID: regionID,
-                                        byUserID: drawnByUserID,
+                                        ofRegionId: regionId,
+                                        byUserId: drawnByUserId,
                                         operationTime: currentTime,
                                         operationType:
                                             _RegionOperationType_Values.DRAW,
@@ -425,7 +425,7 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                 );
                             await regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
                                 {
-                                    ofLogID: drawLogID,
+                                    ofLogId: drawLogId,
                                     oldBorder: oldBorder,
                                     oldHoles: oldHoles,
                                     newBorder: dmBorder,
@@ -434,9 +434,9 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                             );
 
                             return {
-                                id: regionID,
-                                drawnByUserId: drawnByUserID,
-                                labeledByUserId: region.labeledByUserID,
+                                id: regionId,
+                                drawnByUserId: drawnByUserId,
+                                labeledByUserId: region.labeledByUserId,
                                 border: border,
                                 holes: holes,
                                 label: region.label,
@@ -449,68 +449,68 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
     }
 
     public async updateRegionLabel(
-        ofImageID: number,
-        regionID: number,
-        labeledByUserID: number,
-        labelID: number
+        ofImageId: number,
+        regionId: number,
+        labeledByUserId: number,
+        labeId: number
     ): Promise<Region> {
         const currentTime = this.timer.getCurrentTime();
 
-        const image = await this.imageDM.getImage(ofImageID);
+        const image = await this.imageDM.getImage(ofImageId);
         if (image === null) {
             this.logger.error("image with image_id not found", {
-                imageID: ofImageID,
+                imageId: ofImageId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${ofImageID} not found`,
+                `image with image_id ${ofImageId} not found`,
                 status.NOT_FOUND
             );
         }
 
-        const newLabel = await this.regionLabelDM.getRegionLabel(labelID);
+        const newLabel = await this.regionLabelDM.getRegionLabel(labeId);
         if (newLabel === null) {
             this.logger.error("region label with label_id not found", {
-                labelID,
+                labeId,
             });
             throw new ErrorWithStatus(
-                `region label with label_id ${labelID} not found`,
+                `region label with label_id ${labeId} not found`,
                 status.NOT_FOUND
             );
         }
 
-        if (newLabel.ofImageTypeID !== image.imageType?.id) {
+        if (newLabel.ofImageTypeId !== image.imageType?.id) {
             this.logger.error(
                 "region label with label_id is not allowed for the image type of image with image_id",
-                { labelID, imageID: ofImageID }
+                { labeId, imageId: ofImageId }
             );
             throw new ErrorWithStatus(
-                `region label with label_id ${labelID} is not allowed for the image type of image with image_id ${ofImageID}`,
+                `region label with label_id ${labeId} is not allowed for the image type of image with image_id ${ofImageId}`,
                 status.FAILED_PRECONDITION
             );
         }
 
         return this.regionDM.withTransaction(async (regionDM) => {
-            const region = await this.regionDM.getRegionWithXLock(regionID);
+            const region = await this.regionDM.getRegionWithXLock(regionId);
             if (region === null) {
                 this.logger.error("no region with region_id found", {
-                    regionID,
+                    regionId,
                 });
                 throw new ErrorWithStatus(
-                    `no region with region_id ${regionID} found`,
+                    `no region with region_id ${regionId} found`,
                     status.NOT_FOUND
                 );
             }
 
-            if (region.ofImageID !== ofImageID) {
+            if (region.ofImageId !== ofImageId) {
                 this.logger.error(
                     "region with region_id not found in image with image_id",
                     {
-                        imageID: ofImageID,
-                        regionID,
+                        imageId: ofImageId,
+                        regionId,
                     }
                 );
                 throw new ErrorWithStatus(
-                    `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                    `region with region_id ${regionId} not found in image with image_id ${ofImageId}`,
                     status.NOT_FOUND
                 );
             }
@@ -520,22 +520,22 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
 
             await regionDM.updateRegion({
                 id: region.id,
-                drawnByUserID: region.drawnByUserID,
-                labeledByUserID: labeledByUserID,
+                drawnByUserId: region.drawnByUserId,
+                labeledByUserId: labeledByUserId,
                 border: region.border,
                 holes: region.holes,
-                labelID: labelID,
+                labelId: labeId,
             });
 
             return this.regionOperationLogDM.withTransaction(
                 async (regionOperationLogDM) => {
                     return this.regionOperationLogLabelMetadataDM.withTransaction(
                         async (regionOperationLogLabelMetadataDM) => {
-                            const drawLogID =
+                            const drawLogId =
                                 await regionOperationLogDM.createRegionOperationLog(
                                     {
-                                        ofRegionID: regionID,
-                                        byUserID: labeledByUserID,
+                                        ofRegionId: regionId,
+                                        byUserId: labeledByUserId,
                                         operationTime: currentTime,
                                         operationType:
                                             _RegionOperationType_Values.LABEL,
@@ -543,17 +543,17 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                                 );
                             await regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
                                 {
-                                    ofLogID: drawLogID,
-                                    oldLabelID:
+                                    ofLogId: drawLogId,
+                                    oldLabelId:
                                         oldLabel === null ? null : oldLabel.id,
-                                    newLabelID: newLabel.id,
+                                    newLabelId: newLabel.id,
                                 }
                             );
 
                             return {
-                                id: regionID,
-                                drawnByUserId: region.drawnByUserID,
-                                labeledByUserId: labeledByUserID,
+                                id: regionId,
+                                drawnByUserId: region.drawnByUserId,
+                                labeledByUserId: labeledByUserId,
                                 border: region.border,
                                 holes: region.holes,
                                 label: newLabel,
@@ -566,46 +566,46 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
     }
 
     public async deleteRegion(
-        ofImageID: number,
-        regionID: number
+        ofImageId: number,
+        regionId: number
     ): Promise<void> {
-        const image = await this.imageDM.getImage(ofImageID);
+        const image = await this.imageDM.getImage(ofImageId);
         if (image === null) {
             this.logger.error("image with image_id not found", {
-                imageID: ofImageID,
+                imageId: ofImageId,
             });
             throw new ErrorWithStatus(
-                `image with image_id ${ofImageID} not found`,
+                `image with image_id ${ofImageId} not found`,
                 status.NOT_FOUND
             );
         }
         return this.regionDM.withTransaction(async (regionDM) => {
-            const region = await regionDM.getRegionWithXLock(regionID);
+            const region = await regionDM.getRegionWithXLock(regionId);
             if (region === null) {
                 this.logger.error("region with region_id not found", {
-                    regionID,
+                    regionId,
                 });
                 throw new ErrorWithStatus(
-                    `region with region_id ${regionID} not found`,
+                    `region with region_id ${regionId} not found`,
                     status.NOT_FOUND
                 );
             }
 
-            if (region.ofImageID !== ofImageID) {
+            if (region.ofImageId !== ofImageId) {
                 this.logger.error(
                     "region with region_id not found in image with image_id",
                     {
-                        imageID: ofImageID,
-                        regionID,
+                        imageId: ofImageId,
+                        regionId,
                     }
                 );
                 throw new ErrorWithStatus(
-                    `region with region_id ${regionID} not found in image with image_id ${ofImageID}`,
+                    `region with region_id ${regionId} not found in image with image_id ${ofImageId}`,
                     status.NOT_FOUND
                 );
             }
 
-            await regionDM.deleteRegion(regionID);
+            await regionDM.deleteRegion(regionId);
         });
     }
 }

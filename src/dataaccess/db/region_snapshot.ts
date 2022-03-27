@@ -12,19 +12,19 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { Polygon, RegionSnapshot, RegionLabel } from "./models";
 
 export interface CreateRegionSnapshotArguments {
-    ofImageID: number;
+    ofImageId: number;
     atStatus: ImageStatus;
-    drawnByUserID: number;
-    labeledByUserID: number;
+    drawnByUserId: number;
+    labeledByUserId: number;
     border: Polygon;
     holes: Polygon[];
-    labelID: number | null;
+    labelId: number | null;
 }
 
 export interface RegionSnapshotDataAccessor {
     createRegionSnapshot(args: CreateRegionSnapshotArguments): Promise<number>;
     getRegionSnapshotListOfImage(
-        imageID: number,
+        imageId: number,
         imageStatus: ImageStatus
     ): Promise<RegionSnapshot[]>;
     withTransaction<T>(
@@ -33,18 +33,18 @@ export interface RegionSnapshotDataAccessor {
 }
 
 const TabNameImageServiceRegionSnapshot = "image_service_region_snapshot_tab";
-const ColNameImageServiceRegionSnapshotID = "region_snapshot_id";
-const ColNameImageServiceRegionSnapshotOfImageID = "of_image_id";
+const ColNameImageServiceRegionSnapshotId = "region_snapshot_id";
+const ColNameImageServiceRegionSnapshotOfImageId = "of_image_id";
 const ColNameImageServiceRegionSnapshotAtStatus = "at_status";
-const ColNameImageServiceRegionSnapshotDrawnByUserID = "drawn_by_user_id";
-const ColNameImageServiceRegionSnapshotLabeledByUserID = "labeled_by_user_id";
+const ColNameImageServiceRegionSnapshotDrawnByUserId = "drawn_by_user_id";
+const ColNameImageServiceRegionSnapshotLabeledByUserId = "labeled_by_user_id";
 const ColNameImageServiceRegionSnapshotBorder = "border";
 const ColNameImageServiceRegionSnapshotHoles = "holes";
-const ColNameImageServiceRegionSnapshotLabelID = "label_id";
+const ColNameImageServiceRegionSnapshotLabelId = "label_id";
 
 const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionLabelRegionLabelID = "region_label_id";
-const ColNameImageServiceRegionLabelOfImageTypeID = "of_image_type_id";
+const ColNameImageServiceRegionLabelRegionLabelId = "region_label_id";
+const ColNameImageServiceRegionLabelOfImageTypeId = "of_image_type_id";
 const ColNameImageServiceRegionLabelDisplayName = "display_name";
 const ColNameImageServiceRegionLabelColor = "color";
 
@@ -63,22 +63,22 @@ export class RegionSnapshotDataAccessorImpl
         try {
             const rows = await this.knex
                 .insert({
-                    [ColNameImageServiceRegionSnapshotOfImageID]:
-                        args.ofImageID,
+                    [ColNameImageServiceRegionSnapshotOfImageId]:
+                        args.ofImageId,
                     [ColNameImageServiceRegionSnapshotAtStatus]: args.atStatus,
-                    [ColNameImageServiceRegionSnapshotDrawnByUserID]:
-                        args.drawnByUserID,
-                    [ColNameImageServiceRegionSnapshotLabeledByUserID]:
-                        args.labeledByUserID,
+                    [ColNameImageServiceRegionSnapshotDrawnByUserId]:
+                        args.drawnByUserId,
+                    [ColNameImageServiceRegionSnapshotLabeledByUserId]:
+                        args.labeledByUserId,
                     [ColNameImageServiceRegionSnapshotBorder]:
                         this.binaryConverter.toBuffer(args.border),
                     [ColNameImageServiceRegionSnapshotHoles]:
                         this.binaryConverter.toBuffer(args.holes),
-                    [ColNameImageServiceRegionSnapshotLabelID]: args.labelID,
+                    [ColNameImageServiceRegionSnapshotLabelId]: args.labelId,
                 })
-                .returning(ColNameImageServiceRegionSnapshotID)
+                .returning(ColNameImageServiceRegionSnapshotId)
                 .into(TabNameImageServiceRegionSnapshot);
-            return +rows[0][ColNameImageServiceRegionSnapshotID];
+            return +rows[0][ColNameImageServiceRegionSnapshotId];
         } catch (error) {
             this.logger.error("failed to create region", { args, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -86,7 +86,7 @@ export class RegionSnapshotDataAccessorImpl
     }
 
     public async getRegionSnapshotListOfImage(
-        imageID: number,
+        imageId: number,
         imageStatus: ImageStatus
     ): Promise<RegionSnapshot[]> {
         try {
@@ -95,17 +95,17 @@ export class RegionSnapshotDataAccessorImpl
                 .from(TabNameImageServiceRegionSnapshot)
                 .leftOuterJoin(
                     TabNameImageServiceRegionLabel,
-                    `${TabNameImageServiceRegionSnapshot}.${ColNameImageServiceRegionSnapshotLabelID}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelID}`
+                    `${TabNameImageServiceRegionSnapshot}.${ColNameImageServiceRegionSnapshotLabelId}`,
+                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelId}`
                 )
                 .where({
-                    [ColNameImageServiceRegionSnapshotOfImageID]: imageID,
+                    [ColNameImageServiceRegionSnapshotOfImageId]: imageId,
                     [ColNameImageServiceRegionSnapshotAtStatus]: imageStatus,
                 });
             return rows.map((row) => this.getRegionFromJoinedRow(row));
         } catch (error) {
             this.logger.error("failed to get region list of image", {
-                imageID,
+                imageId,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -127,18 +127,18 @@ export class RegionSnapshotDataAccessorImpl
 
     private getRegionFromJoinedRow(row: Record<string, any>): RegionSnapshot {
         let label: RegionLabel | null = null;
-        if (row[ColNameImageServiceRegionSnapshotLabelID]) {
+        if (row[ColNameImageServiceRegionSnapshotLabelId]) {
             label = new RegionLabel(
-                +row[ColNameImageServiceRegionSnapshotLabelID],
-                +row[ColNameImageServiceRegionLabelOfImageTypeID],
+                +row[ColNameImageServiceRegionSnapshotLabelId],
+                +row[ColNameImageServiceRegionLabelOfImageTypeId],
                 row[ColNameImageServiceRegionLabelDisplayName],
                 row[ColNameImageServiceRegionLabelColor]
             );
         }
         return new RegionSnapshot(
-            +row[ColNameImageServiceRegionSnapshotID],
-            +row[ColNameImageServiceRegionSnapshotDrawnByUserID],
-            +row[ColNameImageServiceRegionSnapshotLabeledByUserID],
+            +row[ColNameImageServiceRegionSnapshotId],
+            +row[ColNameImageServiceRegionSnapshotDrawnByUserId],
+            +row[ColNameImageServiceRegionSnapshotLabeledByUserId],
             this.binaryConverter.fromBuffer(
                 row[ColNameImageServiceRegionSnapshotBorder]
             ),

@@ -8,11 +8,11 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { ImageType, ImageListSortOrder, Image } from "./models";
 
 export class ImageListFilterOptions {
-    public imageIDList: number[] = [];
-    public imageTypeIDList: number[] = [];
-    public uploadedByUserIDList: number[] = [];
-    public publishedByUserIDList: number[] = [];
-    public verifiedByUserIDList: number[] = [];
+    public imageIdList: number[] = [];
+    public imageTypeIdList: number[] = [];
+    public uploadedByUserIdList: number[] = [];
+    public publishedByUserIdList: number[] = [];
+    public verifiedByUserIdList: number[] = [];
     public uploadTimeStart = 0;
     public uploadTimeEnd = 0;
     public publishTimeStart = 0;
@@ -24,28 +24,28 @@ export class ImageListFilterOptions {
 }
 
 export interface CreateImageArguments {
-    uploadedByUserID: number;
+    uploadedByUserId: number;
     uploadTime: number;
-    publishedByUserID: number;
+    publishedByUserId: number;
     publishTime: number;
-    verifiedByUserID: number;
+    verifiedByUserId: number;
     verifyTime: number;
     originalFileName: string;
     originalImageFilename: string;
     thumbnailImageFilename: string;
     description: string;
-    imageTypeID: number | null;
+    imageTypeId: number | null;
     status: _ImageStatus_Values;
 }
 
 export interface UpdateImageArguments {
     id: number;
-    publishedByUserID: number;
+    publishedByUserId: number;
     publishTime: number;
-    verifiedByUserID: number;
+    verifiedByUserId: number;
     verifyTime: number;
     description: string;
-    imageTypeID: number | null;
+    imageTypeId: number | null;
     status: _ImageStatus_Values;
 }
 
@@ -69,23 +69,23 @@ export interface ImageDataAccessor {
 }
 
 const TabNameImageServiceImage = "image_service_image_tab";
-const ColNameImageServiceImageID = "image_id";
-const ColNameImageServiceImageUploadedByUserID = "uploaded_by_user_id";
+const ColNameImageServiceImageId = "image_id";
+const ColNameImageServiceImageUploadedByUserId = "uploaded_by_user_id";
 const ColNameImageServiceImageUploadTime = "upload_time";
-const ColNameImageServiceImagePublishedByUserID = "published_by_user_id";
+const ColNameImageServiceImagePublishedByUserId = "published_by_user_id";
 const ColNameImageServiceImagePublishTime = "publish_time";
-const ColNameImageServiceImageVerifiedByUserID = "verified_by_user_id";
+const ColNameImageServiceImageVerifiedByUserId = "verified_by_user_id";
 const ColNameImageServiceImageVerifyTime = "verify_time";
 const ColNameImageServiceImageOriginalFileName = "original_file_name";
 const ColNameImageServiceImageOriginalImageFilename = "original_image_filename";
 const ColNameImageServiceImageThumbnailImageFilename =
     "thumbnail_image_filename";
 const ColNameImageServiceImageDescription = "description";
-const ColNameImageServiceImageImageTypeID = "image_type_id";
+const ColNameImageServiceImageImageTypeId = "image_type_id";
 const ColNameImageServiceImageStatus = "status";
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
-const ColNameImageServiceImageTypeID = "image_type_id";
+const ColNameImageServiceImageTypeId = "image_type_id";
 const ColNameImageServiceImageTypeDisplayName = "display_name";
 const ColNameImageServiceImageTypeHasPredictiveModel = "has_predictive_model";
 
@@ -99,14 +99,14 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         try {
             const rows = await this.knex
                 .insert({
-                    [ColNameImageServiceImageUploadedByUserID]:
-                        args.uploadedByUserID,
+                    [ColNameImageServiceImageUploadedByUserId]:
+                        args.uploadedByUserId,
                     [ColNameImageServiceImageUploadTime]: args.uploadTime,
-                    [ColNameImageServiceImagePublishedByUserID]:
-                        args.publishedByUserID,
+                    [ColNameImageServiceImagePublishedByUserId]:
+                        args.publishedByUserId,
                     [ColNameImageServiceImagePublishTime]: args.publishTime,
-                    [ColNameImageServiceImageVerifiedByUserID]:
-                        args.verifiedByUserID,
+                    [ColNameImageServiceImageVerifiedByUserId]:
+                        args.verifiedByUserId,
                     [ColNameImageServiceImageVerifyTime]: args.verifyTime,
                     [ColNameImageServiceImageOriginalFileName]:
                         args.originalFileName,
@@ -115,12 +115,12 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     [ColNameImageServiceImageThumbnailImageFilename]:
                         args.thumbnailImageFilename,
                     [ColNameImageServiceImageDescription]: args.description,
-                    [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
+                    [ColNameImageServiceImageImageTypeId]: args.imageTypeId,
                     [ColNameImageServiceImageStatus]: args.status,
                 })
-                .returning([ColNameImageServiceImageID])
+                .returning([ColNameImageServiceImageId])
                 .into(TabNameImageServiceImage);
-            return +rows[0][ColNameImageServiceImageID];
+            return +rows[0][ColNameImageServiceImageId];
         } catch (error) {
             this.logger.error("failed to create image", { args, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -135,25 +135,25 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .from(TabNameImageServiceImage)
                 .leftOuterJoin(
                     TabNameImageServiceImageType,
-                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeID}`,
-                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeID}`
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeId}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeId}`
                 )
                 .where({
-                    [ColNameImageServiceImageID]: id,
+                    [ColNameImageServiceImageId]: id,
                 });
         } catch (error) {
-            this.logger.error("failed to get image", { imageID: id, error });
+            this.logger.error("failed to get image", { imageId: id, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
 
         if (rows.length === 0) {
-            this.logger.debug("no image with image_id found", { imageID: id });
+            this.logger.debug("no image with image_id found", { imageId: id });
             return null;
         }
 
         if (rows.length > 1) {
             this.logger.error("more than one image with image_id found", {
-                imageID: id,
+                imageId: id,
             });
             throw new ErrorWithStatus(
                 "more than one image was found",
@@ -172,26 +172,26 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .from(TabNameImageServiceImage)
                 .leftOuterJoin(
                     TabNameImageServiceImageType,
-                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeID}`,
-                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeID}`
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeId}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeId}`
                 )
                 .where({
-                    [ColNameImageServiceImageID]: id,
+                    [ColNameImageServiceImageId]: id,
                 })
                 .forUpdate();
         } catch (error) {
-            this.logger.error("failed to get image", { imageID: id, error });
+            this.logger.error("failed to get image", { imageId: id, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
 
         if (rows.length === 0) {
-            this.logger.debug("no image with image_id found", { imageID: id });
+            this.logger.debug("no image with image_id found", { imageId: id });
             return null;
         }
 
         if (rows.length > 1) {
             this.logger.error("more than one image with image_id found", {
-                imageID: id,
+                imageId: id,
             });
             throw new ErrorWithStatus(
                 "more than one image was found",
@@ -214,8 +214,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .from(TabNameImageServiceImage)
                 .leftOuterJoin(
                     TabNameImageServiceImageType,
-                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeID}`,
-                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeID}`
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeId}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeId}`
                 )
                 .offset(offset)
                 .limit(limit);
@@ -266,18 +266,18 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             await this.knex
                 .table(TabNameImageServiceImage)
                 .update({
-                    [ColNameImageServiceImagePublishedByUserID]:
-                        args.publishedByUserID,
+                    [ColNameImageServiceImagePublishedByUserId]:
+                        args.publishedByUserId,
                     [ColNameImageServiceImagePublishTime]: args.publishTime,
-                    [ColNameImageServiceImageVerifiedByUserID]:
-                        args.verifiedByUserID,
+                    [ColNameImageServiceImageVerifiedByUserId]:
+                        args.verifiedByUserId,
                     [ColNameImageServiceImageVerifyTime]: args.verifyTime,
                     [ColNameImageServiceImageDescription]: args.description,
-                    [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
+                    [ColNameImageServiceImageImageTypeId]: args.imageTypeId,
                     [ColNameImageServiceImageStatus]: args.status,
                 })
                 .where({
-                    [ColNameImageServiceImageID]: args.id,
+                    [ColNameImageServiceImageId]: args.id,
                 });
         } catch (error) {
             this.logger.error("failed to update image", { args, error });
@@ -292,14 +292,14 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 .delete()
                 .from(TabNameImageServiceImage)
                 .where({
-                    [ColNameImageServiceImageID]: id,
+                    [ColNameImageServiceImageId]: id,
                 });
         } catch (error) {
-            this.logger.error("failed to delete image", { imageID: id, error });
+            this.logger.error("failed to delete image", { imageId: id, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deletedCount === 0) {
-            this.logger.error("no image with image_id found", { imageID: id });
+            this.logger.error("no image with image_id found", { imageId: id });
             throw new ErrorWithStatus(
                 `no image with image_id ${id} found`,
                 status.NOT_FOUND
@@ -312,10 +312,10 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             await this.knex
                 .delete()
                 .from(TabNameImageServiceImage)
-                .whereIn(ColNameImageServiceImageID, idList);
+                .whereIn(ColNameImageServiceImageId, idList);
         } catch (error) {
             this.logger.error("failed to delete image", {
-                imageIDList: idList,
+                imageIdList: idList,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -336,31 +336,31 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         filterOptions: ImageListFilterOptions
     ): Knex.QueryBuilder {
         const queryCallbackList: Knex.QueryCallback[] = [];
-        if (filterOptions.imageIDList.length > 0) {
+        if (filterOptions.imageIdList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.whereIn(
-                    ColNameImageServiceImageID,
-                    filterOptions.imageIDList
+                    ColNameImageServiceImageId,
+                    filterOptions.imageIdList
                 );
             });
         }
-        if (filterOptions.imageTypeIDList.length > 0) {
+        if (filterOptions.imageTypeIdList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.whereIn(
-                    ColNameImageServiceImageTypeID,
-                    filterOptions.imageTypeIDList
+                    ColNameImageServiceImageTypeId,
+                    filterOptions.imageTypeIdList
                 );
             });
         }
-        if (filterOptions.uploadedByUserIDList.length > 0) {
+        if (filterOptions.uploadedByUserIdList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.whereIn(
-                    ColNameImageServiceImageUploadedByUserID,
-                    filterOptions.uploadedByUserIDList
+                    ColNameImageServiceImageUploadedByUserId,
+                    filterOptions.uploadedByUserIdList
                 );
             });
         }
-        if (filterOptions.publishedByUserIDList.length > 0) {
+        if (filterOptions.publishedByUserIdList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.where(
                     ColNameImageServiceImageStatus,
@@ -368,13 +368,13 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     _ImageStatus_Values.VERIFIED
                 ).andWhere((qb) => {
                     qb.whereIn(
-                        ColNameImageServiceImagePublishedByUserID,
-                        filterOptions.publishedByUserIDList
+                        ColNameImageServiceImagePublishedByUserId,
+                        filterOptions.publishedByUserIdList
                     );
                 });
             });
         }
-        if (filterOptions.verifiedByUserIDList.length > 0) {
+        if (filterOptions.verifiedByUserIdList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.where(
                     ColNameImageServiceImageStatus,
@@ -382,8 +382,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     _ImageStatus_Values.VERIFIED
                 ).andWhere((qb) => {
                     qb.whereIn(
-                        ColNameImageServiceImageVerifiedByUserID,
-                        filterOptions.verifiedByUserIDList
+                        ColNameImageServiceImageVerifiedByUserId,
+                        filterOptions.verifiedByUserIdList
                     );
                 });
             });
@@ -489,32 +489,32 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         sortOption: ImageListSortOrder
     ): Knex.QueryBuilder {
         switch (sortOption) {
-            case ImageListSortOrder.ID_ASCENDING:
-                return qb.orderBy(ColNameImageServiceImageID, "asc");
-            case ImageListSortOrder.ID_DESCENDING:
-                return qb.orderBy(ColNameImageServiceImageID, "desc");
+            case ImageListSortOrder.Id_ASCENDING:
+                return qb.orderBy(ColNameImageServiceImageId, "asc");
+            case ImageListSortOrder.Id_DESCENDING:
+                return qb.orderBy(ColNameImageServiceImageId, "desc");
             case ImageListSortOrder.UPLOAD_TIME_ASCENDING:
                 return qb
                     .orderBy(ColNameImageServiceImageUploadTime, "asc")
-                    .orderBy(ColNameImageServiceImageID, "asc");
+                    .orderBy(ColNameImageServiceImageId, "asc");
             case ImageListSortOrder.UPLOAD_TIME_DESCENDING:
                 return qb
                     .orderBy(ColNameImageServiceImageUploadTime, "desc")
-                    .orderBy(ColNameImageServiceImageID, "desc");
+                    .orderBy(ColNameImageServiceImageId, "desc");
             case ImageListSortOrder.PUBLISH_TIME_ASCENDING:
                 return qb
                     .orderBy(ColNameImageServiceImagePublishTime, "asc")
-                    .orderBy(ColNameImageServiceImageID, "asc");
+                    .orderBy(ColNameImageServiceImageId, "asc");
             case ImageListSortOrder.PUBLISH_TIME_DESCENDING:
                 return qb.orderBy(ColNameImageServiceImagePublishTime, "desc");
             case ImageListSortOrder.VERIFY_TIME_ASCENDING:
                 return qb
                     .orderBy(ColNameImageServiceImageVerifyTime, "asc")
-                    .orderBy(ColNameImageServiceImageID, "asc");
+                    .orderBy(ColNameImageServiceImageId, "asc");
             case ImageListSortOrder.VERIFY_TIME_DESCENDING:
                 return qb
                     .orderBy(ColNameImageServiceImageVerifyTime, "desc")
-                    .orderBy(ColNameImageServiceImageID, "desc");
+                    .orderBy(ColNameImageServiceImageId, "desc");
             default:
                 throw new ErrorWithStatus(
                     "invalid image list sort order",
@@ -525,20 +525,20 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
 
     private getImageFrowJoinedRow(row: Record<string, any>): Image {
         let imageType: ImageType | null = null;
-        if (row[ColNameImageServiceImageImageTypeID]) {
+        if (row[ColNameImageServiceImageImageTypeId]) {
             imageType = new ImageType(
-                row[ColNameImageServiceImageImageTypeID],
+                row[ColNameImageServiceImageImageTypeId],
                 row[ColNameImageServiceImageTypeDisplayName],
                 row[ColNameImageServiceImageTypeHasPredictiveModel]
             );
         }
         return new Image(
-            +row[ColNameImageServiceImageID],
-            +row[ColNameImageServiceImageUploadedByUserID],
+            +row[ColNameImageServiceImageId],
+            +row[ColNameImageServiceImageUploadedByUserId],
             +row[ColNameImageServiceImageUploadTime],
-            +row[ColNameImageServiceImagePublishedByUserID],
+            +row[ColNameImageServiceImagePublishedByUserId],
             +row[ColNameImageServiceImagePublishTime],
-            +row[ColNameImageServiceImageVerifiedByUserID],
+            +row[ColNameImageServiceImageVerifiedByUserId],
             row[ColNameImageServiceImageVerifyTime],
             row[ColNameImageServiceImageOriginalFileName],
             row[ColNameImageServiceImageOriginalImageFilename],

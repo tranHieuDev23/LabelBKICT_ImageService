@@ -22,7 +22,7 @@ export interface ImageTagGroupDataAccessor {
 }
 
 const TabNameImageServiceImageTagGroup = "image_service_image_tag_group_tab";
-const ColNameImageServiceImageTagGroupID = "image_tag_group_id";
+const ColNameImageServiceImageTagGroupId = "image_tag_group_id";
 const ColNameImageServiceImageTagGroupDisplayName = "display_name";
 const ColNameImageServiceImageTagGroupIsSingleValue = "is_single_value";
 
@@ -45,9 +45,9 @@ export class ImageTagGroupDataAccessorImpl
                     [ColNameImageServiceImageTagGroupIsSingleValue]:
                         isSingleValue,
                 })
-                .returning(ColNameImageServiceImageTagGroupID)
+                .returning(ColNameImageServiceImageTagGroupId)
                 .into(TabNameImageServiceImageTagGroup);
-            return +rows[0][ColNameImageServiceImageTagGroupID];
+            return +rows[0][ColNameImageServiceImageTagGroupId];
         } catch (error) {
             this.logger.error("failed to create image tag group", {
                 displayName,
@@ -63,7 +63,7 @@ export class ImageTagGroupDataAccessorImpl
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceImageTagGroup)
-                .orderBy(ColNameImageServiceImageTagGroupID, "asc");
+                .orderBy(ColNameImageServiceImageTagGroupId, "asc");
             return rows.map((row) => this.getImageTagGroupFromRow(row));
         } catch (error) {
             this.logger.error("failed to get image tag group list", { error });
@@ -78,11 +78,11 @@ export class ImageTagGroupDataAccessorImpl
                 .select()
                 .from(TabNameImageServiceImageTagGroup)
                 .where({
-                    [ColNameImageServiceImageTagGroupID]: id,
+                    [ColNameImageServiceImageTagGroupId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to get image tag group", {
-                imageTagGroupID: id,
+                imageTagGroupId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -90,14 +90,14 @@ export class ImageTagGroupDataAccessorImpl
         if (rows.length === 0) {
             this.logger.info(
                 "no image tag group with image_tag_group_id found",
-                { imageTagGroupID: id }
+                { imageTagGroupId: id }
             );
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one image tag group with image_tag_group_id found",
-                { imageTagGroupID: id }
+                { imageTagGroupId: id }
             );
             throw new ErrorWithStatus(
                 "more than one image tag group was found",
@@ -116,12 +116,12 @@ export class ImageTagGroupDataAccessorImpl
                 .select()
                 .from(TabNameImageServiceImageTagGroup)
                 .where({
-                    [ColNameImageServiceImageTagGroupID]: id,
+                    [ColNameImageServiceImageTagGroupId]: id,
                 })
                 .forUpdate();
         } catch (error) {
             this.logger.error("failed to get image tag group", {
-                imageTagGroupID: id,
+                imageTagGroupId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -129,14 +129,14 @@ export class ImageTagGroupDataAccessorImpl
         if (rows.length === 0) {
             this.logger.info(
                 "no image tag group with image_tag_group_id found",
-                { imageTagGroupID: id }
+                { imageTagGroupId: id }
             );
             return null;
         }
         if (rows.length > 1) {
             this.logger.error(
                 "more than one image tag group with image_tag_group_id found",
-                { imageTagGroupID: id }
+                { imageTagGroupId: id }
             );
             throw new ErrorWithStatus(
                 "more than one image tag group was found",
@@ -159,7 +159,7 @@ export class ImageTagGroupDataAccessorImpl
                         imageTagGroup.isSingleValue,
                 })
                 .where({
-                    [ColNameImageServiceImageTagGroupID]: imageTagGroup.id,
+                    [ColNameImageServiceImageTagGroupId]: imageTagGroup.id,
                 });
         } catch (error) {
             this.logger.error("failed to update image tag group", {
@@ -177,11 +177,11 @@ export class ImageTagGroupDataAccessorImpl
                 .delete()
                 .from(TabNameImageServiceImageTagGroup)
                 .where({
-                    [ColNameImageServiceImageTagGroupID]: id,
+                    [ColNameImageServiceImageTagGroupId]: id,
                 });
         } catch (error) {
             this.logger.error("failed to delete image tag group", {
-                imageTypeID: id,
+                imageTypeId: id,
                 error,
             });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
@@ -189,7 +189,7 @@ export class ImageTagGroupDataAccessorImpl
         if (deletedCount === 0) {
             this.logger.error(
                 "no image tag group with image_tag_group_id found",
-                { imageTagGroupID: id }
+                { imageTagGroupId: id }
             );
             throw new ErrorWithStatus(
                 `no image tag group with image_tag_group_id ${id} found`,
@@ -212,7 +212,7 @@ export class ImageTagGroupDataAccessorImpl
 
     private getImageTagGroupFromRow(row: Record<string, any>): ImageTagGroup {
         return new ImageTagGroup(
-            +row[ColNameImageServiceImageTagGroupID],
+            +row[ColNameImageServiceImageTagGroupId],
             row[ColNameImageServiceImageTagGroupDisplayName],
             row[ColNameImageServiceImageTagGroupIsSingleValue]
         );

@@ -1,12 +1,12 @@
 import { token } from "brandi";
 
 export class DistributedConfig {
-    public nodeID = 0;
+    public nodeId = 0;
 
     public static fromEnv(): DistributedConfig {
         const config = new DistributedConfig();
         if (process.env.NODE_ID !== undefined) {
-            config.nodeID = +process.env.NODE_ID;
+            config.nodeId = +process.env.NODE_ID;
         }
         return config;
     }

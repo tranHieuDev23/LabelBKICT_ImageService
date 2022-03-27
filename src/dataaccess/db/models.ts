@@ -12,7 +12,7 @@ export class ImageType {
 export class RegionLabel {
     constructor(
         public id: number,
-        public ofImageTypeID: number,
+        public ofImageTypeId: number,
         public displayName: string,
         public color: string
     ) {}
@@ -29,7 +29,7 @@ export class ImageTagGroup {
 export class ImageTag {
     constructor(
         public id: number,
-        public ofImageTagGroupID: number,
+        public ofImageTagGroupId: number,
         public displayName: string
     ) {}
 }
@@ -37,11 +37,11 @@ export class ImageTag {
 export class Image {
     constructor(
         public id: number,
-        public uploadedByUserID: number,
+        public uploadedByUserId: number,
         public uploadTime: number,
-        public publishedByUserID: number,
+        public publishedByUserId: number,
         public publishTime: number,
-        public verifiedByUserID: number,
+        public verifiedByUserId: number,
         public verifyTime: number,
         public originalFileName: string,
         public imageURL: string,
@@ -53,8 +53,8 @@ export class Image {
 }
 
 export enum ImageListSortOrder {
-    ID_ASCENDING = 0,
-    ID_DESCENDING = 1,
+    Id_ASCENDING = 0,
+    Id_DESCENDING = 1,
     UPLOAD_TIME_ASCENDING = 2,
     UPLOAD_TIME_DESCENDING = 3,
     PUBLISH_TIME_ASCENDING = 4,
@@ -74,9 +74,9 @@ export class Polygon {
 export class Region {
     constructor(
         public id: number,
-        public ofImageID: number,
-        public drawnByUserID: number,
-        public labeledByUserID: number,
+        public ofImageId: number,
+        public drawnByUserId: number,
+        public labeledByUserId: number,
         public border: Polygon,
         public holes: Polygon[],
         public label: RegionLabel | null
@@ -86,8 +86,8 @@ export class Region {
 export class RegionOperationLog {
     constructor(
         public id: number,
-        public ofRegionID: number,
-        public byUserID: number,
+        public ofRegionId: number,
+        public byUserId: number,
         public operationTime: number,
         public operationType: _RegionOperationType_Values
     ) {}
@@ -95,7 +95,7 @@ export class RegionOperationLog {
 
 export class RegionOperationLogDrawMetadata {
     constructor(
-        public ofLogID: number,
+        public ofLogId: number,
         public oldBorder: Polygon | null,
         public oldHoles: Polygon[] | null,
         public newBorder: Polygon,
@@ -105,7 +105,7 @@ export class RegionOperationLogDrawMetadata {
 
 export class RegionOperationLogLabelMetadata {
     constructor(
-        public ofLogID: number,
+        public ofLogId: number,
         public oldRegionLabel: RegionLabel | null,
         public newRegionLabel: RegionLabel | null
     ) {}
@@ -114,8 +114,8 @@ export class RegionOperationLogLabelMetadata {
 export class RegionSnapshot {
     constructor(
         public id: number,
-        public drawnByUserID: number,
-        public labeledByUserID: number,
+        public drawnByUserId: number,
+        public labeledByUserId: number,
         public border: Polygon,
         public holes: Polygon[],
         public label: RegionLabel | null
