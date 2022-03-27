@@ -220,49 +220,47 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
 
-        return this.imageDM.withTransaction(async (imageDM) => {
-            const uploadedImageID = await imageDM.createImage({
-                uploadedByUserID: uploadedByUserID,
-                uploadTime: uploadTime,
-                publishedByUserID: 0,
-                publishTime: 0,
-                verifiedByUserID: 0,
-                verifyTime: 0,
-                originalFileName: originalFileName,
-                originalImageFilename: originalImageFileName,
-                thumbnailImageFilename: thumbnailImageFileName,
-                description: description,
-                imageTypeID: imageTypeID === undefined ? null : imageTypeID,
-                status: _ImageStatus_Values.UPLOADED,
-            });
-
-            return this.imageHasImageTagDM.withTransaction(
-                async (imageHasImageTagDM) => {
-                    for (const imageTagID of imageTagIDList) {
-                        await imageHasImageTagDM.createImageHasImageTag(
-                            uploadedImageID,
-                            imageTagID
-                        );
-                    }
-
-                    return {
-                        id: uploadedImageID,
-                        uploadedByUserId: uploadedByUserID,
-                        uploadTime: uploadTime,
-                        publishedByUserId: 0,
-                        publishTime: 0,
-                        verifiedByUserId: 0,
-                        verifyTime: 0,
-                        originalFileName: originalFileName,
-                        originalImageFilename: originalImageFileName,
-                        thumbnailImageFilename: thumbnailImageFileName,
-                        description: description,
-                        imageType: imageType,
-                        status: _ImageStatus_Values.UPLOADED,
-                    };
-                }
-            );
+        const uploadedImageID = await this.imageDM.createImage({
+            uploadedByUserID: uploadedByUserID,
+            uploadTime: uploadTime,
+            publishedByUserID: 0,
+            publishTime: 0,
+            verifiedByUserID: 0,
+            verifyTime: 0,
+            originalFileName: originalFileName,
+            originalImageFilename: originalImageFileName,
+            thumbnailImageFilename: thumbnailImageFileName,
+            description: description,
+            imageTypeID: imageTypeID === undefined ? null : imageTypeID,
+            status: _ImageStatus_Values.UPLOADED,
         });
+
+        return this.imageHasImageTagDM.withTransaction(
+            async (imageHasImageTagDM) => {
+                for (const imageTagID of imageTagIDList) {
+                    await imageHasImageTagDM.createImageHasImageTag(
+                        uploadedImageID,
+                        imageTagID
+                    );
+                }
+
+                return {
+                    id: uploadedImageID,
+                    uploadedByUserId: uploadedByUserID,
+                    uploadTime: uploadTime,
+                    publishedByUserId: 0,
+                    publishTime: 0,
+                    verifiedByUserId: 0,
+                    verifyTime: 0,
+                    originalFileName: originalFileName,
+                    originalImageFilename: originalImageFileName,
+                    thumbnailImageFilename: thumbnailImageFileName,
+                    description: description,
+                    imageType: imageType,
+                    status: _ImageStatus_Values.UPLOADED,
+                };
+            }
+        );
     }
 
     private sanitizeOriginalFileName(originalFileName: string): string {
