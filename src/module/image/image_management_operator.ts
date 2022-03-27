@@ -421,7 +421,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         dmFilterOptions.verifyTimeStart = +(filterOptions.verifyTimeStart || 0);
         dmFilterOptions.verifyTimeEnd = +(filterOptions.verifyTimeEnd || 0);
 
-        dmFilterOptions.imageTypeIdList = filterOptions.imageTypeIdList || [];
+        dmFilterOptions.imageTypeIdList = (
+            filterOptions.imageTypeIdList || []
+        ).map((imageTypeId) => {
+            return imageTypeId === 0 ? null : imageTypeId;
+        });
+
         dmFilterOptions.originalFileNameQuery =
             filterOptions.originalFileNameQuery || "";
         dmFilterOptions.imageStatusList = filterOptions.imageStatusList || [];

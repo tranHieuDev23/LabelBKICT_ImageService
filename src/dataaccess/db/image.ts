@@ -9,7 +9,7 @@ import { ImageType, ImageListSortOrder, Image } from "./models";
 
 export class ImageListFilterOptions {
     public imageIdList: number[] = [];
-    public imageTypeIdList: number[] = [];
+    public imageTypeIdList: (number | null)[] = [];
     public uploadedByUserIdList: number[] = [];
     public publishedByUserIdList: number[] = [];
     public verifiedByUserIdList: number[] = [];
@@ -347,7 +347,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         if (filterOptions.imageTypeIdList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.whereIn(
-                    ColNameImageServiceImageTypeId,
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageTypeId}`,
                     filterOptions.imageTypeIdList
                 );
             });
