@@ -345,11 +345,20 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             });
         }
         if (filterOptions.imageTypeIdList.length > 0) {
+            const hasNullImageType =
+                filterOptions.imageTypeIdList.findIndex(
+                    (imageTypeId) => imageTypeId === null
+                ) !== -1;
             queryCallbackList.push((qb) => {
                 qb.whereIn(
                     `${TabNameImageServiceImage}.${ColNameImageServiceImageTypeId}`,
                     filterOptions.imageTypeIdList
                 );
+                if (hasNullImageType) {
+                    qb.orWhereNull(
+                        `${TabNameImageServiceImage}.${ColNameImageServiceImageTypeId}`
+                    );
+                }
             });
         }
         if (filterOptions.uploadedByUserIdList.length > 0) {
