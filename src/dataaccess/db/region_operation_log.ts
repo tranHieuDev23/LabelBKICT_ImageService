@@ -30,7 +30,7 @@ export interface RegionOperationLogDataAccessor {
 
 const TabNameImageServiceRegionOperationLog =
     "image_service_region_operation_log_tab";
-const ColNameImageServiceRegionOperationLogID = "id";
+const ColNameImageServiceRegionOperationLogID = "region_operation_log_id";
 const ColNameImageServiceRegionOperationLogOfRegionID = "of_region_id";
 const ColNameImageServiceRegionOperationLogByUserID = "by_user_id";
 const ColNameImageServiceRegionOperationLogOperationTime = "operation_time";

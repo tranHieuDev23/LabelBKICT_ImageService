@@ -22,7 +22,7 @@ export interface ImageTagGroupDataAccessor {
 }
 
 const TabNameImageServiceImageTagGroup = "image_service_image_tag_group_tab";
-const ColNameImageServiceImageTagGroupID = "id";
+const ColNameImageServiceImageTagGroupID = "image_tag_group_id";
 const ColNameImageServiceImageTagGroupDisplayName = "display_name";
 const ColNameImageServiceImageTagGroupIsSingleValue = "is_single_value";
 

@@ -35,7 +35,7 @@ const ColNameImageServiceRegionOperationLogLabelMetadataNewLabelID =
     "new_label_id";
 
 const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionLabelID = "id";
+const ColNameImageServiceRegionLabelID = "region_label_id";
 const ColNameImageServiceRegionLabelOfImageTypeID = "of_image_type_id";
 const ColNameImageServiceRegionLabelDisplayName = "display_name";
 const ColNameImageServiceRegionLabelColor = "color";

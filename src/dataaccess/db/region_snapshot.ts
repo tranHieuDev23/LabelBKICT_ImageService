@@ -33,7 +33,7 @@ export interface RegionSnapshotDataAccessor {
 }
 
 const TabNameImageServiceRegionSnapshot = "image_service_region_snapshot_tab";
-const ColNameImageServiceRegionSnapshotID = "id";
+const ColNameImageServiceRegionSnapshotID = "region_snapshot_id";
 const ColNameImageServiceRegionSnapshotOfImageID = "of_image_id";
 const ColNameImageServiceRegionSnapshotAtStatus = "at_status";
 const ColNameImageServiceRegionSnapshotDrawnByUserID = "drawn_by_user_id";
@@ -43,7 +43,7 @@ const ColNameImageServiceRegionSnapshotHoles = "holes";
 const ColNameImageServiceRegionSnapshotLabelID = "label_id";
 
 const TabNameImageServiceRegionSnapshotLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionSnapshotLabelRegionLabelID = "id";
+const ColNameImageServiceRegionSnapshotLabelRegionLabelID = "region_label_id";
 const ColNameImageServiceRegionSnapshotLabelOfImageTypeID = "of_image_type_id";
 const ColNameImageServiceRegionSnapshotLabelDisplayName = "display_name";
 const ColNameImageServiceRegionSnapshotLabelColor = "color";

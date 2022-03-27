@@ -23,7 +23,7 @@ const ColNameImageServiceImageHasImageTagImageID = "image_id";
 const ColNameImageServiceImageHasImageTagImageTagID = "image_tag_id";
 
 const TabNameImageServiceImageTag = "image_service_image_tag_tab";
-const ColNameImageServiceImageTagID = "id";
+const ColNameImageServiceImageTagID = "image_tag_id";
 const ColNameImageServiceImageTagOfImageTagGroupID = "of_image_tag_group_id";
 const ColNameImageServiceImageTagDisplayName = "display_name";
 export class ImageHasImageTagDataAccessorImpl

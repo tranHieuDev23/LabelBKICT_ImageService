@@ -20,7 +20,7 @@ const TabNameImageServiceRegionSnapshot = "image_service_region_snapshot_tab";
 export async function up(knex: Knex): Promise<void> {
     if (!(await knex.schema.hasTable(TabNameImageServiceImageType))) {
         await knex.schema.createTable(TabNameImageServiceImageType, (tab) => {
-            tab.increments("id", { primaryKey: true });
+            tab.increments("image_type_id", { primaryKey: true });
             tab.string("display_name", 256).notNullable();
             tab.boolean("has_predictive_model").notNullable();
         });
@@ -28,13 +28,13 @@ export async function up(knex: Knex): Promise<void> {
 
     if (!(await knex.schema.hasTable(TabNameImageServiceRegionLabel))) {
         await knex.schema.createTable(TabNameImageServiceRegionLabel, (tab) => {
-            tab.increments("id", { primaryKey: true });
+            tab.increments("region_label_id", { primaryKey: true });
             tab.integer("of_image_type_id").notNullable();
             tab.string("display_name", 256).notNullable();
             tab.string("color", 7).notNullable();
 
             tab.foreign("of_image_type_id")
-                .references("id")
+                .references("image_type_id")
                 .inTable(TabNameImageServiceImageType)
                 .onDelete("CASCADE");
 
@@ -49,7 +49,7 @@ export async function up(knex: Knex): Promise<void> {
         await knex.schema.createTable(
             TabNameImageServiceImageTagGroup,
             (tab) => {
-                tab.increments("id", { primaryKey: true });
+                tab.increments("image_tag_group_id", { primaryKey: true });
                 tab.string("display_name", 256).notNullable();
                 tab.boolean("is_single_value").notNullable();
             }
@@ -58,12 +58,12 @@ export async function up(knex: Knex): Promise<void> {
 
     if (!(await knex.schema.hasTable(TabNameImageServiceImageTag))) {
         await knex.schema.createTable(TabNameImageServiceImageTag, (tab) => {
-            tab.increments("id", { primaryKey: true });
+            tab.increments("image_tag_id", { primaryKey: true });
             tab.integer("of_image_tag_group_id").notNullable();
             tab.string("display_name", 256).notNullable();
 
             tab.foreign("of_image_tag_group_id")
-                .references("id")
+                .references("image_tag_group_id")
                 .inTable(TabNameImageServiceImageTagGroup)
                 .onDelete("CASCADE");
 
@@ -86,11 +86,11 @@ export async function up(knex: Knex): Promise<void> {
                 tab.integer("image_type_id").notNullable();
 
                 tab.foreign("image_tag_group_id")
-                    .references("id")
+                    .references("image_tag_group_id")
                     .inTable(TabNameImageServiceImageTagGroup)
                     .onDelete("CASCADE");
                 tab.foreign("image_type_id")
-                    .references("id")
+                    .references("image_type_id")
                     .inTable(TabNameImageServiceImageType)
                     .onDelete("CASCADE");
 
@@ -109,7 +109,7 @@ export async function up(knex: Knex): Promise<void> {
 
     if (!(await knex.schema.hasTable(TabNameImageServiceImage))) {
         await knex.schema.createTable(TabNameImageServiceImage, (tab) => {
-            tab.increments("id", { primaryKey: true });
+            tab.increments("image_id", { primaryKey: true });
             tab.integer("uploaded_by_user_id").notNullable().defaultTo(0);
             tab.bigInteger("upload_time").notNullable().defaultTo(0);
             tab.integer("published_by_user_id").notNullable().defaultTo(0);
@@ -124,7 +124,7 @@ export async function up(knex: Knex): Promise<void> {
             tab.smallint("status").notNullable().defaultTo(0);
 
             tab.foreign("image_type_id")
-                .references("id")
+                .references("image_type_id")
                 .inTable(TabNameImageServiceImageType)
                 .onDelete("SET NULL");
 
@@ -140,11 +140,11 @@ export async function up(knex: Knex): Promise<void> {
             tab.integer("image_tag_id").notNullable();
 
             tab.foreign("image_id")
-                .references("id")
+                .references("image_id")
                 .inTable(TabNameImageServiceImage)
                 .onDelete("CASCADE");
             tab.foreign("image_tag_id")
-                .references("id")
+                .references("image_tag_id")
                 .inTable(TabNameImageServiceImageTag)
                 .onDelete("CASCADE");
 
@@ -162,7 +162,7 @@ export async function up(knex: Knex): Promise<void> {
 
     if (!(await knex.schema.hasTable(TabNameImageServiceRegion))) {
         await knex.schema.createTable(TabNameImageServiceRegion, (tab) => {
-            tab.increments("id", { primaryKey: true });
+            tab.increments("region_id", { primaryKey: true });
             tab.integer("of_image_id").notNullable();
             tab.integer("drawn_by_user_id").notNullable().defaultTo(0);
             tab.integer("labeled_by_user_id").notNullable().defaultTo(0);
@@ -171,10 +171,10 @@ export async function up(knex: Knex): Promise<void> {
             tab.integer("label_id").defaultTo(null);
 
             tab.foreign("of_image_id")
-                .references("id")
+                .references("image_id")
                 .inTable(TabNameImageServiceImage);
             tab.foreign("label_id")
-                .references("id")
+                .references("region_label_id")
                 .inTable(TabNameImageServiceRegionLabel)
                 .onDelete("SET NULL");
 
@@ -187,14 +187,14 @@ export async function up(knex: Knex): Promise<void> {
         await knex.schema.createTable(
             TabNameImageServiceRegionOperationLog,
             (tab) => {
-                tab.increments("id", { primaryKey: true });
+                tab.increments("region_operation_log_id", { primaryKey: true });
                 tab.integer("of_region_id").notNullable();
                 tab.integer("by_user_id").notNullable().defaultTo(0);
                 tab.bigInteger("operation_time").notNullable();
                 tab.smallint("operation_type").notNullable();
 
                 tab.foreign("of_region_id")
-                    .references("id")
+                    .references("region_id")
                     .inTable(TabNameImageServiceRegion);
 
                 tab.index(
@@ -213,17 +213,17 @@ export async function up(knex: Knex): Promise<void> {
         await knex.schema.createTable(
             TabNameImageServiceRegionOperationLogDrawMetadata,
             (tab) => {
-                tab.integer("of_log_id");
+                tab.integer("of_region_operation_log_id");
                 tab.binary("old_border").notNullable();
                 tab.binary("old_holes").notNullable();
                 tab.binary("new_border").notNullable();
                 tab.binary("new_holes").notNullable();
 
-                tab.primary(["of_log_id"]);
+                tab.primary(["of_region_operation_log_id"]);
 
-                tab.foreign("of_log_id")
-                    .references("id")
-                    .inTable(TabNameImageServiceRegion)
+                tab.foreign("of_region_operation_log_id")
+                    .references("region_operation_log_id")
+                    .inTable(TabNameImageServiceRegionOperationLog)
                     .onDelete("CASCADE");
             }
         );
@@ -237,22 +237,22 @@ export async function up(knex: Knex): Promise<void> {
         await knex.schema.createTable(
             TabNameImageServiceRegionOperationLogLabelMetadata,
             (tab) => {
-                tab.integer("of_log_id");
+                tab.integer("of_region_operation_log_id");
                 tab.integer("old_label_id");
                 tab.integer("new_label_id");
 
-                tab.primary(["of_log_id"]);
+                tab.primary(["of_region_operation_log_id"]);
 
-                tab.foreign("of_log_id")
-                    .references("id")
-                    .inTable(TabNameImageServiceRegion)
+                tab.foreign("of_region_operation_log_id")
+                    .references("region_operation_log_id")
+                    .inTable(TabNameImageServiceRegionOperationLog)
                     .onDelete("CASCADE");
                 tab.foreign("old_label_id")
-                    .references("id")
+                    .references("region_label_id")
                     .inTable(TabNameImageServiceRegionLabel)
                     .onDelete("SET NULL");
                 tab.foreign("new_label_id")
-                    .references("id")
+                    .references("region_label_id")
                     .inTable(TabNameImageServiceRegionLabel)
                     .onDelete("SET NULL");
             }
@@ -263,7 +263,7 @@ export async function up(knex: Knex): Promise<void> {
         await knex.schema.createTable(
             TabNameImageServiceRegionSnapshot,
             (tab) => {
-                tab.increments("id", { primaryKey: true });
+                tab.increments("region_snapshot_id", { primaryKey: true });
                 tab.integer("of_image_id").notNullable();
                 tab.smallint("at_status").notNullable();
                 tab.integer("drawn_by_user_id").notNullable().defaultTo(0);
@@ -273,10 +273,10 @@ export async function up(knex: Knex): Promise<void> {
                 tab.integer("label_id").defaultTo(null);
 
                 tab.foreign("of_image_id")
-                    .references("id")
+                    .references("image_id")
                     .inTable(TabNameImageServiceImage);
                 tab.foreign("label_id")
-                    .references("id")
+                    .references("region_label_id")
                     .inTable(TabNameImageServiceRegionLabel)
                     .onDelete("SET NULL");
 

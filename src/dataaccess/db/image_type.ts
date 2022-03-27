@@ -22,7 +22,7 @@ export interface ImageTypeDataAccessor {
 }
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
-const ColNameImageServiceImageTypeID = "id";
+const ColNameImageServiceImageTypeID = "image_type_id";
 const ColNameImageServiceImageTypeDisplayName = "display_name";
 const ColNameImageServiceImageTypeHasPredictiveModel = "has_predictive_model";
 

@@ -47,12 +47,12 @@ const ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupID =
 const ColNameImageServiceImageTagGroupHasImageTypeImageTypeID = "image_type_id";
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
-const ColNameImageServiceImageTypeID = "id";
+const ColNameImageServiceImageTypeID = "image_type_id";
 const ColNameImageServiceImageTypeDisplayName = "display_name";
 const ColNameImageServiceImageTypeHasPredictiveModel = "has_predictive_model";
 
 const TabNameImageServiceImageTagGroup = "image_service_image_tag_group_tab";
-const ColNameImageServiceImageTagGroupID = "id";
+const ColNameImageServiceImageTagGroupID = "image_tag_group_id";
 const ColNameImageServiceImageTagGroupDisplayName = "display_name";
 const ColNameImageServiceImageTagGroupIsSingleValue = "is_single_value";
 export class ImageTagGroupHasImageTypeDataAccessorImpl

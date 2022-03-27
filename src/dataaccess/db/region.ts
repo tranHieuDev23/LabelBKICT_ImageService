@@ -46,7 +46,7 @@ export interface RegionDataAccessor {
 }
 
 const TabNameImageServiceRegion = "image_service_region_tab";
-const ColNameImageServiceRegionID = "id";
+const ColNameImageServiceRegionID = "region_id";
 const ColNameImageServiceRegionOfImageID = "of_image_id";
 const ColNameImageServiceRegionDrawnByUserID = "drawn_by_user_id";
 const ColNameImageServiceRegionLabeledByUserID = "labeled_by_user_id";
@@ -55,7 +55,7 @@ const ColNameImageServiceRegionHoles = "holes";
 const ColNameImageServiceRegionLabelID = "label_id";
 
 const TabNameImageServiceRegionLabel = "image_service_region_label_tab";
-const ColNameImageServiceRegionLabelRegionLabelID = "id";
+const ColNameImageServiceRegionLabelRegionLabelID = "region_label_id";
 const ColNameImageServiceRegionLabelOfImageTypeID = "of_image_type_id";
 const ColNameImageServiceRegionLabelDisplayName = "display_name";
 const ColNameImageServiceRegionLabelColor = "color";
