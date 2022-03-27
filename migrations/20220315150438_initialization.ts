@@ -7,14 +7,14 @@ const TabNameImageServiceImageTag = "image_service_image_tag_tab";
 const TabNameImageServiceImageTagGroupHasImageType =
     "image_service_image_tag_group_has_image_type_tab";
 const TabNameImageServiceImage = "image_service_image_tab";
-const TabNameImageServiceImageHasTag = "image_service_image_has_tag_tab";
+const TabNameImageServiceImageHasTag = "image_service_image_has_image_tag_tab";
 const TabNameImageServiceRegion = "image_service_region_tab";
 const TabNameImageServiceRegionOperationLog =
-    "image_service_region_operation_log";
+    "image_service_region_operation_log_tab";
 const TabNameImageServiceRegionOperationLogDrawMetadata =
-    "image_service_region_operation_log_draw_metadata";
+    "image_service_region_operation_log_draw_metadata_tab";
 const TabNameImageServiceRegionOperationLogLabelMetadata =
-    "image_service_region_operation_log_label_metadata";
+    "image_service_region_operation_log_label_metadata_tab";
 const TabNameImageServiceRegionSnapshot = "image_service_region_snapshot_tab";
 
 export async function up(knex: Knex): Promise<void> {
