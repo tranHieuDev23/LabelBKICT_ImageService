@@ -51,7 +51,7 @@ const ColNameImageServiceImageTypeID = "id";
 const ColNameImageServiceImageTypeDisplayName = "display_name";
 const ColNameImageServiceImageTypeHasPredictiveModel = "has_predictive_model";
 
-const TabNameImageServiceImageTagGroup = "image_service_image_tag_group";
+const TabNameImageServiceImageTagGroup = "image_service_image_tag_group_tab";
 const ColNameImageServiceImageTagGroupID = "id";
 const ColNameImageServiceImageTagGroupDisplayName = "display_name";
 const ColNameImageServiceImageTagGroupIsSingleValue = "is_single_value";
