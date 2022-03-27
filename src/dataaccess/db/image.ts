@@ -365,7 +365,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 qb.where(
                     ColNameImageServiceImageStatus,
                     "=",
-                    _ImageStatus_Values.VERIFIED
+                    _ImageStatus_Values.PUBLISHED
                 ).andWhere((qb) => {
                     qb.whereIn(
                         ColNameImageServiceImagePublishedByUserId,

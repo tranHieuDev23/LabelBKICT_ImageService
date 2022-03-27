@@ -610,15 +610,18 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             const regionListOfImage = await this.regionDM.getRegionListOfImage(
                 id
             );
-            if (newStatus === _ImageStatus_Values.PUBLISHED) {
+            if (
+                newStatus === _ImageStatus_Values.PUBLISHED ||
+                newStatus === _ImageStatus_Values.VERIFIED
+            ) {
                 for (const region of regionListOfImage) {
                     if (region.label === null) {
                         this.logger.error(
-                            "there are unlabeled regions, image cannot be published",
+                            "there are unlabeled regions, image cannot change status",
                             { imageId: id }
                         );
                         throw new ErrorWithStatus(
-                            "there are unlabeled regions, image cannot be published",
+                            "there are unlabeled regions, image cannot change status",
                             status.FAILED_PRECONDITION
                         );
                     }

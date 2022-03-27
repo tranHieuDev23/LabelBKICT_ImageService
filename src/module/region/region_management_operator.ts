@@ -120,78 +120,55 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
         const dmBorder = this.getDMPolygonFromPolygon(border);
         const dmHoles = holes.map((hole) => this.getDMPolygonFromPolygon(hole));
 
-        return this.regionDM.withTransaction(async (regionDM) => {
-            const createdRegionId = await regionDM.createRegion({
-                ofImageId,
-                drawnByUserId: drawnByUserId,
-                labeledByUserId: labeledByUserId,
-                border: dmBorder,
-                holes: dmHoles,
-                labeId: labeId === undefined ? null : labeId,
-            });
-
-            return this.regionOperationLogDM.withTransaction(
-                async (regionOperationLogDM) => {
-                    return this.regionOperationLogDrawMetadataDM.withTransaction(
-                        async (regionOperationLogDrawMetadataDM) => {
-                            return this.regionOperationLogLabelMetadataDM.withTransaction(
-                                async (regionOperationLogLabelMetadataDM) => {
-                                    const drawLogId =
-                                        await regionOperationLogDM.createRegionOperationLog(
-                                            {
-                                                ofRegionId: createdRegionId,
-                                                byUserId: drawnByUserId,
-                                                operationTime: currentTime,
-                                                operationType:
-                                                    _RegionOperationType_Values.DRAW,
-                                            }
-                                        );
-                                    await regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
-                                        {
-                                            ofLogId: drawLogId,
-                                            oldBorder: null,
-                                            oldHoles: null,
-                                            newBorder: dmBorder,
-                                            newHoles: dmHoles,
-                                        }
-                                    );
-
-                                    const labelLogId =
-                                        await regionOperationLogDM.createRegionOperationLog(
-                                            {
-                                                ofRegionId: createdRegionId,
-                                                byUserId: labeledByUserId,
-                                                operationTime: currentTime,
-                                                operationType:
-                                                    _RegionOperationType_Values.LABEL,
-                                            }
-                                        );
-                                    await regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
-                                        {
-                                            ofLogId: labelLogId,
-                                            oldLabelId: null,
-                                            newLabelId:
-                                                labeId === undefined
-                                                    ? null
-                                                    : labeId,
-                                        }
-                                    );
-
-                                    return {
-                                        id: createdRegionId,
-                                        drawnByUserId: drawnByUserId,
-                                        labeledByUserId: labeledByUserId,
-                                        border: border,
-                                        holes: holes,
-                                        label: regionLabel,
-                                    };
-                                }
-                            );
-                        }
-                    );
-                }
-            );
+        const createdRegionId = await this.regionDM.createRegion({
+            ofImageId,
+            drawnByUserId: drawnByUserId,
+            labeledByUserId: labeledByUserId,
+            border: dmBorder,
+            holes: dmHoles,
+            labeId: labeId === undefined ? null : labeId,
         });
+
+        const drawLogId =
+            await this.regionOperationLogDM.createRegionOperationLog({
+                ofRegionId: createdRegionId,
+                byUserId: drawnByUserId,
+                operationTime: currentTime,
+                operationType: _RegionOperationType_Values.DRAW,
+            });
+        await this.regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
+            {
+                ofLogId: drawLogId,
+                oldBorder: null,
+                oldHoles: null,
+                newBorder: dmBorder,
+                newHoles: dmHoles,
+            }
+        );
+
+        const labelLogId =
+            await this.regionOperationLogDM.createRegionOperationLog({
+                ofRegionId: createdRegionId,
+                byUserId: labeledByUserId,
+                operationTime: currentTime,
+                operationType: _RegionOperationType_Values.LABEL,
+            });
+        await this.regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
+            {
+                ofLogId: labelLogId,
+                oldLabelId: null,
+                newLabelId: labeId === undefined ? null : labeId,
+            }
+        );
+
+        return {
+            id: createdRegionId,
+            drawnByUserId: drawnByUserId,
+            labeledByUserId: labeledByUserId,
+            border: border,
+            holes: holes,
+            label: regionLabel,
+        };
     }
 
     private async getOptionalRegionLabel(
