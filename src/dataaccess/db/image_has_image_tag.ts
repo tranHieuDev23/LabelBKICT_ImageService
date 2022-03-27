@@ -11,7 +11,7 @@ export interface ImageHasImageTagDataAccessor {
     deleteImageHasImageTag(imageId: number, imageTagId: number): Promise<void>;
     deleteImageHasImageTagOfImage(imageId: number): Promise<void>;
     getImageTagListOfImageList(imageIdList: number[]): Promise<ImageTag[][]>;
-    getImageIdListOfImageTagList(imageTagIdList: number[]): Promise<number[]>;
+    getImageIdListOfImageTagList(imageTagIdList: number[]): Promise<number[][]>;
     withTransaction<T>(
         executeFunc: (dataAccessor: ImageHasImageTagDataAccessor) => Promise<T>
     ): Promise<T>;
@@ -154,7 +154,7 @@ export class ImageHasImageTagDataAccessorImpl
 
     public async getImageIdListOfImageTagList(
         imageTagIdList: number[]
-    ): Promise<number[]> {
+    ): Promise<number[][]> {
         try {
             const rows = await this.knex
                 .select()
@@ -163,9 +163,24 @@ export class ImageHasImageTagDataAccessorImpl
                     ColNameImageServiceImageHasImageTagImageTagId,
                     imageTagIdList
                 );
-            return rows.map(
-                (row) => +row[ColNameImageServiceImageHasImageTagImageId]
-            );
+
+            const imageTagIdToImageIdList = new Map<number, number[]>();
+            for (const row of rows) {
+                const imageTagId =
+                    +row[ColNameImageServiceImageHasImageTagImageTagId];
+                if (!imageTagIdToImageIdList.has(imageTagId)) {
+                    imageTagIdToImageIdList.set(imageTagId, []);
+                }
+                imageTagIdToImageIdList
+                    .get(imageTagId)
+                    ?.push(+row[ColNameImageServiceImageHasImageTagImageId]);
+            }
+
+            const results: number[][] = [];
+            for (const imageTagId of imageTagIdList) {
+                results.push(imageTagIdToImageIdList.get(imageTagId) || []);
+            }
+            return results;
         } catch (error) {
             this.logger.error("failed to get image id list of image tag list", {
                 error,

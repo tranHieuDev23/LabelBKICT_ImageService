@@ -39,7 +39,7 @@ export interface RegionDataAccessor {
     deleteRegion(id: number): Promise<void>;
     getOfImageIdListOfRegionLabelList(
         regionLabelIdList: number[]
-    ): Promise<number[]>;
+    ): Promise<number[][]>;
     withTransaction<T>(
         executeFunc: (dataAccessor: RegionDataAccessor) => Promise<T>
     ): Promise<T>;
@@ -302,13 +302,31 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
 
     public async getOfImageIdListOfRegionLabelList(
         regionLabelIdList: number[]
-    ): Promise<number[]> {
+    ): Promise<number[][]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceRegion)
                 .whereIn(ColNameImageServiceRegionLabelId, regionLabelIdList);
-            return rows.map((row) => +row[ColNameImageServiceRegionOfImageId]);
+
+            const regionLabelIdToImageIdList = new Map<number, number[]>();
+            for (const row of rows) {
+                const regionLabelId = +row[ColNameImageServiceRegionLabelId];
+                if (!regionLabelIdToImageIdList.has(regionLabelId)) {
+                    regionLabelIdToImageIdList.set(regionLabelId, []);
+                }
+                regionLabelIdToImageIdList
+                    .get(regionLabelId)
+                    ?.push(+row[ColNameImageServiceRegionOfImageId]);
+            }
+
+            const results: number[][] = [];
+            for (const regionLabelId of regionLabelIdList) {
+                results.push(
+                    regionLabelIdToImageIdList.get(regionLabelId) || []
+                );
+            }
+            return results;
         } catch (error) {
             this.logger.error(
                 "failed to get of image id list of region label list"

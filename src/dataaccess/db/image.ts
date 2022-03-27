@@ -8,6 +8,7 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { ImageType, ImageListSortOrder, Image } from "./models";
 
 export class ImageListFilterOptions {
+    public shouldFilterByImageIdList: boolean = false;
     public imageIdList: number[] = [];
     public imageTypeIdList: (number | null)[] = [];
     public uploadedByUserIdList: number[] = [];
@@ -336,7 +337,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         filterOptions: ImageListFilterOptions
     ): Knex.QueryBuilder {
         const queryCallbackList: Knex.QueryCallback[] = [];
-        if (filterOptions.imageIdList.length > 0) {
+        if (filterOptions.shouldFilterByImageIdList) {
             queryCallbackList.push((qb) => {
                 qb.whereIn(
                     ColNameImageServiceImageId,

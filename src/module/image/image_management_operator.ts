@@ -436,10 +436,11 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             filterOptions.imageTagIdList !== undefined &&
             filterOptions.imageTagIdList.length > 0
         ) {
-            const imageIdList =
-                await this.imageHasImageTagDM.getImageIdListOfImageTagList(
-                    filterOptions.imageTagIdList
-                );
+            dmFilterOptions.shouldFilterByImageIdList = true;
+            const imageIdList = await this.getImageIdListMatchingImageTagIdList(
+                filterOptions.imageTagIdList,
+                filterOptions.mustMatchAllImageTags || false
+            );
             for (const imageId of imageIdList) {
                 imageIdSet.add(imageId);
             }
@@ -448,9 +449,11 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             filterOptions.regionLabelIdList !== undefined &&
             filterOptions.regionLabelIdList.length > 0
         ) {
+            dmFilterOptions.shouldFilterByImageIdList = true;
             const imageIdList =
-                await this.regionDM.getOfImageIdListOfRegionLabelList(
-                    filterOptions.regionLabelIdList
+                await this.getImageIdListMatchingRegionLabelIdList(
+                    filterOptions.regionLabelIdList,
+                    filterOptions.mustMatchAllRegionLabels || false
                 );
             for (const imageId of imageIdList) {
                 imageIdSet.add(imageId);
@@ -459,6 +462,75 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         dmFilterOptions.imageIdList = Array.from(imageIdSet);
 
         return dmFilterOptions;
+    }
+
+    private async getImageIdListMatchingImageTagIdList(
+        imageTagIdList: number[],
+        mustMatchAllImageTag: boolean
+    ): Promise<number[]> {
+        const imageIdList =
+            await this.imageHasImageTagDM.getImageIdListOfImageTagList(
+                imageTagIdList
+            );
+
+        const imageIdToMatchedImageTagCount = new Map<number, number>();
+        for (const imageIdSublist of imageIdList) {
+            for (const imageId of imageIdSublist) {
+                const currentCount =
+                    imageIdToMatchedImageTagCount.get(imageId) || 0;
+                imageIdToMatchedImageTagCount.set(imageId, currentCount + 1);
+            }
+        }
+
+        const matchedImageIdList: number[] = [];
+        for (const imageId of imageIdToMatchedImageTagCount.keys()) {
+            const matchedImageTagCount =
+                imageIdToMatchedImageTagCount.get(imageId);
+            if (
+                mustMatchAllImageTag &&
+                matchedImageTagCount !== imageTagIdList.length
+            ) {
+                continue;
+            }
+            matchedImageIdList.push(imageId);
+        }
+
+        return matchedImageIdList;
+    }
+
+    private async getImageIdListMatchingRegionLabelIdList(
+        regionLabelIdList: number[],
+        mustMatchAllRegionLabel: boolean
+    ): Promise<number[]> {
+        const imageIdList =
+            await this.regionDM.getOfImageIdListOfRegionLabelList(
+                regionLabelIdList
+            );
+
+        const imageIdToMatchedRegionLabelCount = new Map<number, number>();
+        for (const imageIdSublist of imageIdList) {
+            const imageIdSubset = new Set<number>(imageIdSublist);
+            for (const imageId of imageIdSubset.keys()) {
+                const currentCount =
+                    imageIdToMatchedRegionLabelCount.get(imageId) || 0;
+                imageIdToMatchedRegionLabelCount.set(imageId, currentCount + 1);
+            }
+        }
+
+        const matchedImageIdList: number[] = [];
+        for (const imageId of imageIdToMatchedRegionLabelCount.keys()) {
+            const matchedRegionLabelCount =
+                imageIdToMatchedRegionLabelCount.get(imageId);
+            if (
+                mustMatchAllRegionLabel &&
+                matchedRegionLabelCount !== regionLabelIdList.length
+            ) {
+                continue;
+            }
+            matchedImageIdList.push(imageId);
+        }
+
+        return matchedImageIdList;
     }
 
     private getImageListSortOrder(
