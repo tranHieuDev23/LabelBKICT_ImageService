@@ -463,15 +463,19 @@ export class ImageServiceHandlersFactory {
                 const withRegion = req.withRegion || false;
 
                 try {
-                    const { imageList, imageTagList, regionList } =
-                        await this.imageManagementOperator.getImageList(
-                            offset,
-                            limit,
-                            sortOrder,
-                            req.filterOptions,
-                            withImageTag,
-                            withRegion
-                        );
+                    const {
+                        totalImageCount,
+                        imageList,
+                        imageTagList,
+                        regionList,
+                    } = await this.imageManagementOperator.getImageList(
+                        offset,
+                        limit,
+                        sortOrder,
+                        req.filterOptions,
+                        withImageTag,
+                        withRegion
+                    );
 
                     let imageTagListOfImageList = undefined;
                     if (withImageTag) {
@@ -496,6 +500,7 @@ export class ImageServiceHandlersFactory {
                     }
 
                     callback(null, {
+                        totalImageCount,
                         imageList,
                         imageTagListOfImageList,
                         regionListOfImageList,

@@ -250,8 +250,8 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 queryBuilder,
                 filterOptions
             );
-            const rows = await queryBuilder;
-            return +rows[0];
+            const rows = (await queryBuilder) as any[];
+            return +rows[0]["count"];
         } catch (error) {
             this.logger.error("failed to get image count", {
                 filterOptions,
