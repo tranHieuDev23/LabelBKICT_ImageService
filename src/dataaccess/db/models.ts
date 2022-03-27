@@ -44,8 +44,8 @@ export class Image {
         public verifiedByUserId: number,
         public verifyTime: number,
         public originalFileName: string,
-        public imageURL: string,
-        public thumbnailURL: string,
+        public originalImageFilename: string,
+        public thumbnailImageFilename: string,
         public description: string,
         public imageType: ImageType | null,
         public status: _ImageStatus_Values
