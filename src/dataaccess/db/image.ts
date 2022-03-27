@@ -82,7 +82,7 @@ const ColNameImageServiceImageThumbnailImageFilename =
     "thumbnail_image_filename";
 const ColNameImageServiceImageDescription = "description";
 const ColNameImageServiceImageImageTypeID = "image_type_id";
-const ColNameImageService_ImageStatus_Values = "status";
+const ColNameImageServiceImageStatus = "status";
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
 const ColNameImageServiceImageTypeID = "id";
@@ -116,7 +116,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                         args.thumbnailImageFilename,
                     [ColNameImageServiceImageDescription]: args.description,
                     [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
-                    [ColNameImageService_ImageStatus_Values]: args.status,
+                    [ColNameImageServiceImageStatus]: args.status,
                 })
                 .returning([ColNameImageServiceImageID])
                 .into(TabNameImageServiceImage);
@@ -274,7 +274,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     [ColNameImageServiceImageVerifyTime]: args.verifyTime,
                     [ColNameImageServiceImageDescription]: args.description,
                     [ColNameImageServiceImageImageTypeID]: args.imageTypeID,
-                    [ColNameImageService_ImageStatus_Values]: args.status,
+                    [ColNameImageServiceImageStatus]: args.status,
                 })
                 .where({
                     [ColNameImageServiceImageID]: args.id,
@@ -363,7 +363,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         if (filterOptions.publishedByUserIDList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.where(
-                    ColNameImageService_ImageStatus_Values,
+                    ColNameImageServiceImageStatus,
                     "=",
                     _ImageStatus_Values.VERIFIED
                 ).andWhere((qb) => {
@@ -377,7 +377,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         if (filterOptions.verifiedByUserIDList.length > 0) {
             queryCallbackList.push((qb) => {
                 qb.where(
-                    ColNameImageService_ImageStatus_Values,
+                    ColNameImageServiceImageStatus,
                     "=",
                     _ImageStatus_Values.VERIFIED
                 ).andWhere((qb) => {
@@ -408,7 +408,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         }
         if (filterOptions.publishTimeStart !== 0) {
             queryCallbackList.push((qb) => {
-                qb.whereIn(ColNameImageService_ImageStatus_Values, [
+                qb.whereIn(ColNameImageServiceImageStatus, [
                     _ImageStatus_Values.PUBLISHED,
                     _ImageStatus_Values.VERIFIED,
                 ]).andWhere(
@@ -420,7 +420,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         }
         if (filterOptions.publishTimeEnd !== 0) {
             queryCallbackList.push((qb) => {
-                qb.whereIn(ColNameImageService_ImageStatus_Values, [
+                qb.whereIn(ColNameImageServiceImageStatus, [
                     _ImageStatus_Values.PUBLISHED,
                     _ImageStatus_Values.VERIFIED,
                 ]).andWhere(
@@ -433,7 +433,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         if (filterOptions.verifyTimeStart !== 0) {
             queryCallbackList.push((qb) => {
                 qb.where(
-                    ColNameImageService_ImageStatus_Values,
+                    ColNameImageServiceImageStatus,
                     "=",
                     _ImageStatus_Values.VERIFIED
                 ).andWhere(
@@ -446,7 +446,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         if (filterOptions.verifyTimeEnd !== 0) {
             queryCallbackList.push((qb) => {
                 qb.where(
-                    ColNameImageService_ImageStatus_Values,
+                    ColNameImageServiceImageStatus,
                     "=",
                     _ImageStatus_Values.VERIFIED
                 ).andWhere(
@@ -467,7 +467,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         if (filterOptions.imageStatusList.length !== 0) {
             queryCallbackList.push((qb) => {
                 qb.whereIn(
-                    ColNameImageService_ImageStatus_Values,
+                    ColNameImageServiceImageStatus,
                     filterOptions.imageStatusList
                 );
             });
@@ -545,7 +545,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             row[ColNameImageServiceImageThumbnailImageFilename],
             row[ColNameImageServiceImageDescription],
             imageType,
-            +row[ColNameImageService_ImageStatus_Values]
+            +row[ColNameImageServiceImageStatus]
         );
     }
 }
