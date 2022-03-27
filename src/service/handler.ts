@@ -458,7 +458,9 @@ export class ImageServiceHandlersFactory {
                 const offset = req.offset || 0;
                 const limit = req.limit || DEFAULT_GET_IMAGE_LIST_LIMIT;
                 const sortOrder =
-                    req.sortOrder || DEFAULT_GET_IMAGE_LIST_SORT_ORDER;
+                    req.sortOrder === undefined
+                        ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER
+                        : req.sortOrder;
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;
 

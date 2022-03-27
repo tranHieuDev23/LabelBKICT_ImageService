@@ -499,9 +499,9 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         sortOption: ImageListSortOrder
     ): Knex.QueryBuilder {
         switch (sortOption) {
-            case ImageListSortOrder.Id_ASCENDING:
+            case ImageListSortOrder.ID_ASCENDING:
                 return qb.orderBy(ColNameImageServiceImageId, "asc");
-            case ImageListSortOrder.Id_DESCENDING:
+            case ImageListSortOrder.ID_DESCENDING:
                 return qb.orderBy(ColNameImageServiceImageId, "desc");
             case ImageListSortOrder.UPLOAD_TIME_ASCENDING:
                 return qb

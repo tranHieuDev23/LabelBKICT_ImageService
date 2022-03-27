@@ -538,9 +538,9 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     ): ImageListSortOrder {
         switch (sortOrder) {
             case _ImageListSortOrder_Values.ID_ASCENDING:
-                return ImageListSortOrder.Id_ASCENDING;
+                return ImageListSortOrder.ID_ASCENDING;
             case _ImageListSortOrder_Values.ID_DESCENDING:
-                return ImageListSortOrder.Id_DESCENDING;
+                return ImageListSortOrder.ID_DESCENDING;
             case _ImageListSortOrder_Values.UPLOAD_TIME_ASCENDING:
                 return ImageListSortOrder.UPLOAD_TIME_ASCENDING;
             case _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING:

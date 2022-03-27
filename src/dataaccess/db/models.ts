@@ -53,8 +53,8 @@ export class Image {
 }
 
 export enum ImageListSortOrder {
-    Id_ASCENDING = 0,
-    Id_DESCENDING = 1,
+    ID_ASCENDING = 0,
+    ID_DESCENDING = 1,
     UPLOAD_TIME_ASCENDING = 2,
     UPLOAD_TIME_DESCENDING = 3,
     PUBLISH_TIME_ASCENDING = 4,
