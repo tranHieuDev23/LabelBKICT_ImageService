@@ -460,7 +460,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             queryCallbackList.push((qb) => {
                 qb.whereLike(
                     ColNameImageServiceImageOriginalFileName,
-                    filterOptions.originalFileNameQuery
+                    `%${filterOptions.originalFileNameQuery}%`
                 );
             });
         }
