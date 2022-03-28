@@ -196,11 +196,6 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
             rows = await this.knex
                 .select()
                 .from(TabNameImageServiceRegion)
-                .leftOuterJoin(
-                    TabNameImageServiceRegionLabel,
-                    `${TabNameImageServiceRegion}.${ColNameImageServiceRegionLabelId}`,
-                    `${TabNameImageServiceRegionLabel}.${ColNameImageServiceRegionLabelRegionLabelId}`
-                )
                 .where({
                     [ColNameImageServiceRegionId]: id,
                 })
@@ -225,7 +220,7 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 status.INTERNAL
             );
         }
-        return this.getRegionFromJoinedRow(rows[0]);
+        return this.getRegionFromRow(rows[0]);
     }
 
     public async updateRegion(args: UpdateRegionArguments): Promise<void> {
@@ -346,6 +341,31 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
             );
             return executeFunc(txDataAccessor);
         });
+    }
+
+    private getRegionFromRow(row: Record<string, any>): Region {
+        let label: RegionLabel | null = null;
+        if (row[ColNameImageServiceRegionLabelId]) {
+            label = new RegionLabel(
+                +row[ColNameImageServiceRegionLabelId],
+                0,
+                "",
+                ""
+            );
+        }
+        return new Region(
+            +row[ColNameImageServiceRegionId],
+            +row[ColNameImageServiceRegionOfImageId],
+            +row[ColNameImageServiceRegionDrawnByUserId],
+            +row[ColNameImageServiceRegionLabeledByUserId],
+            this.binaryConverter.fromBuffer(
+                row[ColNameImageServiceRegionBorder]
+            ),
+            this.binaryConverter.fromBuffer(
+                row[ColNameImageServiceRegionHoles]
+            ),
+            label
+        );
     }
 
     private getRegionFromJoinedRow(row: Record<string, any>): Region {

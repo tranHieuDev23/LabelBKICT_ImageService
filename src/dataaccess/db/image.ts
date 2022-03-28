@@ -171,11 +171,6 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             rows = await this.knex
                 .select()
                 .from(TabNameImageServiceImage)
-                .leftOuterJoin(
-                    TabNameImageServiceImageType,
-                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeId}`,
-                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeId}`
-                )
                 .where({
                     [ColNameImageServiceImageId]: id,
                 })
@@ -200,7 +195,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             );
         }
 
-        return this.getImageFrowJoinedRow(rows[0]);
+        return this.getImageFrowRow(rows[0]);
     }
 
     public async getImageList(
@@ -531,6 +526,32 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     status.INVALID_ARGUMENT
                 );
         }
+    }
+
+    private getImageFrowRow(row: Record<string, any>): Image {
+        let imageType: ImageType | null = null;
+        if (row[ColNameImageServiceImageImageTypeId]) {
+            imageType = new ImageType(
+                row[ColNameImageServiceImageImageTypeId],
+                "",
+                false
+            );
+        }
+        return new Image(
+            +row[ColNameImageServiceImageId],
+            +row[ColNameImageServiceImageUploadedByUserId],
+            +row[ColNameImageServiceImageUploadTime],
+            +row[ColNameImageServiceImagePublishedByUserId],
+            +row[ColNameImageServiceImagePublishTime],
+            +row[ColNameImageServiceImageVerifiedByUserId],
+            row[ColNameImageServiceImageVerifyTime],
+            row[ColNameImageServiceImageOriginalFileName],
+            row[ColNameImageServiceImageOriginalImageFilename],
+            row[ColNameImageServiceImageThumbnailImageFilename],
+            row[ColNameImageServiceImageDescription],
+            imageType,
+            +row[ColNameImageServiceImageStatus]
+        );
     }
 
     private getImageFrowJoinedRow(row: Record<string, any>): Image {
