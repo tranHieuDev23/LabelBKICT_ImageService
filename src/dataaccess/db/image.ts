@@ -8,7 +8,7 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { ImageType, ImageListSortOrder, Image } from "./models";
 
 export class ImageListFilterOptions {
-    public shouldFilterByImageIdList: boolean = false;
+    public shouldFilterByImageIdList = false;
     public imageIdList: number[] = [];
     public imageTypeIdList: (number | null)[] = [];
     public uploadedByUserIdList: number[] = [];
