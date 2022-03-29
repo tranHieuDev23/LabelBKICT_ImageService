@@ -4,6 +4,10 @@ import {
     polygon as toTurfPolygon,
     multiPolygon as toTurfMultiPolygon,
     cleanCoords,
+    kinks,
+    distance,
+    unkinkPolygon,
+    area,
     union,
     intersect,
 } from "@turf/turf";
@@ -21,6 +25,8 @@ export interface RegionNormalizer {
     };
 }
 
+const KINK_VERTICES_DISTANCE_LOWER_BOUND = 1e-3;
+
 export class TurfRegionNormalizer implements RegionNormalizer {
     public normalizeRegion(
         border: Polygon,
@@ -37,6 +43,12 @@ export class TurfRegionNormalizer implements RegionNormalizer {
         // Remove redundant vertices
         turfBorder = cleanCoords(turfBorder);
         turfHoles = turfHoles.map((hole) => cleanCoords(hole));
+
+        // Fix self-intersection
+        turfBorder = this.fixSelfIntersectedTurfPolygon(turfBorder);
+        turfHoles = turfHoles.map((hole) =>
+            this.fixSelfIntersectedTurfPolygon(hole)
+        );
 
         // Join all common area between holes
         if (turfHoles.length > 1) {
@@ -93,6 +105,43 @@ export class TurfRegionNormalizer implements RegionNormalizer {
                 };
             }),
         };
+    }
+
+    private fixSelfIntersectedTurfPolygon(polygon: TurfPolygon): TurfPolygon {
+        const kinkPointList = kinks(polygon).features.map((point) => {
+            return point.geometry.coordinates;
+        });
+
+        /**
+         * HACK: unkinkPolygon() will cause error if there is an intersection that lies directly on a vertex.
+         * To prevent that, we will just remove these vertices.
+         */
+
+        const verticesFarFromKinkList = polygon.coordinates[0].filter(
+            (vertex) => {
+                return kinkPointList.every((kinkPoint) => {
+                    distance(vertex, kinkPoint) >=
+                        KINK_VERTICES_DISTANCE_LOWER_BOUND;
+                });
+            }
+        );
+
+        const unKinkedPolygonList = unkinkPolygon(
+            toTurfPolygon([verticesFarFromKinkList])
+        );
+
+        // Only keep the polygon with the maximum area
+        let maxArea = -1;
+        let maxAreaIndex = -1;
+        unKinkedPolygonList.features.forEach((polygon, index) => {
+            const itemArea = area(polygon);
+            if (itemArea > maxArea) {
+                maxArea = itemArea;
+                maxAreaIndex = index;
+            }
+        });
+
+        return unKinkedPolygonList.features[maxAreaIndex].geometry;
     }
 
     private calculateUnionOfTurfPolygonListAndTurfPolygon(
