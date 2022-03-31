@@ -195,7 +195,8 @@ export async function up(knex: Knex): Promise<void> {
 
                 tab.foreign("of_region_id")
                     .references("region_id")
-                    .inTable(TabNameImageServiceRegion);
+                    .inTable(TabNameImageServiceRegion)
+                    .onDelete("CASCADE");
 
                 tab.index(
                     ["of_region_id"],
