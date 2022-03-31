@@ -5,7 +5,6 @@ import {
     multiPolygon as toTurfMultiPolygon,
     cleanCoords,
     kinks,
-    distance,
     unkinkPolygon,
     area,
     union,
