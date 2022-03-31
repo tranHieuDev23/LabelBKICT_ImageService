@@ -25,8 +25,6 @@ export interface RegionNormalizer {
     };
 }
 
-const KINK_VERTICES_DISTANCE_LOWER_BOUND = 1e-3;
-
 export class TurfRegionNormalizer implements RegionNormalizer {
     public normalizeRegion(
         border: Polygon,
@@ -116,15 +114,17 @@ export class TurfRegionNormalizer implements RegionNormalizer {
          * HACK: unkinkPolygon() will cause error if there is an intersection that lies directly on a vertex.
          * To prevent that, we will just remove these vertices.
          */
-
         const verticesFarFromKinkList = polygon.coordinates[0].filter(
             (vertex) => {
                 return kinkPointList.every((kinkPoint) => {
-                    distance(vertex, kinkPoint) >=
-                        KINK_VERTICES_DISTANCE_LOWER_BOUND;
+                    return (
+                        vertex[0] !== kinkPoint[0] || vertex[1] !== kinkPoint[1]
+                    );
                 });
             }
         );
+
+        console.log(verticesFarFromKinkList);
 
         const unKinkedPolygonList = unkinkPolygon(
             toTurfPolygon([verticesFarFromKinkList])
