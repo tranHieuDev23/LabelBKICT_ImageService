@@ -227,12 +227,6 @@ export class ImageServiceHandlersFactory {
                         code: status.INVALID_ARGUMENT,
                     });
                 }
-                if (req.holes === undefined) {
-                    return callback({
-                        message: "holes is required",
-                        code: status.INVALID_ARGUMENT,
-                    });
-                }
 
                 try {
                     const region =
@@ -241,7 +235,7 @@ export class ImageServiceHandlersFactory {
                             req.drawnByUserId,
                             req.labeledByUserId,
                             req.border,
-                            req.holes,
+                            req.holes || [],
                             req.labelId
                         );
                     callback(null, { region });
@@ -944,12 +938,6 @@ export class ImageServiceHandlersFactory {
                         code: status.INVALID_ARGUMENT,
                     });
                 }
-                if (req.holes === undefined) {
-                    return callback({
-                        message: "holes is required",
-                        code: status.INVALID_ARGUMENT,
-                    });
-                }
 
                 try {
                     const region =
@@ -958,7 +946,7 @@ export class ImageServiceHandlersFactory {
                             req.regionId,
                             req.drawnByUserId,
                             req.border,
-                            req.holes
+                            req.holes || []
                         );
                     callback(null, { region });
                 } catch (e) {

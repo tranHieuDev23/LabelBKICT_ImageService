@@ -34,7 +34,8 @@ export interface RegionOperationLogDrawMetadataDataAccessor {
 
 const TabNameImageServiceRegionOperationLogDrawMetadata =
     "image_service_region_operation_log_draw_metadata_tab";
-const ColNameImageServiceRegionOperationLogDrawMetadataOfLogId = "of_log_id";
+const ColNameImageServiceRegionOperationLogDrawMetadataOfLogId =
+    "of_region_operation_log_id";
 const ColNameImageServiceRegionOperationLogDrawMetadataOldBorder = "old_border";
 const ColNameImageServiceRegionOperationLogDrawMetadataOldHoles = "old_holes";
 const ColNameImageServiceRegionOperationLogDrawMetadataNewBorder = "new_border";
@@ -55,11 +56,11 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
         try {
             const oldBorderBinary =
                 args.oldBorder === null
-                    ? null
+                    ? ""
                     : this.binaryConverter.toBuffer(args.oldBorder);
             const oldHolesBinary =
                 args.oldHoles === null
-                    ? null
+                    ? ""
                     : this.binaryConverter.toBuffer(args.oldHoles);
             const newBorderBinary = this.binaryConverter.toBuffer(
                 args.newBorder
@@ -135,7 +136,7 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
     ): RegionOperationLogDrawMetadata {
         const oldBorder =
             row[ColNameImageServiceRegionOperationLogDrawMetadataOldBorder] ===
-            null
+            ""
                 ? null
                 : this.binaryConverter.fromBuffer(
                       row[
@@ -144,7 +145,7 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
                   );
         const oldHoles =
             row[ColNameImageServiceRegionOperationLogDrawMetadataOldHoles] ===
-            null
+            ""
                 ? null
                 : this.binaryConverter.fromBuffer(
                       row[

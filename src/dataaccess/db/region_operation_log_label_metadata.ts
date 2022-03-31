@@ -27,8 +27,9 @@ export interface RegionOperationLogLabelMetadataDataAccessor {
 }
 
 const TabNameImageServiceRegionOperationLogLabelMetadata =
-    "image_service_region_operation_log_draw_metadata_tab";
-const ColNameImageServiceRegionOperationLogLabelMetadataOfLogId = "of_log_id";
+    "image_service_region_operation_log_label_metadata_tab";
+const ColNameImageServiceRegionOperationLogLabelMetadataOfLogId =
+    "of_region_operation_log_id";
 const ColNameImageServiceRegionOperationLogLabelMetadataOldLabelId =
     "old_label_id";
 const ColNameImageServiceRegionOperationLogLabelMetadataNewLabelId =
