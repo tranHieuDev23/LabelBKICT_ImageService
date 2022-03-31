@@ -588,6 +588,26 @@ export class ImageServiceHandlersFactory {
                 }
             },
 
+            GetImageType: async (call, callback) => {
+                const req = call.request;
+                if (req.id === undefined) {
+                    return callback({
+                        message: "id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    const { imageType, regionLabelList } =
+                        await this.imageTypeManagementOperator.getImageType(
+                            req.id
+                        );
+                    callback(null, { imageType, regionLabelList });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
             GetImageTypeList: async (call, callback) => {
                 const req = call.request;
                 const withRegionLabel = req.withRegionLabel || false;

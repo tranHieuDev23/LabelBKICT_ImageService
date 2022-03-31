@@ -21,6 +21,10 @@ export interface ImageTypeManagementOperator {
         imageTypeList: ImageType[];
         regionLabelList: RegionLabel[][] | null;
     }>;
+    getImageType(id: number): Promise<{
+        imageType: ImageType;
+        regionLabelList: RegionLabel[];
+    }>;
     updateImageType(
         id: number,
         displayName: string | undefined,
@@ -90,6 +94,26 @@ export class ImageTypeManagementOperatorImpl
         }
 
         return { imageTypeList, regionLabelList };
+    }
+
+    public async getImageType(id: number): Promise<{
+        imageType: ImageType;
+        regionLabelList: RegionLabel[];
+    }> {
+        const imageType = await this.imageTypeDM.getImageType(id);
+        if (imageType === null) {
+            this.logger.error("no image type with image_type_id found", {
+                imageTypeId: id,
+            });
+            throw new ErrorWithStatus(
+                `no image type with image_type_id ${id} found`,
+                status.NOT_FOUND
+            );
+        }
+        const regionLabelList = (
+            await this.regionLabelDM.getRegionLabelListOfImageTypeIdList([id])
+        )[0];
+        return { imageType, regionLabelList };
     }
 
     public async updateImageType(

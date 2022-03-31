@@ -3,6 +3,7 @@ syntax = "proto3";
 service ImageService {
     rpc CreateImageType(CreateImageTypeRequest) returns (CreateImageTypeResponse) {}
     rpc GetImageTypeList(GetImageTypeListRequest) returns (GetImageTypeListResponse) {}
+    rpc GetImageType(GetImageTypeRequest) returns (GetImageTypeResponse) {}
     rpc UpdateImageType(UpdateImageTypeRequest) returns (UpdateImageTypeResponse) {}
     rpc DeleteImageType(DeleteImageTypeRequest) returns (DeleteImageTypeResponse) {}
 
@@ -205,6 +206,15 @@ message GetImageTypeListRequest {
 message GetImageTypeListResponse {
     repeated ImageType image_type_list = 1;
     repeated RegionLabelList region_label_list_of_image_type_list = 2;
+}
+
+message GetImageTypeRequest {
+    uint32 id = 1;
+}
+
+message GetImageTypeResponse {
+    ImageType image_type = 1;
+    repeated RegionLabel region_label_list = 2;
 }
 
 message UpdateImageTypeRequest {
