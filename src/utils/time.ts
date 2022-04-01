@@ -6,7 +6,7 @@ export interface Timer {
 
 export class TimeImpl implements Timer {
     getCurrentTime(): number {
-        return Math.round(Date.now() / 1000);
+        return Math.round(Date.now());
     }
 }
 
