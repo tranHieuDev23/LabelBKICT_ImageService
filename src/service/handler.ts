@@ -754,11 +754,12 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageManagementOperator.updateImageImageType(
-                        req.id,
-                        req.imageTypeId
-                    );
-                    callback(null, {});
+                    const image =
+                        await this.imageManagementOperator.updateImageImageType(
+                            req.id,
+                            req.imageTypeId
+                        );
+                    callback(null, { image });
                 } catch (e) {
                     this.handleError(e, callback);
                 }
