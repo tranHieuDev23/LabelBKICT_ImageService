@@ -123,8 +123,6 @@ export class TurfRegionNormalizer implements RegionNormalizer {
             }
         );
 
-        console.log(verticesFarFromKinkList);
-
         const unKinkedPolygonList = unkinkPolygon(
             toTurfPolygon([verticesFarFromKinkList])
         );
