@@ -404,13 +404,19 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                 }
             );
 
+            // HACK: since we can't get region label with x lock, need to manually retrieve region label here
+            const regionLabel =
+                region.label === null
+                    ? null
+                    : await this.regionLabelDM.getRegionLabel(region.label.id);
+
             return {
                 id: regionId,
                 drawnByUserId: drawnByUserId,
                 labeledByUserId: region.labeledByUserId,
                 border: border,
                 holes: holes,
-                label: region.label,
+                label: regionLabel,
             };
         });
     }
