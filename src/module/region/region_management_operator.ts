@@ -386,42 +386,32 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                 labelId: region.label === null ? null : region.label.id,
             });
 
-            return this.regionOperationLogDM.withTransaction(
-                async (regionOperationLogDM) => {
-                    return this.regionOperationLogDrawMetadataDM.withTransaction(
-                        async (regionOperationLogDrawMetadataDM) => {
-                            const drawLogId =
-                                await regionOperationLogDM.createRegionOperationLog(
-                                    {
-                                        ofRegionId: regionId,
-                                        byUserId: drawnByUserId,
-                                        operationTime: currentTime,
-                                        operationType:
-                                            _RegionOperationType_Values.DRAW,
-                                    }
-                                );
-                            await regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
-                                {
-                                    ofLogId: drawLogId,
-                                    oldBorder: oldBorder,
-                                    oldHoles: oldHoles,
-                                    newBorder: dmBorder,
-                                    newHoles: dmHoles,
-                                }
-                            );
+            const drawLogId =
+                await this.regionOperationLogDM.createRegionOperationLog({
+                    ofRegionId: regionId,
+                    byUserId: drawnByUserId,
+                    operationTime: currentTime,
+                    operationType: _RegionOperationType_Values.DRAW,
+                });
 
-                            return {
-                                id: regionId,
-                                drawnByUserId: drawnByUserId,
-                                labeledByUserId: region.labeledByUserId,
-                                border: border,
-                                holes: holes,
-                                label: region.label,
-                            };
-                        }
-                    );
+            await this.regionOperationLogDrawMetadataDM.createRegionOperationLogDrawMetadata(
+                {
+                    ofLogId: drawLogId,
+                    oldBorder: oldBorder,
+                    oldHoles: oldHoles,
+                    newBorder: dmBorder,
+                    newHoles: dmHoles,
                 }
             );
+
+            return {
+                id: regionId,
+                drawnByUserId: drawnByUserId,
+                labeledByUserId: region.labeledByUserId,
+                border: border,
+                holes: holes,
+                label: region.label,
+            };
         });
     }
 
@@ -504,41 +494,30 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
                 labelId: labeId,
             });
 
-            return this.regionOperationLogDM.withTransaction(
-                async (regionOperationLogDM) => {
-                    return this.regionOperationLogLabelMetadataDM.withTransaction(
-                        async (regionOperationLogLabelMetadataDM) => {
-                            const drawLogId =
-                                await regionOperationLogDM.createRegionOperationLog(
-                                    {
-                                        ofRegionId: regionId,
-                                        byUserId: labeledByUserId,
-                                        operationTime: currentTime,
-                                        operationType:
-                                            _RegionOperationType_Values.LABEL,
-                                    }
-                                );
-                            await regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
-                                {
-                                    ofLogId: drawLogId,
-                                    oldLabelId:
-                                        oldLabel === null ? null : oldLabel.id,
-                                    newLabelId: newLabel.id,
-                                }
-                            );
+            const drawLogId =
+                await this.regionOperationLogDM.createRegionOperationLog({
+                    ofRegionId: regionId,
+                    byUserId: labeledByUserId,
+                    operationTime: currentTime,
+                    operationType: _RegionOperationType_Values.LABEL,
+                });
 
-                            return {
-                                id: regionId,
-                                drawnByUserId: region.drawnByUserId,
-                                labeledByUserId: labeledByUserId,
-                                border: region.border,
-                                holes: region.holes,
-                                label: newLabel,
-                            };
-                        }
-                    );
+            await this.regionOperationLogLabelMetadataDM.createRegionOperationLogLabelMetadata(
+                {
+                    ofLogId: drawLogId,
+                    oldLabelId: oldLabel === null ? null : oldLabel.id,
+                    newLabelId: newLabel.id,
                 }
             );
+
+            return {
+                id: regionId,
+                drawnByUserId: region.drawnByUserId,
+                labeledByUserId: labeledByUserId,
+                border: region.border,
+                holes: region.holes,
+                label: newLabel,
+            };
         });
     }
 
