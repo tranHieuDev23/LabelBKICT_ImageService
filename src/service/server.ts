@@ -53,10 +53,10 @@ export class ImageServiceGRPCServer {
             defaults: false,
             oneofs: true,
         });
-        const ImageServicePackageDefinition = loadPackageDefinition(
+        const imageServicePackageDefinition = loadPackageDefinition(
             packageDefinition
         ) as unknown;
-        return ImageServicePackageDefinition as ProtoGrpcType;
+        return imageServicePackageDefinition as ProtoGrpcType;
     }
 }
 
