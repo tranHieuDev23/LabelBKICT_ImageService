@@ -353,17 +353,19 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 ""
             );
         }
+        const border = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionBorder]
+        );
+        const holes = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionHoles]
+        );
         return new Region(
             +row[ColNameImageServiceRegionId],
             +row[ColNameImageServiceRegionOfImageId],
             +row[ColNameImageServiceRegionDrawnByUserId],
             +row[ColNameImageServiceRegionLabeledByUserId],
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionBorder]
-            ),
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionHoles]
-            ),
+            border,
+            holes,
             label
         );
     }
@@ -378,17 +380,19 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 row[ColNameImageServiceRegionLabelColor]
             );
         }
+        const border = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionBorder]
+        );
+        const holes = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionHoles]
+        );
         return new Region(
             +row[ColNameImageServiceRegionId],
             +row[ColNameImageServiceRegionOfImageId],
             +row[ColNameImageServiceRegionDrawnByUserId],
             +row[ColNameImageServiceRegionLabeledByUserId],
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionBorder]
-            ),
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionHoles]
-            ),
+            border,
+            holes,
             label
         );
     }

@@ -134,24 +134,12 @@ export class RegionOperationLogDrawMetadataDataAccessorImpl
     private getRegionOperationLogDrawMetadataFromRow(
         row: Record<string, any>
     ): RegionOperationLogDrawMetadata {
-        const oldBorder =
-            row[ColNameImageServiceRegionOperationLogDrawMetadataOldBorder] ===
-            ""
-                ? null
-                : this.binaryConverter.fromBuffer(
-                      row[
-                          ColNameImageServiceRegionOperationLogDrawMetadataOldBorder
-                      ]
-                  );
-        const oldHoles =
-            row[ColNameImageServiceRegionOperationLogDrawMetadataOldHoles] ===
-            ""
-                ? null
-                : this.binaryConverter.fromBuffer(
-                      row[
-                          ColNameImageServiceRegionOperationLogDrawMetadataOldHoles
-                      ]
-                  );
+        const oldBorder = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionOperationLogDrawMetadataOldBorder]
+        );
+        const oldHoles = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionOperationLogDrawMetadataOldHoles]
+        );
         const newBorder = this.binaryConverter.fromBuffer(
             row[ColNameImageServiceRegionOperationLogDrawMetadataNewBorder]
         );

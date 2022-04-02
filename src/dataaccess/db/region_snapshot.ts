@@ -135,16 +135,18 @@ export class RegionSnapshotDataAccessorImpl
                 row[ColNameImageServiceRegionLabelColor]
             );
         }
+        const border = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionSnapshotBorder]
+        );
+        const holes = this.binaryConverter.fromBuffer(
+            row[ColNameImageServiceRegionSnapshotHoles]
+        );
         return new RegionSnapshot(
             +row[ColNameImageServiceRegionSnapshotId],
             +row[ColNameImageServiceRegionSnapshotDrawnByUserId],
             +row[ColNameImageServiceRegionSnapshotLabeledByUserId],
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionSnapshotBorder]
-            ),
-            this.binaryConverter.fromBuffer(
-                row[ColNameImageServiceRegionSnapshotHoles]
-            ),
+            border,
+            holes,
             label
         );
     }
