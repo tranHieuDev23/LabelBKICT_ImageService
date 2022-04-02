@@ -61,6 +61,21 @@ export interface ImageDataAccessor {
         filterOptions: ImageListFilterOptions
     ): Promise<Image[]>;
     getImageCount(filterOptions: ImageListFilterOptions): Promise<number>;
+    getPrevImageCount(
+        image: Image,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number>;
+    getPrevImageId(
+        image: Image,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number | null>;
+    getNextImageId(
+        image: Image,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number | null>;
     updateImage(args: UpdateImageArguments): Promise<void>;
     deleteImage(id: number): Promise<void>;
     deleteImageList(idList: number[]): Promise<void>;
@@ -215,13 +230,12 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 )
                 .offset(offset)
                 .limit(limit);
-            queryBuilder = this.applyImageListSortOrder(
+            queryBuilder = this.applyImageListOrderByClause(
                 queryBuilder,
                 sortOrder
             );
-            queryBuilder = this.applyImageListFilterOptions(
-                queryBuilder,
-                filterOptions
+            queryBuilder = queryBuilder.where((qb) =>
+                this.getImageListFilterOptionsWhereClause(qb, filterOptions)
             );
             const rows = await queryBuilder;
             return rows.map((row) => this.getImageFrowJoinedRow(row));
@@ -242,14 +256,123 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
     ): Promise<number> {
         try {
             let queryBuilder = this.knex.count().from(TabNameImageServiceImage);
-            queryBuilder = this.applyImageListFilterOptions(
-                queryBuilder,
-                filterOptions
+            queryBuilder = queryBuilder.where((qb) =>
+                this.getImageListFilterOptionsWhereClause(qb, filterOptions)
             );
             const rows = (await queryBuilder) as any[];
             return +rows[0]["count"];
         } catch (error) {
             this.logger.error("failed to get image count", {
+                filterOptions,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getPrevImageCount(
+        image: Image,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number> {
+        const oppositeSortOrder = this.getOppositeSortOrder(sortOrder);
+        try {
+            let queryBuilder = this.knex.count().from(TabNameImageServiceImage);
+            queryBuilder = queryBuilder.where((qb) =>
+                this.getImageListFilterOptionsWhereClause(qb, filterOptions)
+            );
+            queryBuilder = queryBuilder.andWhere((qb) => {
+                this.getNextImageListWhereClause(qb, image, oppositeSortOrder);
+            });
+            const rows = (await queryBuilder) as any[];
+            return +rows[0]["count"];
+        } catch (error) {
+            this.logger.error("failed to get prev image count", {
+                image,
+                sortOrder,
+                filterOptions,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getPrevImageId(
+        image: Image,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number | null> {
+        const oppositeSortOrder = this.getOppositeSortOrder(sortOrder);
+        try {
+            let queryBuilder = this.knex
+                .select()
+                .from(TabNameImageServiceImage)
+                .limit(1);
+            queryBuilder = this.applyImageListOrderByClause(
+                queryBuilder,
+                oppositeSortOrder
+            );
+            queryBuilder = queryBuilder.where((qb) =>
+                this.getImageListFilterOptionsWhereClause(qb, filterOptions)
+            );
+            queryBuilder = queryBuilder.andWhere((qb) => {
+                this.getNextImageListWhereClause(qb, image, oppositeSortOrder);
+            });
+            const rows = await queryBuilder;
+            if (rows.length === 0) {
+                this.logger.debug("no prev image found", {
+                    image,
+                    sortOrder,
+                    filterOptions,
+                });
+                return null;
+            }
+            return +rows[0][ColNameImageServiceImageId];
+        } catch (error) {
+            this.logger.error("failed to get prev image id", {
+                image,
+                sortOrder,
+                filterOptions,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getNextImageId(
+        image: Image,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number | null> {
+        try {
+            let queryBuilder = this.knex
+                .select()
+                .from(TabNameImageServiceImage)
+                .limit(1);
+            queryBuilder = this.applyImageListOrderByClause(
+                queryBuilder,
+                sortOrder
+            );
+            queryBuilder = queryBuilder.where((qb) =>
+                this.getImageListFilterOptionsWhereClause(qb, filterOptions)
+            );
+            queryBuilder = queryBuilder.andWhere((qb) => {
+                this.getNextImageListWhereClause(qb, image, sortOrder);
+            });
+            const rows = await queryBuilder;
+            if (rows.length === 0) {
+                this.logger.debug("no next image found", {
+                    image,
+                    sortOrder,
+                    filterOptions,
+                });
+                return null;
+            }
+            return +rows[0][ColNameImageServiceImageId];
+        } catch (error) {
+            this.logger.error("failed to get next image id", {
+                image,
+                sortOrder,
                 filterOptions,
                 error,
             });
@@ -327,7 +450,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         });
     }
 
-    private applyImageListFilterOptions(
+    private getImageListFilterOptionsWhereClause(
         qb: Knex.QueryBuilder,
         filterOptions: ImageListFilterOptions
     ): Knex.QueryBuilder {
@@ -489,7 +612,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         return qb;
     }
 
-    private applyImageListSortOrder(
+    private applyImageListOrderByClause(
         qb: Knex.QueryBuilder,
         sortOption: ImageListSortOrder
     ): Knex.QueryBuilder {
@@ -525,6 +648,138 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     "invalid image list sort order",
                     status.INVALID_ARGUMENT
                 );
+        }
+    }
+
+    private getOppositeSortOrder(
+        sortOrder: ImageListSortOrder
+    ): ImageListSortOrder {
+        switch (sortOrder) {
+            case ImageListSortOrder.ID_ASCENDING:
+                return ImageListSortOrder.ID_DESCENDING;
+            case ImageListSortOrder.ID_DESCENDING:
+                return ImageListSortOrder.ID_ASCENDING;
+            case ImageListSortOrder.UPLOAD_TIME_ASCENDING:
+                return ImageListSortOrder.UPLOAD_TIME_DESCENDING;
+            case ImageListSortOrder.UPLOAD_TIME_DESCENDING:
+                return ImageListSortOrder.UPLOAD_TIME_ASCENDING;
+            case ImageListSortOrder.PUBLISH_TIME_ASCENDING:
+                return ImageListSortOrder.PUBLISH_TIME_DESCENDING;
+            case ImageListSortOrder.PUBLISH_TIME_DESCENDING:
+                return ImageListSortOrder.PUBLISH_TIME_ASCENDING;
+            case ImageListSortOrder.VERIFY_TIME_ASCENDING:
+                return ImageListSortOrder.VERIFY_TIME_DESCENDING;
+            case ImageListSortOrder.VERIFY_TIME_DESCENDING:
+                return ImageListSortOrder.VERIFY_TIME_ASCENDING;
+        }
+    }
+
+    private getNextImageListWhereClause(
+        qb: Knex.QueryBuilder,
+        image: Image,
+        sortOrder: ImageListSortOrder
+    ): Knex.QueryBuilder {
+        switch (sortOrder) {
+            case ImageListSortOrder.ID_ASCENDING:
+                return qb.where(ColNameImageServiceImageId, ">", image.id);
+            case ImageListSortOrder.ID_DESCENDING:
+                return qb.where(ColNameImageServiceImageId, "<", image.id);
+            case ImageListSortOrder.UPLOAD_TIME_ASCENDING:
+                return qb
+                    .where(
+                        ColNameImageServiceImageUploadTime,
+                        ">",
+                        image.uploadTime
+                    )
+                    .orWhere((qb) =>
+                        qb
+                            .where(
+                                ColNameImageServiceImageUploadTime,
+                                "=",
+                                image.uploadTime
+                            )
+                            .andWhere(ColNameImageServiceImageId, ">", image.id)
+                    );
+            case ImageListSortOrder.UPLOAD_TIME_DESCENDING:
+                return qb
+                    .where(
+                        ColNameImageServiceImageUploadTime,
+                        "<",
+                        image.uploadTime
+                    )
+                    .orWhere((qb) =>
+                        qb
+                            .where(
+                                ColNameImageServiceImageUploadTime,
+                                "=",
+                                image.uploadTime
+                            )
+                            .andWhere(ColNameImageServiceImageId, "<", image.id)
+                    );
+            case ImageListSortOrder.PUBLISH_TIME_ASCENDING:
+                return qb
+                    .where(
+                        ColNameImageServiceImagePublishTime,
+                        ">",
+                        image.publishTime
+                    )
+                    .orWhere((qb) =>
+                        qb
+                            .where(
+                                ColNameImageServiceImagePublishTime,
+                                "=",
+                                image.publishTime
+                            )
+                            .andWhere(ColNameImageServiceImageId, ">", image.id)
+                    );
+            case ImageListSortOrder.PUBLISH_TIME_DESCENDING:
+                return qb
+                    .where(
+                        ColNameImageServiceImagePublishTime,
+                        "<",
+                        image.publishTime
+                    )
+                    .orWhere((qb) =>
+                        qb
+                            .where(
+                                ColNameImageServiceImagePublishTime,
+                                "=",
+                                image.publishTime
+                            )
+                            .andWhere(ColNameImageServiceImageId, "<", image.id)
+                    );
+            case ImageListSortOrder.VERIFY_TIME_ASCENDING:
+                return qb
+                    .where(
+                        ColNameImageServiceImageVerifyTime,
+                        ">",
+                        image.verifyTime
+                    )
+                    .orWhere((qb) =>
+                        qb
+                            .where(
+                                ColNameImageServiceImageVerifyTime,
+                                "=",
+                                image.verifyTime
+                            )
+                            .andWhere(ColNameImageServiceImageId, ">", image.id)
+                    );
+            case ImageListSortOrder.VERIFY_TIME_DESCENDING:
+                return qb
+                    .where(
+                        ColNameImageServiceImageVerifyTime,
+                        "<",
+                        image.verifyTime
+                    )
+                    .orWhere((qb) =>
+                        qb
+                            .where(
+                                ColNameImageServiceImageVerifyTime,
+                                "=",
+                                image.verifyTime
+                            )
+                            .andWhere(ColNameImageServiceImageId, "<", image.id)
+                    );
         }
     }
 

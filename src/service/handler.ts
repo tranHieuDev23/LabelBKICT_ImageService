@@ -7,7 +7,9 @@ import {
     IMAGE_TYPE_MANAGEMENT_OPERATOR_TOKEN,
 } from "../module/image_type";
 import {
+    ImageListManagementOperator,
     ImageManagementOperator,
+    IMAGE_LIST_MANAGEMENT_OPERATOR_TOKEN,
     IMAGE_MANAGEMENT_OPERATOR_TOKEN,
 } from "../module/image";
 import {
@@ -29,6 +31,7 @@ export class ImageServiceHandlersFactory {
         private readonly imageTypeManagementOperator: ImageTypeManagementOperator,
         private readonly imageTagManagementOperator: ImageTagManagementOperator,
         private readonly imageManagementOperator: ImageManagementOperator,
+        private readonly imageListManagementOperator: ImageListManagementOperator,
         private readonly regionManagementOperator: RegionManagementOperator
     ) {}
 
@@ -298,7 +301,7 @@ export class ImageServiceHandlersFactory {
             DeleteImageList: async (call, callback) => {
                 const req = call.request;
                 try {
-                    await this.imageManagementOperator.deleteImageList(
+                    await this.imageListManagementOperator.deleteImageList(
                         req.idList || []
                     );
                     callback(null, {});
@@ -464,7 +467,7 @@ export class ImageServiceHandlersFactory {
                         imageList,
                         imageTagList,
                         regionList,
-                    } = await this.imageManagementOperator.getImageList(
+                    } = await this.imageListManagementOperator.getImageList(
                         offset,
                         limit,
                         sortOrder,
@@ -500,6 +503,41 @@ export class ImageServiceHandlersFactory {
                         imageList,
                         imageTagListOfImageList,
                         regionListOfImageList,
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetImagePositionInList: async (call, callback) => {
+                const req = call.request;
+                if (req.id === undefined) {
+                    return callback({
+                        message: "id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const sortOrder =
+                    req.sortOrder === undefined
+                        ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER
+                        : req.sortOrder;
+
+                try {
+                    const {
+                        position,
+                        totalImageCount,
+                        prevImageId,
+                        nextImageId,
+                    } = await this.imageListManagementOperator.getImagePositionInList(
+                        req.id,
+                        sortOrder,
+                        req.filterOptions
+                    );
+                    callback(null, {
+                        position,
+                        totalImageCount,
+                        prevImageId,
+                        nextImageId,
                     });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -776,7 +814,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageManagementOperator.updateImageListImageType(
+                    await this.imageListManagementOperator.updateImageListImageType(
                         imageIdList,
                         req.imageTypeId
                     );
@@ -1052,6 +1090,7 @@ injected(
     IMAGE_TYPE_MANAGEMENT_OPERATOR_TOKEN,
     IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN,
     IMAGE_MANAGEMENT_OPERATOR_TOKEN,
+    IMAGE_LIST_MANAGEMENT_OPERATOR_TOKEN,
     REGION_MANAGEMENT_OPERATOR_TOKEN
 );
 
