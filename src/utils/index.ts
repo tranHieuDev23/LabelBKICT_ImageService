@@ -3,7 +3,7 @@ import {
     BINARY_CONVERTER_TOKEN,
     BinaryConverterImpl,
 } from "./binary_converter";
-import { Id_GENERATOR_TOKEN, SnowflakeIdGenerator } from "./id";
+import { ID_GENERATOR_TOKEN, SnowflakeIdGenerator } from "./id";
 import { initializeLogger, LOGGER_TOKEN } from "./logging";
 import { TimeImpl, TIMER_TOKEN } from "./time";
 
@@ -20,7 +20,7 @@ export function bindToContainer(container: Container): void {
         .toInstance(initializeLogger)
         .inSingletonScope();
     container
-        .bind(Id_GENERATOR_TOKEN)
+        .bind(ID_GENERATOR_TOKEN)
         .toInstance(SnowflakeIdGenerator)
         .inSingletonScope();
     container.bind(TIMER_TOKEN).toInstance(TimeImpl).inSingletonScope();

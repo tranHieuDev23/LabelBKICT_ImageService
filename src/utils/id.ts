@@ -24,4 +24,4 @@ export class SnowflakeIdGenerator implements IdGenerator {
 
 injected(SnowflakeIdGenerator, DISTRIBUTED_CONFIG_TOKEN);
 
-export const Id_GENERATOR_TOKEN = token<IdGenerator>("IdGenerator");
+export const ID_GENERATOR_TOKEN = token<IdGenerator>("IdGenerator");

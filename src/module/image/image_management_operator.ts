@@ -32,7 +32,7 @@ import { Region } from "../../proto/gen/Region";
 import {
     ErrorWithStatus,
     IdGenerator,
-    Id_GENERATOR_TOKEN,
+    ID_GENERATOR_TOKEN,
     LOGGER_TOKEN,
     Timer,
     TIMER_TOKEN,
@@ -745,7 +745,7 @@ injected(
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
-    Id_GENERATOR_TOKEN,
+    ID_GENERATOR_TOKEN,
     TIMER_TOKEN,
     IMAGE_PROCESSOR_TOKEN,
     APPLICATION_CONFIG_TOKEN,
