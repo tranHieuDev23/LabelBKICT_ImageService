@@ -490,11 +490,10 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         }
         if (filterOptions.publishedByUserIdList.length > 0) {
             queryCallbackList.push((qb) => {
-                qb.where(
-                    ColNameImageServiceImageStatus,
-                    "=",
-                    _ImageStatus_Values.PUBLISHED
-                ).andWhere((qb) => {
+                qb.whereIn(ColNameImageServiceImageStatus, [
+                    _ImageStatus_Values.PUBLISHED,
+                    _ImageStatus_Values.VERIFIED,
+                ]).andWhere((qb) => {
                     qb.whereIn(
                         ColNameImageServiceImagePublishedByUserId,
                         filterOptions.publishedByUserIdList
@@ -542,7 +541,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 ]).andWhere(
                     ColNameImageServiceImagePublishTime,
                     ">=",
-                    filterOptions.uploadTimeStart
+                    filterOptions.publishTimeStart
                 );
             });
         }
@@ -554,7 +553,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 ]).andWhere(
                     ColNameImageServiceImagePublishTime,
                     "<=",
-                    filterOptions.uploadTimeEnd
+                    filterOptions.publishTimeEnd
                 );
             });
         }
@@ -567,7 +566,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 ).andWhere(
                     ColNameImageServiceImageVerifyTime,
                     ">=",
-                    filterOptions.uploadTimeStart
+                    filterOptions.verifyTimeStart
                 );
             });
         }
@@ -580,7 +579,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 ).andWhere(
                     ColNameImageServiceImageVerifyTime,
                     "<=",
-                    filterOptions.uploadTimeEnd
+                    filterOptions.verifyTimeEnd
                 );
             });
         }
