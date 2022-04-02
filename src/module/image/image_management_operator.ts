@@ -487,7 +487,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                     }
                     if (newStatus === _ImageStatus_Values.VERIFIED) {
                         image.verifiedByUserId = byUserId;
-                        image.verifiedByUserId = currentTime;
+                        image.verifyTime = currentTime;
                         await this.generateRegionSnapshotOfImage(
                             regionSnapshotDM,
                             newStatus,
@@ -508,6 +508,13 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                                 : image.imageType.id,
                         status: newStatus,
                     });
+
+                    // HACK: since we can't get image type with x lock, need to manually retrieve image type here
+                    if (image.imageType !== null) {
+                        image.imageType = await this.imageTypeDM.getImageType(
+                            image.imageType.id
+                        );
+                    }
 
                     return image;
                 }
