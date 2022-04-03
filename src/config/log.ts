@@ -5,8 +5,8 @@ export class LogConfig {
 
     public static fromEnv(): LogConfig {
         const config = new LogConfig();
-        if (process.env.USER_SERVICE_LOG_DIR !== undefined) {
-            config.logDir = process.env.USER_SERVICE_LOG_DIR;
+        if (process.env.IMAGE_SERVICE_LOG_DIR !== undefined) {
+            config.logDir = process.env.IMAGE_SERVICE_LOG_DIR;
         }
         return config;
     }

@@ -6,11 +6,13 @@ export class ApplicationConfig {
 
     public static fromEnv(): ApplicationConfig {
         const config = new ApplicationConfig();
-        if (process.env.ORIGINAL_IMAGE_DIR !== undefined) {
-            config.originalImageDir = process.env.ORIGINAL_IMAGE_DIR;
+        if (process.env.IMAGE_SERVICE_ORIGINAL_IMAGE_DIR !== undefined) {
+            config.originalImageDir =
+                process.env.IMAGE_SERVICE_ORIGINAL_IMAGE_DIR;
         }
-        if (process.env.THUMBNAIL_IMAGE_DIR !== undefined) {
-            config.thumbnailImageDir = process.env.THUMBNAIL_IMAGE_DIR;
+        if (process.env.IMAGE_SERVICE_THUMBNAIL_IMAGE_DIR !== undefined) {
+            config.thumbnailImageDir =
+                process.env.IMAGE_SERVICE_THUMBNAIL_IMAGE_DIR;
         }
         return config;
     }
