@@ -24,6 +24,11 @@ import {
     Region as DMRegion,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
+import {
+    ImageCreated,
+    ImageCreatedProducer,
+    IMAGE_CREATED_PRODUCER_TOKEN,
+} from "../../dataaccess/kafka";
 import { Image } from "../../proto/gen/Image";
 import { _ImageListSortOrder_Values } from "../../proto/gen/ImageListSortOrder";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
@@ -91,6 +96,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
         private readonly regionSnapshotDM: RegionSnapshotDataAccessor,
+        private readonly imageCreatedProducer: ImageCreatedProducer,
         private readonly idGenerator: IdGenerator,
         private readonly timer: Timer,
         private readonly imageProcessor: ImageProcessor,
@@ -199,31 +205,24 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
 
-        const uploadedImageId = await this.imageDM.createImage({
-            uploadedByUserId: uploadedByUserId,
-            uploadTime: uploadTime,
-            publishedByUserId: 0,
-            publishTime: 0,
-            verifiedByUserId: 0,
-            verifyTime: 0,
-            originalFileName: originalFileName,
-            originalImageFilename: originalImageFileName,
-            thumbnailImageFilename: thumbnailImageFileName,
-            description: description,
-            imageTypeId: imageTypeId === undefined ? null : imageTypeId,
-            status: _ImageStatus_Values.UPLOADED,
-        });
+        const uploadedImage = await this.imageDM.withTransaction(
+            async (imageDM) => {
+                const uploadedImageId = await imageDM.createImage({
+                    uploadedByUserId: uploadedByUserId,
+                    uploadTime: uploadTime,
+                    publishedByUserId: 0,
+                    publishTime: 0,
+                    verifiedByUserId: 0,
+                    verifyTime: 0,
+                    originalFileName: originalFileName,
+                    originalImageFilename: originalImageFileName,
+                    thumbnailImageFilename: thumbnailImageFileName,
+                    description: description,
+                    imageTypeId: imageTypeId === undefined ? null : imageTypeId,
+                    status: _ImageStatus_Values.UPLOADED,
+                });
 
-        return this.imageHasImageTagDM.withTransaction(
-            async (imageHasImageTagDM) => {
-                for (const imageTagId of imageTagIdList) {
-                    await imageHasImageTagDM.createImageHasImageTag(
-                        uploadedImageId,
-                        imageTagId
-                    );
-                }
-
-                return {
+                const uploadedImage = {
                     id: uploadedImageId,
                     uploadedByUserId: uploadedByUserId,
                     uploadTime: uploadTime,
@@ -238,8 +237,27 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                     imageType: imageType,
                     status: _ImageStatus_Values.UPLOADED,
                 };
+
+                await this.imageCreatedProducer.createImageCreatedMessage(
+                    new ImageCreated(uploadedImage)
+                );
+
+                return uploadedImage;
             }
         );
+
+        await this.imageHasImageTagDM.withTransaction(
+            async (imageHasImageTagDM) => {
+                for (const imageTagId of imageTagIdList) {
+                    await imageHasImageTagDM.createImageHasImageTag(
+                        uploadedImage.id,
+                        imageTagId
+                    );
+                }
+            }
+        );
+
+        return uploadedImage;
     }
 
     private sanitizeOriginalFileName(originalFileName: string): string {
@@ -745,6 +763,7 @@ injected(
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
+    IMAGE_CREATED_PRODUCER_TOKEN,
     ID_GENERATOR_TOKEN,
     TIMER_TOKEN,
     IMAGE_PROCESSOR_TOKEN,
