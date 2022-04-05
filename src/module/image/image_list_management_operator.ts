@@ -16,7 +16,6 @@ import {
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
 import { _ImageListSortOrder_Values } from "../../proto/gen/ImageListSortOrder";
-import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { ImageTag } from "../../proto/gen/ImageTag";
 import { Region } from "../../proto/gen/Region";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
