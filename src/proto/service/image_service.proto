@@ -50,6 +50,15 @@ service ImageService {
     rpc GetImageBookmark(GetImageBookmarkRequest) returns (GetImageBookmarkResponse) {}
     rpc UpdateImageBookmark(UpdateImageBookmarkRequest) returns (UpdateImageBookmarkResponse) {}
     rpc DeleteImageBookmark(DeleteImageBookmarkRequest) returns (DeleteImageBookmarkResponse) {}
+
+    rpc CreateUserCanManageUserImage(CreateUserCanManageUserImageRequest) returns (CreateUserCanManageUserImageResponse) {}
+    rpc GetUserCanManageUserImageOfUserId(GetUserCanManageUserImageOfUserIdRequest) returns (GetUserCanManageUserImageOfUserIdResponse) {}
+    rpc UpdateUserCanManageUserImage(UpdateUserCanManageUserImageRequest) returns (UpdateUserCanManageUserImageResponse) {}
+    rpc DeleteUserCanManageUserImage(DeleteUserCanManageUserImageRequest) returns (DeleteUserCanManageUserImageResponse) {}
+
+    rpc CreateUserCanVerifyUserImage(CreateUserCanVerifyUserImageRequest) returns (CreateUserCanVerifyUserImageResponse) {}
+    rpc GetUserCanVerifyUserImageOfUserId(GetUserCanVerifyUserImageOfUserIdRequest) returns (GetUserCanVerifyUserImageOfUserIdResponse) {}
+    rpc DeleteUserCanVerifyUserImage(DeleteUserCanVerifyUserImageRequest) returns (DeleteUserCanVerifyUserImageResponse) {}
 }
 
 // Business objects
@@ -198,6 +207,15 @@ message ImageListFilterOptions {
 
 message ImageBookmark {
     string description = 1;
+}
+
+message UserCanManageUserImage {
+    uint32 image_of_user_id = 1;
+    bool can_edit = 2;
+}
+
+message UserCanVerifyUserImage {
+    uint32 image_of_user_id = 1;
 }
 
 // Request and response bodies of API calls
@@ -568,3 +586,62 @@ message DeleteImageBookmarkRequest {
 }
 
 message DeleteImageBookmarkResponse {}
+
+message CreateUserCanManageUserImageRequest {
+    uint32 user_id = 1;
+    uint32 image_of_user_id = 2;
+    bool can_edit = 3;
+}
+
+message CreateUserCanManageUserImageResponse {}
+
+message GetUserCanManageUserImageOfUserIdRequest {
+    uint32 user_id = 1;
+    uint32 offset = 2;
+    uint32 limit = 3;
+}
+
+message GetUserCanManageUserImageOfUserIdResponse {
+    uint32 total_user_count = 1;
+    repeated UserCanManageUserImage user_list = 2;
+}
+
+message UpdateUserCanManageUserImageRequest {
+    uint32 user_id = 1;
+    uint32 image_of_user_id = 2;
+    bool can_edit = 3;
+}
+
+message UpdateUserCanManageUserImageResponse {}
+
+message DeleteUserCanManageUserImageRequest {
+    uint32 user_id = 1;
+    uint32 image_of_user_id = 2;
+}
+
+message DeleteUserCanManageUserImageResponse {}
+
+message CreateUserCanVerifyUserImageRequest {
+    uint32 user_id = 1;
+    uint32 image_of_user_id = 2;
+}
+
+message CreateUserCanVerifyUserImageResponse {}
+
+message GetUserCanVerifyUserImageOfUserIdRequest {
+    uint32 user_id = 1;
+    uint32 offset = 2;
+    uint32 limit = 3;
+}
+
+message GetUserCanVerifyUserImageOfUserIdResponse {
+    uint32 total_user_count = 1;
+    repeated UserCanVerifyUserImage user_list = 2;
+}
+
+message DeleteUserCanVerifyUserImageRequest {
+    uint32 user_id = 1;
+    uint32 image_of_user_id = 2;
+}
+
+message DeleteUserCanVerifyUserImageResponse {}

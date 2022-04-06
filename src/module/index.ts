@@ -4,6 +4,8 @@ import * as imageTag from "./image_tag";
 import * as imageType from "./image_type";
 import * as region from "./region";
 import * as bookmark from "./bookmark";
+import * as userCanManageUserImage from "./user_can_manage_user_image";
+import * as userCanVerifyUserImage from "./user_can_verify_user_image";
 
 export function bindToContainer(container: Container): void {
     image.bindToContainer(container);
@@ -11,4 +13,6 @@ export function bindToContainer(container: Container): void {
     imageType.bindToContainer(container);
     region.bindToContainer(container);
     bookmark.bindToContainer(container);
+    userCanManageUserImage.bindToContainer(container);
+    userCanVerifyUserImage.bindToContainer(container);
 }
