@@ -42,6 +42,10 @@ import {
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
     RegionSnapshotDataAccessorImpl,
 } from "./region_snapshot";
+import {
+    UserBookmarksImageDataAccessorImpl,
+    USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
+} from "./user_bookmarks_image";
 
 export * from "./image_has_image_tag";
 export * from "./image_tag_group_has_image_type";
@@ -56,6 +60,7 @@ export * from "./region_operation_log_label_metadata";
 export * from "./region_operation_log";
 export * from "./region_snapshot";
 export * from "./region";
+export * from "./user_bookmarks_image";
 
 export function bindToContainer(container: Container): void {
     container
@@ -109,5 +114,9 @@ export function bindToContainer(container: Container): void {
     container
         .bind(REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN)
         .toInstance(RegionSnapshotDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN)
+        .toInstance(UserBookmarksImageDataAccessorImpl)
         .inSingletonScope();
 }
