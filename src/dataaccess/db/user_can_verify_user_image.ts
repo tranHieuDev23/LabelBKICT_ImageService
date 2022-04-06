@@ -102,6 +102,10 @@ export class UserCanVerifyUserImageDataAccessorImpl
                 .where({
                     [ColNameImageServiceUserCanVerifyUserImageUserId]: userId,
                 })
+                .orderBy(
+                    ColNameImageServiceUserCanVerifyUserImageImageOfUserId,
+                    "asc"
+                )
                 .offset(offset)
                 .limit(limit);
             return rows.map((row) =>

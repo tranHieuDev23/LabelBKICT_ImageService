@@ -113,6 +113,10 @@ export class UserCanManageUserImageDataAccessorImpl
                 .where({
                     [ColNameImageServiceUserCanManageUserImageUserId]: userId,
                 })
+                .orderBy(
+                    ColNameImageServiceUserCanManageUserImageImageOfUserId,
+                    "asc"
+                )
                 .offset(offset)
                 .limit(limit);
             return rows.map((row) =>
