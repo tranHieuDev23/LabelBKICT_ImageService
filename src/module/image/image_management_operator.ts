@@ -458,10 +458,11 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                 );
             }
 
-            if (!this.isValidStatusTransition(image.status, newStatus)) {
+            const oldStatus = image.status;
+            if (!this.isValidStatusTransition(oldStatus, newStatus)) {
                 this.logger.error("invalid status transition", {
-                    oldStatus: image.status,
-                    newStatus: newStatus,
+                    oldStatus,
+                    newStatus,
                 });
                 throw new ErrorWithStatus(
                     "invalid status transition",
@@ -472,30 +473,20 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             const regionListOfImage = await this.regionDM.getRegionListOfImage(
                 id
             );
-            if (
-                newStatus === _ImageStatus_Values.PUBLISHED ||
-                newStatus === _ImageStatus_Values.VERIFIED
-            ) {
-                for (const region of regionListOfImage) {
-                    if (region.label === null) {
-                        this.logger.error(
-                            "there are unlabeled regions, image cannot change status",
-                            { imageId: id }
-                        );
-                        throw new ErrorWithStatus(
-                            "there are unlabeled regions, image cannot change status",
-                            status.FAILED_PRECONDITION
-                        );
-                    }
-                }
-            }
 
             return this.regionSnapshotDM.withTransaction(
                 async (regionSnapshotDM) => {
+                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(
+                        id,
+                        oldStatus
+                    );
+
                     image.status = newStatus;
                     if (newStatus === _ImageStatus_Values.PUBLISHED) {
                         image.publishedByUserId = byUserId;
                         image.publishTime = currentTime;
+                        image.verifiedByUserId = 0;
+                        image.publishTime = 0;
                         await this.generateRegionSnapshotOfImage(
                             regionSnapshotDM,
                             newStatus,
@@ -549,10 +540,15 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
                     newStatus === _ImageStatus_Values.EXCLUDED ||
                     newStatus === _ImageStatus_Values.PUBLISHED
                 );
+            case _ImageStatus_Values.PUBLISHED:
+                return (
+                    newStatus === _ImageStatus_Values.UPLOADED ||
+                    newStatus === _ImageStatus_Values.VERIFIED
+                );
+            case _ImageStatus_Values.VERIFIED:
+                return newStatus === _ImageStatus_Values.PUBLISHED;
             case _ImageStatus_Values.EXCLUDED:
                 return newStatus === _ImageStatus_Values.UPLOADED;
-            case _ImageStatus_Values.PUBLISHED:
-                return newStatus === _ImageStatus_Values.VERIFIED;
             default:
                 return false;
         }
@@ -745,7 +741,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             );
         }
 
-        return await this.regionSnapshotDM.getRegionSnapshotListOfImage(
+        return await this.regionSnapshotDM.getRegionSnapshotListOfImageAtStatus(
             ofImageId,
             atStatus
         );

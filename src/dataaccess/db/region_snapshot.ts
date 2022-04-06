@@ -23,10 +23,14 @@ export interface CreateRegionSnapshotArguments {
 
 export interface RegionSnapshotDataAccessor {
     createRegionSnapshot(args: CreateRegionSnapshotArguments): Promise<number>;
-    getRegionSnapshotListOfImage(
+    getRegionSnapshotListOfImageAtStatus(
         imageId: number,
         imageStatus: ImageStatus
     ): Promise<RegionSnapshot[]>;
+    deleteRegionSnapshotListOfImageAtStatus(
+        imageId: number,
+        imageStatus: ImageStatus
+    ): Promise<void>;
     withTransaction<T>(
         executeFunc: (dataAccessor: RegionSnapshotDataAccessor) => Promise<T>
     ): Promise<T>;
@@ -85,7 +89,7 @@ export class RegionSnapshotDataAccessorImpl
         }
     }
 
-    public async getRegionSnapshotListOfImage(
+    public async getRegionSnapshotListOfImageAtStatus(
         imageId: number,
         imageStatus: ImageStatus
     ): Promise<RegionSnapshot[]> {
@@ -104,10 +108,39 @@ export class RegionSnapshotDataAccessorImpl
                 });
             return rows.map((row) => this.getRegionFromJoinedRow(row));
         } catch (error) {
-            this.logger.error("failed to get region list of image", {
-                imageId,
-                error,
-            });
+            this.logger.error(
+                "failed to get region snapshot list of image at status",
+                {
+                    imageId,
+                    imageStatus,
+                    error,
+                }
+            );
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async deleteRegionSnapshotListOfImageAtStatus(
+        imageId: number,
+        imageStatus: ImageStatus
+    ): Promise<void> {
+        try {
+            await this.knex
+                .delete()
+                .from(TabNameImageServiceRegionSnapshot)
+                .where({
+                    [ColNameImageServiceRegionSnapshotOfImageId]: imageId,
+                    [ColNameImageServiceRegionSnapshotAtStatus]: imageStatus,
+                });
+        } catch (error) {
+            this.logger.error(
+                "failed to delete region snapshot list of image at status",
+                {
+                    imageId,
+                    imageStatus,
+                    error,
+                }
+            );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
