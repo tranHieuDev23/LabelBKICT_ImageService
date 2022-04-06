@@ -476,10 +476,14 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
 
             return this.regionSnapshotDM.withTransaction(
                 async (regionSnapshotDM) => {
-                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(
-                        id,
-                        oldStatus
-                    );
+                    if (
+                        this.isDowngradingStatusTransition(oldStatus, newStatus)
+                    ) {
+                        await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(
+                            id,
+                            oldStatus
+                        );
+                    }
 
                     image.status = newStatus;
                     if (newStatus === _ImageStatus_Values.PUBLISHED) {
@@ -548,6 +552,20 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             case _ImageStatus_Values.VERIFIED:
                 return newStatus === _ImageStatus_Values.PUBLISHED;
             case _ImageStatus_Values.EXCLUDED:
+                return newStatus === _ImageStatus_Values.UPLOADED;
+            default:
+                return false;
+        }
+    }
+
+    private isDowngradingStatusTransition(
+        oldStatus: _ImageStatus_Values,
+        newStatus: _ImageStatus_Values
+    ): boolean {
+        switch (oldStatus) {
+            case _ImageStatus_Values.VERIFIED:
+                return newStatus === _ImageStatus_Values.PUBLISHED;
+            case _ImageStatus_Values.PUBLISHED:
                 return newStatus === _ImageStatus_Values.UPLOADED;
             default:
                 return false;
