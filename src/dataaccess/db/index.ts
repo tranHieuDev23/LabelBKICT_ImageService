@@ -46,6 +46,14 @@ import {
     UserBookmarksImageDataAccessorImpl,
     USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
 } from "./user_bookmarks_image";
+import {
+    UserCanManageUserImageDataAccessorImpl,
+    USER_CAN_MANAGE_USER_IMAGE_DATA_ACCESSOR_TOKEN,
+} from "./user_can_manage_user_image";
+import {
+    UserCanVerifyUserImageDataAccessorImpl,
+    USER_CAN_VERIFY_USER_IMAGE_DATA_ACCESSOR_TOKEN,
+} from "./user_can_verify_user_image";
 
 export * from "./image_has_image_tag";
 export * from "./image_tag_group_has_image_type";
@@ -61,6 +69,8 @@ export * from "./region_operation_log";
 export * from "./region_snapshot";
 export * from "./region";
 export * from "./user_bookmarks_image";
+export * from "./user_can_manage_user_image";
+export * from "./user_can_verify_user_image";
 
 export function bindToContainer(container: Container): void {
     container
@@ -118,5 +128,13 @@ export function bindToContainer(container: Container): void {
     container
         .bind(USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN)
         .toInstance(UserBookmarksImageDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(USER_CAN_MANAGE_USER_IMAGE_DATA_ACCESSOR_TOKEN)
+        .toInstance(UserCanManageUserImageDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(USER_CAN_VERIFY_USER_IMAGE_DATA_ACCESSOR_TOKEN)
+        .toInstance(UserCanVerifyUserImageDataAccessorImpl)
         .inSingletonScope();
 }
