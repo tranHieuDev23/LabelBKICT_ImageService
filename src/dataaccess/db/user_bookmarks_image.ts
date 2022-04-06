@@ -19,8 +19,8 @@ export interface UserBookmarksImageDataAccessor {
         imageId: number,
         description: string
     ): Promise<void>;
-    getBookmarkedImageListOfUserId(
-        userId: number
+    getBookmarkedImageListOfUserIdList(
+        userIdList: number[]
     ): Promise<UserBookmarksImage[]>;
     getUserBookmarksImage(
         userId: number,
@@ -76,21 +76,22 @@ export class UserBookmarksImageDataAccessorImpl
         }
     }
 
-    public async getBookmarkedImageListOfUserId(
-        userId: number
+    public async getBookmarkedImageListOfUserIdList(
+        userIdList: number[]
     ): Promise<UserBookmarksImage[]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceUserBookmarksImage)
-                .where({
-                    [ColNameImageServiceUserBookmarksImageUserId]: userId,
-                });
+                .whereIn(
+                    ColNameImageServiceUserBookmarksImageUserId,
+                    userIdList
+                );
             return rows.map((row) => this.getUserBookmarksImageFromRow(row));
         } catch (error) {
             this.logger.error(
                 "failed to get user bookmarks image relation list",
-                { userId, error }
+                { error }
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }

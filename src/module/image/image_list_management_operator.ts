@@ -12,6 +12,8 @@ import {
     IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
+    UserBookmarksImageDataAccessor,
+    USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -59,6 +61,7 @@ export class ImageListManagementOperatorImpl
         private readonly imageTypeDM: ImageTypeDataAccessor,
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
+        private readonly userBookmarksImageDM: UserBookmarksImageDataAccessor,
         private readonly logger: Logger
     ) {}
 
@@ -210,6 +213,18 @@ export class ImageListManagementOperatorImpl
                 imageIdSet.add(imageId);
             }
         }
+        if (
+            filterOptions.bookmarkedByUserIdList !== undefined &&
+            filterOptions.bookmarkedByUserIdList.length > 0
+        ) {
+            dmFilterOptions.shouldFilterByImageIdList = true;
+            const imageIdList = await this.getImageIdListBookmarkedByUserIdList(
+                filterOptions.bookmarkedByUserIdList
+            );
+            for (const imageId of imageIdList) {
+                imageIdSet.add(imageId);
+            }
+        }
         dmFilterOptions.imageIdList = Array.from(imageIdSet);
 
         return dmFilterOptions;
@@ -223,7 +238,6 @@ export class ImageListManagementOperatorImpl
             await this.imageHasImageTagDM.getImageIdListOfImageTagList(
                 imageTagIdList
             );
-
         const imageIdToMatchedImageTagCount = new Map<number, number>();
         for (const imageIdSublist of imageIdList) {
             for (const imageId of imageIdSublist) {
@@ -232,7 +246,6 @@ export class ImageListManagementOperatorImpl
                 imageIdToMatchedImageTagCount.set(imageId, currentCount + 1);
             }
         }
-
         const matchedImageIdList: number[] = [];
         for (const imageId of imageIdToMatchedImageTagCount.keys()) {
             const matchedImageTagCount =
@@ -245,7 +258,6 @@ export class ImageListManagementOperatorImpl
             }
             matchedImageIdList.push(imageId);
         }
-
         return matchedImageIdList;
     }
 
@@ -257,7 +269,6 @@ export class ImageListManagementOperatorImpl
             await this.regionDM.getOfImageIdListOfRegionLabelList(
                 regionLabelIdList
             );
-
         const imageIdToMatchedRegionLabelCount = new Map<number, number>();
         for (const imageIdSublist of imageIdList) {
             const imageIdSubset = new Set<number>(imageIdSublist);
@@ -267,7 +278,6 @@ export class ImageListManagementOperatorImpl
                 imageIdToMatchedRegionLabelCount.set(imageId, currentCount + 1);
             }
         }
-
         const matchedImageIdList: number[] = [];
         for (const imageId of imageIdToMatchedRegionLabelCount.keys()) {
             const matchedRegionLabelCount =
@@ -280,8 +290,19 @@ export class ImageListManagementOperatorImpl
             }
             matchedImageIdList.push(imageId);
         }
-
         return matchedImageIdList;
+    }
+
+    private async getImageIdListBookmarkedByUserIdList(
+        bookmarkedByUserIdList: number[]
+    ): Promise<number[]> {
+        const bookmarkList =
+            await this.userBookmarksImageDM.getBookmarkedImageListOfUserIdList(
+                bookmarkedByUserIdList
+            );
+        const imageIdList = bookmarkList.map((bookmark) => bookmark.imageId);
+        const imageIdSet = new Set<number>(imageIdList);
+        return Array.from(imageIdSet);
     }
 
     private getDMImageListSortOrder(
@@ -382,6 +403,7 @@ injected(
     IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
+    USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
     LOGGER_TOKEN
 );
 
