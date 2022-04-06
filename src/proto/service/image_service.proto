@@ -45,6 +45,11 @@ service ImageService {
     rpc DeleteRegion(DeleteRegionRequest) returns (DeleteRegionResponse) {}
 
     rpc GetRegionSnapshotListOfImage(GetRegionSnapshotListOfImageRequest) returns (GetRegionSnapshotListOfImageResponse) {}
+
+    rpc CreateImageBookmark(CreateImageBookmarkRequest) returns (CreateImageBookmarkResponse) {}
+    rpc GetImageBookmark(GetImageBookmarkRequest) returns (GetImageBookmarkResponse) {}
+    rpc UpdateImageBookmark(UpdateImageBookmarkRequest) returns (UpdateImageBookmarkResponse) {}
+    rpc DeleteImageBookmark(DeleteImageBookmarkRequest) returns (DeleteImageBookmarkResponse) {}
 }
 
 // Business objects
@@ -188,6 +193,11 @@ message ImageListFilterOptions {
     repeated uint32 image_status_list = 14;
     bool must_match_all_image_tags = 15;
     bool must_match_all_region_labels = 16;
+    repeated uint32 bookmarked_by_user_id_list = 17;
+}
+
+message ImageBookmark {
+    string description = 1;
 }
 
 // Request and response bodies of API calls
@@ -522,3 +532,39 @@ message GetRegionSnapshotListOfImageRequest {
 message GetRegionSnapshotListOfImageResponse {
     repeated Region region_list = 1;
 }
+
+message CreateImageBookmarkRequest {
+    uint32 user_id = 1;
+    uint32 image_id = 2;
+    string description = 3;
+}
+
+message CreateImageBookmarkResponse {
+    ImageBookmark image_bookmark = 1;
+}
+
+message GetImageBookmarkRequest {
+    uint32 user_id = 1;
+    uint32 image_id = 2;
+}
+
+message GetImageBookmarkResponse {
+    ImageBookmark image_bookmark = 1;
+}
+
+message UpdateImageBookmarkRequest {
+    uint32 user_id = 1;
+    uint32 image_id = 2;
+    string description = 3;
+}
+
+message UpdateImageBookmarkResponse {
+    ImageBookmark image_bookmark = 1;
+}
+
+message DeleteImageBookmarkRequest {
+    uint32 user_id = 1;
+    uint32 image_id = 2;
+}
+
+message DeleteImageBookmarkResponse {}

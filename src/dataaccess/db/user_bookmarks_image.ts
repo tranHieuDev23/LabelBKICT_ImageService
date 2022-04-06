@@ -32,6 +32,11 @@ export interface UserBookmarksImageDataAccessor {
     ): Promise<UserBookmarksImage | null>;
     updateUserBookmarksImage(bookmark: UserBookmarksImage): Promise<void>;
     deleteUserBookmarksImage(userId: number, imageId: number): Promise<void>;
+    withTransaction<T>(
+        executeFunc: (
+            dataAccessor: UserBookmarksImageDataAccessor
+        ) => Promise<T>
+    ): Promise<T>;
 }
 
 const TabNameImageServiceUserBookmarksImage =
@@ -210,6 +215,19 @@ export class UserBookmarksImageDataAccessorImpl
             );
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
+    }
+    public async withTransaction<T>(
+        executeFunc: (
+            dataAccessor: UserBookmarksImageDataAccessor
+        ) => Promise<T>
+    ): Promise<T> {
+        return this.knex.transaction(async (tx) => {
+            const txDataAccessor = new UserBookmarksImageDataAccessorImpl(
+                tx,
+                this.logger
+            );
+            return executeFunc(txDataAccessor);
+        });
     }
 
     private getUserBookmarksImageFromRow(
