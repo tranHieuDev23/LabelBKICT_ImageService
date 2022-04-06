@@ -1,3 +1,4 @@
+import { status } from "@grpc/grpc-js";
 import { injected, token } from "brandi";
 import { Logger } from "winston";
 import {
@@ -5,7 +6,7 @@ import {
     USER_CAN_VERIFY_USER_IMAGE_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { UserCanVerifyUserImage } from "../../proto/gen/UserCanVerifyUserImage";
-import { LOGGER_TOKEN } from "../../utils";
+import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
 
 export interface UserCanVerifyUserImageManagementOperator {
     createUserCanVerifyUserImage(
@@ -38,7 +39,20 @@ export class UserCanVerifyUserImageManagementOperatorImpl
         userId: number,
         imageOfUserId: number
     ): Promise<void> {
-        throw new Error("Method not implemented.");
+        if (userId === imageOfUserId) {
+            this.logger.error(
+                "trying to add user can verify user image relation for the same user",
+                { userId }
+            );
+            throw new ErrorWithStatus(
+                "trying to add user can verify user image relation for the same user",
+                status.INVALID_ARGUMENT
+            );
+        }
+        await this.userCanVerifyUserImageDM.createUserCanVerifyUserImage(
+            userId,
+            imageOfUserId
+        );
     }
 
     public async getUserCanVerifyUserImageOfUserId(
@@ -46,14 +60,29 @@ export class UserCanVerifyUserImageManagementOperatorImpl
         offset: number,
         limit: number
     ): Promise<{ totalUserCount: number; userList: UserCanVerifyUserImage[] }> {
-        throw new Error("Method not implemented.");
+        const dmResults = await Promise.all([
+            this.userCanVerifyUserImageDM.getUserCanVerifyUserImageCountOfUserId(
+                userId
+            ),
+            this.userCanVerifyUserImageDM.getUserCanVerifyUserImageListOfUserId(
+                userId,
+                offset,
+                limit
+            ),
+        ]);
+        const totalUserCount = dmResults[0];
+        const userList = dmResults[1];
+        return { totalUserCount, userList };
     }
 
     public async deleteUserCanVerifyUserImage(
         userId: number,
         imageOfUserId: number
     ): Promise<void> {
-        throw new Error("Method not implemented.");
+        await this.userCanVerifyUserImageDM.deleteUserCanVerifyUserImage(
+            userId,
+            imageOfUserId
+        );
     }
 }
 
