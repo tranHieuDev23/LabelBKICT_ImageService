@@ -21,6 +21,10 @@ import {
     REGION_MANAGEMENT_OPERATOR_TOKEN,
 } from "../module/region";
 import { _ImageListSortOrder_Values } from "../proto/gen/ImageListSortOrder";
+import {
+    BookmarkManagementOperator,
+    BOOKMARK_MANAGEMENT_OPERATOR_TOKEN,
+} from "../module/bookmark";
 
 const DEFAULT_GET_IMAGE_LIST_LIMIT = 12;
 const DEFAULT_GET_IMAGE_LIST_SORT_ORDER =
@@ -32,7 +36,8 @@ export class ImageServiceHandlersFactory {
         private readonly imageTagManagementOperator: ImageTagManagementOperator,
         private readonly imageManagementOperator: ImageManagementOperator,
         private readonly imageListManagementOperator: ImageListManagementOperator,
-        private readonly regionManagementOperator: RegionManagementOperator
+        private readonly regionManagementOperator: RegionManagementOperator,
+        private readonly bookmarkManagementOperator: BookmarkManagementOperator
     ) {}
 
     public getImageServiceHandlers(): ImageServiceHandlers {
@@ -1062,6 +1067,113 @@ export class ImageServiceHandlersFactory {
                     this.handleError(e, callback);
                 }
             },
+
+            CreateImageBookmark: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const description = req.description || "";
+                try {
+                    const imageBookmark =
+                        await this.bookmarkManagementOperator.createImageBookmark(
+                            req.userId,
+                            req.imageId,
+                            description
+                        );
+                    return callback(null, { imageBookmark });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            DeleteImageBookmark: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    await this.bookmarkManagementOperator.deleteImageBookmark(
+                        req.userId,
+                        req.imageId
+                    );
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetImageBookmark: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    const imageBookmark =
+                        await this.bookmarkManagementOperator.getImageBookmark(
+                            req.userId,
+                            req.imageId
+                        );
+                    return callback(null, { imageBookmark });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            UpdateImageBookmark: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const description = req.description || "";
+                try {
+                    const imageBookmark =
+                        await this.bookmarkManagementOperator.updateImageBookmark(
+                            req.userId,
+                            req.imageId,
+                            description
+                        );
+                    return callback(null, { imageBookmark });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
         };
         return handler;
     }
@@ -1091,7 +1203,8 @@ injected(
     IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN,
     IMAGE_MANAGEMENT_OPERATOR_TOKEN,
     IMAGE_LIST_MANAGEMENT_OPERATOR_TOKEN,
-    REGION_MANAGEMENT_OPERATOR_TOKEN
+    REGION_MANAGEMENT_OPERATOR_TOKEN,
+    BOOKMARK_MANAGEMENT_OPERATOR_TOKEN
 );
 
 export const IMAGE_SERVICE_HANDLERS_FACTORY_TOKEN =
