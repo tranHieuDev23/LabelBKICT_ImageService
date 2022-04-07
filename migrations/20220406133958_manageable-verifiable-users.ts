@@ -14,7 +14,7 @@ export async function up(knex: Knex): Promise<void> {
             (tab) => {
                 tab.integer("user_id").notNullable();
                 tab.integer("image_of_user_id").notNullable();
-                tab.integer("can_edit").notNullable();
+                tab.boolean("can_edit").notNullable();
 
                 tab.primary(["user_id", "image_of_user_id"]);
             }
