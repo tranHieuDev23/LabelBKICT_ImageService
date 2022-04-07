@@ -1304,7 +1304,7 @@ export class ImageServiceHandlersFactory {
                     DEFAULT_GET_USER_CAN_MANAGE_USER_IMAGE_LIST_LIMIT;
                 try {
                     const { totalUserCount, userList } =
-                        await this.userCanVerifyUserImageOperator.getUserCanVerifyUserImageOfUserId(
+                        await this.userCanManageUserImageOperator.getUserCanManageUserImageOfUserId(
                             req.userId,
                             offset,
                             limit
