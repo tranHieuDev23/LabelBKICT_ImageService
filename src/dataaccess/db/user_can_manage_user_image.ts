@@ -108,7 +108,7 @@ export class UserCanManageUserImageDataAccessorImpl
     ): Promise<UserCanManageUserImage[]> {
         try {
             const rows = await this.knex
-                .count()
+                .select()
                 .from(TabNameImageServiceUserCanManageUserImage)
                 .where({
                     [ColNameImageServiceUserCanManageUserImageUserId]: userId,
@@ -137,7 +137,7 @@ export class UserCanManageUserImageDataAccessorImpl
     ): Promise<UserCanManageUserImage | null> {
         try {
             const rows = await this.knex
-                .count()
+                .select()
                 .from(TabNameImageServiceUserCanManageUserImage)
                 .where({
                     [ColNameImageServiceUserCanManageUserImageUserId]: userId,

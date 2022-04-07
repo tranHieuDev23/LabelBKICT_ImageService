@@ -97,7 +97,7 @@ export class UserCanVerifyUserImageDataAccessorImpl
     ): Promise<UserCanVerifyUserImage[]> {
         try {
             const rows = await this.knex
-                .count()
+                .select()
                 .from(TabNameImageServiceUserCanVerifyUserImage)
                 .where({
                     [ColNameImageServiceUserCanVerifyUserImageUserId]: userId,
@@ -126,7 +126,7 @@ export class UserCanVerifyUserImageDataAccessorImpl
     ): Promise<UserCanVerifyUserImage | null> {
         try {
             const rows = await this.knex
-                .count()
+                .select()
                 .from(TabNameImageServiceUserCanVerifyUserImage)
                 .where({
                     [ColNameImageServiceUserCanVerifyUserImageUserId]: userId,
