@@ -80,7 +80,7 @@ export class UserCanVerifyUserImageDataAccessorImpl
                 .where({
                     [ColNameImageServiceUserCanVerifyUserImageUserId]: userId,
                 });
-            return +rows[0];
+            return +(rows[0] as any)["count"];
         } catch (error) {
             this.logger.error(
                 "failed to get user can verify user image relation count",
