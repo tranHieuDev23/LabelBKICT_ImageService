@@ -3,6 +3,7 @@ FROM node:16.14.2-bullseye
 # Install NodeJs dependencies
 WORKDIR /build
 COPY package.json ./
+COPY package-lock.json ./
 RUN npm install
 RUN npm install -g pm2
 # Build package
