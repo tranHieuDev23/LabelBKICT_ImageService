@@ -31,7 +31,7 @@ export class ImageServiceGRPCServer {
         );
 
         server.bindAsync(
-            `127.0.0.1:${this.grpcServerConfig.port}`,
+            `0.0.0.0:${this.grpcServerConfig.port}`,
             ServerCredentials.createInsecure(),
             (error, port) => {
                 if (error) {
