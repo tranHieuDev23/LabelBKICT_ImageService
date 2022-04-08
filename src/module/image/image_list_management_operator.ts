@@ -227,6 +227,9 @@ export class ImageListManagementOperatorImpl
         }
         dmFilterOptions.imageIdList = Array.from(imageIdSet);
 
+        dmFilterOptions.mustHaveDescription =
+            filterOptions.mustHaveDescription || false;
+
         return dmFilterOptions;
     }
 

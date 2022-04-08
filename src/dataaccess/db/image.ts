@@ -22,6 +22,7 @@ export class ImageListFilterOptions {
     public verifyTimeEnd = 0;
     public originalFileNameQuery = "";
     public imageStatusList: _ImageStatus_Values[] = [];
+    public mustHaveDescription = false;
 }
 
 export interface CreateImageArguments {
@@ -599,6 +600,11 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 );
             });
         }
+        if (filterOptions.mustHaveDescription) {
+            queryCallbackList.push((qb) => {
+                qb.where(ColNameImageServiceImageDescription, "!=", "");
+            });
+        }
 
         if (queryCallbackList.length === 0) {
             return qb;
@@ -608,6 +614,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         for (let i = 1; i < queryCallbackList.length; i++) {
             qb = qb.andWhere(queryCallbackList[i]);
         }
+
         return qb;
     }
 
