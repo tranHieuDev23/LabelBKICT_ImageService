@@ -9,6 +9,7 @@ import {
     area,
     union,
     intersect,
+    Position,
 } from "@turf/turf";
 import { injected, token } from "brandi";
 import { Polygon } from "../../proto/gen/Polygon";
@@ -124,7 +125,9 @@ export class TurfRegionNormalizer implements RegionNormalizer {
         );
 
         const unKinkedPolygonList = unkinkPolygon(
-            toTurfPolygon([verticesFarFromKinkList])
+            toTurfPolygon([
+                this.ensureStartEndVertexEqual(verticesFarFromKinkList),
+            ])
         );
 
         // Only keep the polygon with the maximum area
@@ -197,6 +200,17 @@ export class TurfRegionNormalizer implements RegionNormalizer {
             polygonList.push(toTurfPolygon(coordinateList).geometry);
         }
         return polygonList;
+    }
+
+    private ensureStartEndVertexEqual(positionList: Position[]): Position[] {
+        const lastIndex = positionList.length - 1;
+        if (
+            positionList[0][0] === positionList[lastIndex][0] &&
+            positionList[0][1] === positionList[lastIndex][1]
+        ) {
+            return positionList;
+        }
+        return [...positionList, positionList[0]];
     }
 }
 
