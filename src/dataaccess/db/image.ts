@@ -12,6 +12,7 @@ export class ImageListFilterOptions {
     public imageIdList: number[] = [];
     public imageTypeIdList: (number | null)[] = [];
     public uploadedByUserIdList: number[] = [];
+    public notUploadedByUserIdList: number[] = [];
     public publishedByUserIdList: number[] = [];
     public verifiedByUserIdList: number[] = [];
     public uploadTimeStart = 0;
@@ -486,6 +487,14 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                 qb.whereIn(
                     ColNameImageServiceImageUploadedByUserId,
                     filterOptions.uploadedByUserIdList
+                );
+            });
+        }
+        if (filterOptions.notUploadedByUserIdList.length > 0) {
+            queryCallbackList.push((qb) => {
+                qb.whereNotIn(
+                    ColNameImageServiceImageUploadedByUserId,
+                    filterOptions.notUploadedByUserIdList
                 );
             });
         }

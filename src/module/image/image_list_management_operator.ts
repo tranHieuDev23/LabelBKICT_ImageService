@@ -160,6 +160,8 @@ export class ImageListManagementOperatorImpl
 
         dmFilterOptions.uploadedByUserIdList =
             filterOptions.uploadedByUserIdList || [];
+        dmFilterOptions.notUploadedByUserIdList =
+            filterOptions.notUploadedByUserIdList || [];
         dmFilterOptions.uploadTimeStart = +(filterOptions.uploadTimeStart || 0);
         dmFilterOptions.uploadTimeEnd = +(filterOptions.uploadTimeEnd || 0);
 

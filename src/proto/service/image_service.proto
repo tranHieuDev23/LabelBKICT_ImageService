@@ -204,6 +204,7 @@ message ImageListFilterOptions {
     bool must_match_all_region_labels = 16;
     repeated uint32 bookmarked_by_user_id_list = 17;
     bool must_have_description = 18;
+    repeated uint32 not_uploaded_by_user_id_list = 19;
 }
 
 message ImageBookmark {
