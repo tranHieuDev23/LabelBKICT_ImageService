@@ -418,6 +418,25 @@ export class ImageServiceHandlersFactory {
                 }
             },
 
+            DeleteRegionOfImage: async (call, callback) => {
+                const req = call.request;
+                if (req.ofImageId === undefined) {
+                    return callback({
+                        message: "of_image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    await this.regionManagementOperator.deleteRegionOfImage(
+                        req.ofImageId
+                    );
+                    callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
             DeleteRegionLabel: async (call, callback) => {
                 const req = call.request;
                 if (req.ofImageTypeId === undefined) {

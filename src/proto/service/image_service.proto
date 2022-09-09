@@ -43,6 +43,7 @@ service ImageService {
     rpc UpdateRegionBoundary(UpdateRegionBoundaryRequest) returns (UpdateRegionBoundaryResponse) {}
     rpc UpdateRegionRegionLabel(UpdateRegionRegionLabelRequest) returns (UpdateRegionRegionLabelResponse) {}
     rpc DeleteRegion(DeleteRegionRequest) returns (DeleteRegionResponse) {}
+    rpc DeleteRegionOfImage(DeleteRegionOfImageRequest) returns (DeleteRegionOfImageResponse) {}
 
     rpc GetRegionSnapshotListOfImage(GetRegionSnapshotListOfImageRequest) returns (GetRegionSnapshotListOfImageResponse) {}
 
@@ -543,6 +544,12 @@ message DeleteRegionRequest {
 }
 
 message DeleteRegionResponse {}
+
+message DeleteRegionOfImageRequest {
+    uint32 of_image_id = 1;
+}
+
+message DeleteRegionOfImageResponse {}
 
 message GetRegionSnapshotListOfImageRequest {
     uint32 of_image_id = 1;

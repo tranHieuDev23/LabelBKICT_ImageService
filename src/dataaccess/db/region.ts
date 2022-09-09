@@ -37,6 +37,7 @@ export interface RegionDataAccessor {
         labeId: number | null
     ): Promise<void>;
     deleteRegion(id: number): Promise<void>;
+    deleteRegionOfImageId(ofImageId: number): Promise<void>;
     getOfImageIdListOfRegionLabelList(
         regionLabelIdList: number[]
     ): Promise<number[][]>;
@@ -292,6 +293,23 @@ export class RegionDataAccessorImpl implements RegionDataAccessor {
                 `no region with region_id ${id} found`,
                 status.NOT_FOUND
             );
+        }
+    }
+
+    public async deleteRegionOfImageId(ofImageId: number): Promise<void> {
+        try {
+            await this.knex
+                .delete()
+                .from(TabNameImageServiceRegion)
+                .where({
+                    [ColNameImageServiceRegionOfImageId]: ofImageId,
+                });
+        } catch (error) {
+            this.logger.error("failed to delete region of image id", {
+                ofImageId,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 

@@ -61,6 +61,7 @@ export interface RegionManagementOperator {
         labeId: number
     ): Promise<Region>;
     deleteRegion(ofImageId: number, regionId: number): Promise<void>;
+    deleteRegionOfImage(ofImageId: number): Promise<void>;
 }
 
 export class RegionManagementOperatorImpl implements RegionManagementOperator {
@@ -569,6 +570,20 @@ export class RegionManagementOperatorImpl implements RegionManagementOperator {
 
             await regionDM.deleteRegion(regionId);
         });
+    }
+
+    public async deleteRegionOfImage(ofImageId: number): Promise<void> {
+        const image = await this.imageDM.getImage(ofImageId);
+        if (image === null) {
+            this.logger.error("image with image_id not found", {
+                imageId: ofImageId,
+            });
+            throw new ErrorWithStatus(
+                `image with image_id ${ofImageId} not found`,
+                status.NOT_FOUND
+            );
+        }
+        await this.regionDM.deleteRegionOfImageId(ofImageId);
     }
 }
 
