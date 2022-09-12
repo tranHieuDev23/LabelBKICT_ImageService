@@ -147,8 +147,8 @@ message RegionList {
 
 message RegionOperationType {
     enum Values {
-        DRAW = 1;
-        LABEL = 2;
+        DRAW = 0;
+        LABEL = 1;
     }
 }
 
