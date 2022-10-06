@@ -5,6 +5,7 @@ import { DistributedConfig } from "./distributed";
 import { GRPCServerConfig } from "./grpc_service";
 import { KafkaConfig } from "./kafka";
 import { LogConfig } from "./log";
+import { ElasticsearchConfig } from "./elasticsearch";
 
 export class ImageServiceConfig {
     public logConfig = new LogConfig();
@@ -12,6 +13,7 @@ export class ImageServiceConfig {
     public databaseConfig = new DatabaseConfig();
     public kafkaConfig = new KafkaConfig();
     public grpcServerConfig = new GRPCServerConfig();
+    public elasticsearchConfig = new ElasticsearchConfig();
     public applicationConfig = new ApplicationConfig();
 
     public static fromEnv(): ImageServiceConfig {
@@ -21,10 +23,10 @@ export class ImageServiceConfig {
         config.databaseConfig = DatabaseConfig.fromEnv();
         config.kafkaConfig = KafkaConfig.fromEnv();
         config.grpcServerConfig = GRPCServerConfig.fromEnv();
+        config.elasticsearchConfig = ElasticsearchConfig.fromEnv();
         config.applicationConfig = ApplicationConfig.fromEnv();
         return config;
     }
 }
 
-export const IMAGE_SERVICE_CONFIG_TOKEN =
-    token<ImageServiceConfig>("ImageServiceConfig");
+export const IMAGE_SERVICE_CONFIG_TOKEN = token<ImageServiceConfig>("ImageServiceConfig");
