@@ -3,6 +3,8 @@ import { token } from "brandi";
 export class ElasticsearchConfig {
     public host = "127.0.0.1";
     public port = 9200;
+    public username = "elastic";
+    public password = "elastic";
 
     public static fromEnv(): ElasticsearchConfig {
         const config = new ElasticsearchConfig();
@@ -11,6 +13,12 @@ export class ElasticsearchConfig {
         }
         if (process.env.ELASTICSEARCH_PORT !== undefined) {
             config.port = +process.env.ELASTICSEARCH_PORT;
+        }
+        if (process.env.ELASTICSEARCH_USERNAME !== undefined) {
+            config.username = process.env.ELASTICSEARCH_USERNAME;
+        }
+        if (process.env.ELASTICSEARCH_PASSWORD !== undefined) {
+            config.password = process.env.ELASTICSEARCH_PASSWORD;
         }
         return config;
     }

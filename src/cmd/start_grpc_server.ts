@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import * as utils from "../utils";
 import * as config from "../config";
 import * as db from "../dataaccess/db";
+import * as elasticsearch from "../dataaccess/elasticsearch";
 import * as kafka from "../dataaccess/kafka";
 import * as modules from "../module";
 import * as service from "../service";
@@ -16,6 +17,7 @@ export function startGRPCServer(dotenvPath: string) {
     utils.bindToContainer(container);
     config.bindToContainer(container);
     db.bindToContainer(container);
+    elasticsearch.bindToContainer(container);
     kafka.bindToContainer(container);
     modules.bindToContainer(container);
     service.bindToContainer(container);

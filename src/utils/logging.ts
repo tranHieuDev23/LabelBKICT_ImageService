@@ -1,10 +1,12 @@
+import { Client } from "@elastic/elasticsearch";
 import { injected, token } from "brandi";
 import { createLogger, format, Logger, transports } from "winston";
 import "winston-daily-rotate-file";
 import { ElasticsearchTransport } from "winston-elasticsearch";
-import { ElasticsearchConfig, ELASTICSEARCH_CONFIG_TOKEN, LogConfig, LOG_CONFIG_TOKEN } from "../config";
+import { LogConfig, LOG_CONFIG_TOKEN } from "../config";
+import { ELASTICSEARCH_CLIENT_TOKEN } from "../dataaccess/elasticsearch";
 
-export function initializeLogger(elasticsearchConfig: ElasticsearchConfig, logConfig: LogConfig): Logger {
+export function initializeLogger(elasticsearchClient: Client, logConfig: LogConfig): Logger {
     const logger = createLogger({
         format: format.combine(format.timestamp(), format.json()),
         defaultMeta: {},
@@ -22,11 +24,9 @@ export function initializeLogger(elasticsearchConfig: ElasticsearchConfig, logCo
                 datePattern: "YYYY-MM-DD-HH",
             }),
             new ElasticsearchTransport({
-                level: "error",
+                level: "info",
                 source: "image_service",
-                clientOpts: {
-                    node: `http://${elasticsearchConfig.host}:${elasticsearchConfig.port}`,
-                },
+                client: elasticsearchClient,
             }),
         ],
     });
@@ -40,6 +40,6 @@ export function initializeLogger(elasticsearchConfig: ElasticsearchConfig, logCo
     return logger;
 }
 
-injected(initializeLogger, ELASTICSEARCH_CONFIG_TOKEN, LOG_CONFIG_TOKEN);
+injected(initializeLogger, ELASTICSEARCH_CLIENT_TOKEN, LOG_CONFIG_TOKEN);
 
 export const LOGGER_TOKEN = token<Logger>("Logger");
