@@ -14,6 +14,7 @@ import {
 } from "../../dataaccess/db";
 import { ImageTag } from "../../proto/gen/ImageTag";
 import { ImageTagGroup } from "../../proto/gen/ImageTagGroup";
+import { ImageTagGroupAndTagList } from "../../proto/gen/ImageTagGroupAndTagList";
 import { ImageType } from "../../proto/gen/ImageType";
 import { RegionLabel } from "../../proto/gen/RegionLabel";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
@@ -59,6 +60,9 @@ export interface ImageTagManagementOperator {
         imageTagGroupList: ImageTagGroup[];
         imageTagList: ImageTag[][];
     }>;
+    getImageTagGroupListOfImageTypeList(imageTypeIdList: number[]): Promise<
+        ImageTagGroupAndTagList[]
+    >;
 }
 
 export class ImageTagManagementOperatorImpl
@@ -417,6 +421,37 @@ export class ImageTagManagementOperatorImpl
             );
 
         return { imageTagGroupList, imageTagList };
+    }
+
+    public async getImageTagGroupListOfImageTypeList(imageTypeIdList: number[]): Promise<
+        ImageTagGroupAndTagList[]
+    > {
+        const imageTagGroupAndTagList: ImageTagGroupAndTagList[] = [];
+        for (const imageTypeId of imageTypeIdList) {
+            const imageType = await this.imageTypeDM.getImageType(imageTypeId);
+            if (imageType === null) {
+                imageTagGroupAndTagList.push({});
+            }
+            const imageTagGroupList =
+                await this.imageTagGroupHasImageTypeDM.getImageTagGroupOfImageType(
+                    imageTypeId
+                );
+
+            const imageTagGroupIdList = imageTagGroupList.map(
+                (imageTagGroup) => imageTagGroup.id
+            );
+            const imageTagList =
+                (await this.imageTagDM.getImageTagListOfImageTagGroupIdList(
+                    imageTagGroupIdList
+                )).map(imageTagSubList => ({ imageTagList: imageTagSubList }));
+            
+            imageTagGroupAndTagList.push({
+                imageTagGroupList: imageTagGroupList,
+                imageTagListOfImageTagGroupList: imageTagList
+            });
+        }
+
+        return imageTagGroupAndTagList;
     }
 
     private sanitizeImageTagGroupDisplayName(displayName: string): string {

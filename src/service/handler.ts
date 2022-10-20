@@ -107,6 +107,32 @@ export class ImageServiceHandlersFactory {
                 }
             },
 
+            AddImageTagListToImageList: async (call, callback) => {
+                const req = call.request;
+                if (req.imageIdList === undefined) {
+                    return callback({
+                        message: "image_id_list is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageTagIdList === undefined) {
+                    return callback({
+                        message: "image_tag_id_list is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    await this.imageListManagementOperator.addImageTagListToImageList(
+                        req.imageIdList,
+                        req.imageTagIdList
+                    );
+                    callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
             CreateImage: async (call, callback) => {
                 const req = call.request;
                 if (req.uploadedByUserId === undefined) {
@@ -651,6 +677,29 @@ export class ImageServiceHandlersFactory {
                     callback(null, {
                         imageTagGroupList,
                         imageTagListOfImageTagGroupList,
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetImageTagGroupListOfImageTypeList: async (call, callback) => {
+                const req = call.request;
+                if (req.imageTypeIdList === undefined) {
+                    return callback({
+                        message: "image_type_id_list is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    const imageTagGroupAndTagList =
+                        await this.imageTagManagementOperator.getImageTagGroupListOfImageTypeList(
+                            req.imageTypeIdList
+                        );
+
+                    callback(null, {
+                        imageTagGroupAndTagList: imageTagGroupAndTagList
                     });
                 } catch (e) {
                     this.handleError(e, callback);
