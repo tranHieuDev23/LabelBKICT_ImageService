@@ -14,6 +14,12 @@ import {
     REGION_DATA_ACCESSOR_TOKEN,
     UserBookmarksImageDataAccessor,
     USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
+    ImageTagGroupDataAccessor,
+    ImageTagGroupHasImageTypeDataAccessor,
+    ImageTagDataAccessor,
+    IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -48,12 +54,16 @@ export interface ImageListManagementOperator {
     }>;
     updateImageListImageType(idList: number[], imageTypeId: number): Promise<void>;
     deleteImageList(idList: number[]): Promise<void>;
+    addImageTagListToImageList(imageIdList: number[], imageTagIdList: number[]): Promise<void>;
 }
 
 export class ImageListManagementOperatorImpl implements ImageListManagementOperator {
     constructor(
         private readonly imageDM: ImageDataAccessor,
         private readonly imageTypeDM: ImageTypeDataAccessor,
+        private readonly imageTagGroupDM: ImageTagGroupDataAccessor,
+        private readonly imageTagGroupHasImageTypeDM: ImageTagGroupHasImageTypeDataAccessor,
+        private readonly imageTagDM: ImageTagDataAccessor,
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
         private readonly userBookmarksImageDM: UserBookmarksImageDataAccessor,
@@ -327,12 +337,82 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
     public async deleteImageList(idList: number[]): Promise<void> {
         return this.imageDM.deleteImageList(idList);
     }
+
+    public async addImageTagListToImageList(imageIdList: number[], imageTagIdList: number[]): Promise<void> {
+        for (const imageId of imageIdList) {
+            for (const imageTagId of imageTagIdList) {
+                await this.addImageTagToEachImage(imageId, imageTagId);
+            }
+        }
+    }
+
+    public async addImageTagToEachImage(imageId: number, imageTagId: number): Promise<void> {
+        const image = await this.imageDM.getImage(imageId);
+        if (image === null) {
+            this.logger.error("image with image_id not found", { imageId });
+            throw new ErrorWithStatus(`image with image_id ${imageId} not found`, status.NOT_FOUND);
+        }
+        if (image.imageType === null) {
+            this.logger.error("image does not have image type, cannot assign tag", { imageId });
+            return;
+        }
+
+        const imageTag = await this.imageTagDM.getImageTag(imageTagId);
+        if (imageTag === null) {
+            this.logger.error("image tag with image_tag_id not found", {
+                imageTagId,
+            });
+            throw new ErrorWithStatus(`image tag with image_tag_id ${imageTagId} not found`, status.NOT_FOUND);
+        }
+
+        const imageTagListOfImage = (await this.imageHasImageTagDM.getImageTagListOfImageList([imageId]))[0];
+        const imageAlreadyHasTag = imageTagListOfImage.find((item) => item.id === imageTag.id) !== undefined;
+        if (imageAlreadyHasTag) {
+            this.logger.error("image already has image tag", {
+                imageId,
+                imageTagId,
+            });
+            return;
+        }
+
+        const imageTagGroupId = imageTag.ofImageTagGroupId;
+        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(imageTagGroupId);
+        if (imageTagGroup?.isSingleValue) {
+            for (const item of imageTagListOfImage) {
+                if (item.ofImageTagGroupId === imageTagGroupId) {
+                    this.logger.error(
+                        "image with image_id already has tag of image tag group with image_tag_group_id",
+                        { imageId, imageTagGroupId }
+                    );
+                    return;
+                }
+            }
+        }
+
+        const imageTypeId = image.imageType.id;
+        const imageTagGroupHasImageTypeRelation = await this.imageTagGroupHasImageTypeDM.getImageTagGroupHasImageType(
+            imageTagGroupId,
+            imageTypeId
+        );
+        if (imageTagGroupHasImageTypeRelation === null) {
+            this.logger.error("image tag group does not have image type", {
+                imageTagGroupId,
+                imageTypeId,
+            });
+            return;
+        }
+
+        await this.imageHasImageTagDM.createImageHasImageTag(imageId, imageTagId);
+    }
 }
 
 injected(
     ImageListManagementOperatorImpl,
     IMAGE_DATA_ACCESSOR_TOKEN,
     IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
     USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
