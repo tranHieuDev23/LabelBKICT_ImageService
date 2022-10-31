@@ -7,7 +7,7 @@
     "api-knex": "TS_NODE_COMPILER_OPTIONS='{ \"module\": \"commonjs\" }' knex --knexfile=./knexfile.ts",
     "build": "npm run generate && tsc --build",
     "clean": "rm -r ./src/proto/gen && tsc --build --clean",
-    "debug": "npm run build && npm run watch",
+    "debug-grpc": "npm run build && npm run watch-grpc",
     "generate": "./node_modules/.bin/proto-loader-gen-types --longs=Number --enums=Number --oneofs --grpcLib=@grpc/grpc-js --outDir=src/proto/gen src/proto/**/*.proto",
     "lint": "npx eslint ./src --ext .js,.jsx,.ts,.tsx",
     "serve-migrate-files-to-s3": "node dist/main.js --migrate_files_to_s3",
