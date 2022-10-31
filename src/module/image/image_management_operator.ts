@@ -1,9 +1,7 @@
 import { status } from "@grpc/grpc-js";
 import { injected, token } from "brandi";
-import { join } from "path";
 import validator from "validator";
 import { Logger } from "winston";
-import { ApplicationConfig, APPLICATION_CONFIG_TOKEN } from "../../config";
 import {
     ImageDataAccessor,
     ImageHasImageTagDataAccessor,
@@ -25,6 +23,7 @@ import {
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { ImageCreated, ImageCreatedProducer, IMAGE_CREATED_PRODUCER_TOKEN } from "../../dataaccess/kafka";
+import { BucketDM, THUMBNAIL_IMAGE_DM_TOKEN, ORIGINAL_IMAGE_DM_TOKEN } from "../../dataaccess/s3";
 import { Image } from "../../proto/gen/Image";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { ImageTag } from "../../proto/gen/ImageTag";
@@ -75,10 +74,11 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         private readonly regionDM: RegionDataAccessor,
         private readonly regionSnapshotDM: RegionSnapshotDataAccessor,
         private readonly imageCreatedProducer: ImageCreatedProducer,
+        private readonly originalImageS3DM: BucketDM,
+        private readonly thumbnailImageS3DM: BucketDM,
         private readonly idGenerator: IdGenerator,
         private readonly timer: Timer,
         private readonly imageProcessor: ImageProcessor,
-        private readonly applicationConfig: ApplicationConfig,
         private readonly logger: Logger
     ) {}
 
@@ -136,17 +136,15 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         const uploadTime = this.timer.getCurrentTime();
         const originalImageFileName = await this.generateOriginalImageFilename(uploadTime);
         const thumbnailImageFileName = await this.generateThumbnailImageFilename(uploadTime);
-        const originalImageFilePath = join(this.applicationConfig.originalImageDir, originalImageFileName);
-        const thumbnailImageFilePath = join(this.applicationConfig.thumbnailImageDir, thumbnailImageFileName);
 
         try {
             Promise.all([
                 this.imageProcessor
                     .resizeImage(imageData, ORIGINAL_WIDTH, ORIGINAL_HEIGHT)
-                    .then((resizedBuffer) => this.imageProcessor.saveImageFile(originalImageFilePath, resizedBuffer)),
+                    .then((resizedBuffer) => this.originalImageS3DM.uploadFile(originalImageFileName, resizedBuffer)),
                 this.imageProcessor
                     .resizeImage(imageData, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
-                    .then((resizedBuffer) => this.imageProcessor.saveImageFile(thumbnailImageFilePath, resizedBuffer)),
+                    .then((resizedBuffer) => this.thumbnailImageS3DM.uploadFile(thumbnailImageFileName, resizedBuffer)),
             ]);
         } catch (error) {
             this.logger.error("failed to save image files", { error });
@@ -584,10 +582,11 @@ injected(
     REGION_DATA_ACCESSOR_TOKEN,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
     IMAGE_CREATED_PRODUCER_TOKEN,
+    ORIGINAL_IMAGE_DM_TOKEN,
+    THUMBNAIL_IMAGE_DM_TOKEN,
     ID_GENERATOR_TOKEN,
     TIMER_TOKEN,
     IMAGE_PROCESSOR_TOKEN,
-    APPLICATION_CONFIG_TOKEN,
     LOGGER_TOKEN
 );
 

@@ -6,12 +6,14 @@ import { GRPCServerConfig } from "./grpc_service";
 import { KafkaConfig } from "./kafka";
 import { LogConfig } from "./log";
 import { ElasticsearchConfig } from "./elasticsearch";
+import { S3Config } from "./s3";
 
 export class ImageServiceConfig {
     public logConfig = new LogConfig();
     public distributedConfig = new DistributedConfig();
     public databaseConfig = new DatabaseConfig();
     public kafkaConfig = new KafkaConfig();
+    public s3Config = new S3Config();
     public grpcServerConfig = new GRPCServerConfig();
     public elasticsearchConfig = new ElasticsearchConfig();
     public applicationConfig = new ApplicationConfig();
@@ -22,6 +24,7 @@ export class ImageServiceConfig {
         config.distributedConfig = DistributedConfig.fromEnv();
         config.databaseConfig = DatabaseConfig.fromEnv();
         config.kafkaConfig = KafkaConfig.fromEnv();
+        config.s3Config = S3Config.fromEnv();
         config.grpcServerConfig = GRPCServerConfig.fromEnv();
         config.elasticsearchConfig = ElasticsearchConfig.fromEnv();
         config.applicationConfig = ApplicationConfig.fromEnv();

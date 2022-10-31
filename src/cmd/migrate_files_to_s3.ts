@@ -2,14 +2,12 @@ import { Container } from "brandi";
 import dotenv from "dotenv";
 import * as utils from "../utils";
 import * as config from "../config";
-import * as db from "../dataaccess/db";
 import * as elasticsearch from "../dataaccess/elasticsearch";
-import * as kafka from "../dataaccess/kafka";
 import * as s3 from "../dataaccess/s3";
 import * as modules from "../module";
-import * as service from "../service";
+import * as jobs from "../jobs";
 
-export function startGRPCServer(dotenvPath: string) {
+export function migrateFilesToS3(dotenvPath: string) {
     dotenv.config({
         path: dotenvPath,
     });
@@ -17,13 +15,13 @@ export function startGRPCServer(dotenvPath: string) {
     const container = new Container();
     utils.bindToContainer(container);
     config.bindToContainer(container);
-    db.bindToContainer(container);
     elasticsearch.bindToContainer(container);
-    kafka.bindToContainer(container);
     s3.bindToContainer(container);
     modules.bindToContainer(container);
-    service.bindToContainer(container);
+    jobs.bindToContainer(container);
 
-    const server = container.get(service.IMAGE_SERVICE_GRPC_SERVER_TOKEN);
-    server.loadProtoAndStart("./src/proto/service/image_service.proto");
+    const job = container.get(jobs.MIGRATE_FILES_TO_S3_JOBS_TOKEN);
+    job.execute().then(() => {
+        process.exit();
+    });
 }
