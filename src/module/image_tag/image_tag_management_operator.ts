@@ -430,7 +430,13 @@ export class ImageTagManagementOperatorImpl
         for (const imageTypeId of imageTypeIdList) {
             const imageType = await this.imageTypeDM.getImageType(imageTypeId);
             if (imageType === null) {
-                imageTagGroupAndTagList.push({});
+                this.logger.error("no image type with image_type_id found", {
+                    imageTypeId,
+                });
+                throw new ErrorWithStatus(
+                    `no image type with image_type_id ${imageTypeId} found`,
+                    status.NOT_FOUND
+                );
             }
             const imageTagGroupList =
                 await this.imageTagGroupHasImageTypeDM.getImageTagGroupOfImageType(
