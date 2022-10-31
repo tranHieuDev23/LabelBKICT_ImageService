@@ -23,7 +23,7 @@ import {
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { ImageCreated, ImageCreatedProducer, IMAGE_CREATED_PRODUCER_TOKEN } from "../../dataaccess/kafka";
-import { BucketDM, THUMBNAIL_IMAGE_DM_TOKEN, ORIGINAL_IMAGE_DM_TOKEN } from "../../dataaccess/s3";
+import { BucketDM, THUMBNAIL_IMAGE_S3_DM_TOKEN, ORIGINAL_IMAGE_S3_DM_TOKEN } from "../../dataaccess/s3";
 import { Image } from "../../proto/gen/Image";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
 import { ImageTag } from "../../proto/gen/ImageTag";
@@ -582,8 +582,8 @@ injected(
     REGION_DATA_ACCESSOR_TOKEN,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
     IMAGE_CREATED_PRODUCER_TOKEN,
-    ORIGINAL_IMAGE_DM_TOKEN,
-    THUMBNAIL_IMAGE_DM_TOKEN,
+    ORIGINAL_IMAGE_S3_DM_TOKEN,
+    THUMBNAIL_IMAGE_S3_DM_TOKEN,
     ID_GENERATOR_TOKEN,
     TIMER_TOKEN,
     IMAGE_PROCESSOR_TOKEN,

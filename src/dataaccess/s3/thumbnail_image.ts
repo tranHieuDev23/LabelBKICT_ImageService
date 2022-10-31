@@ -6,10 +6,10 @@ import { LOGGER_TOKEN } from "../../utils";
 import { BucketDMImpl } from "./bucket_dm";
 import { MINIO_CLIENT_TOKEN } from "./minio";
 
-export function initializeThumbnailImageDM(minioClient: Client, logger: Logger, s3Config: S3Config): BucketDMImpl {
+export function initializeThumbnailImageS3DM(minioClient: Client, logger: Logger, s3Config: S3Config): BucketDMImpl {
     return new BucketDMImpl(s3Config.thumbnailImageBucket, minioClient, logger);
 }
 
-injected(initializeThumbnailImageDM, MINIO_CLIENT_TOKEN, LOGGER_TOKEN, S3_CONFIG_TOKEN);
+injected(initializeThumbnailImageS3DM, MINIO_CLIENT_TOKEN, LOGGER_TOKEN, S3_CONFIG_TOKEN);
 
-export const THUMBNAIL_IMAGE_DM_TOKEN = token<BucketDMImpl>("ThumbnailImageDM");
+export const THUMBNAIL_IMAGE_S3_DM_TOKEN = token<BucketDMImpl>("ThumbnailImageS3DM");

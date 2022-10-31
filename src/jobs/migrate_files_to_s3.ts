@@ -1,6 +1,6 @@
 import { injected, token } from "brandi";
 import { ApplicationConfig, APPLICATION_CONFIG_TOKEN } from "../config";
-import { BucketDM, ORIGINAL_IMAGE_DM_TOKEN, THUMBNAIL_IMAGE_DM_TOKEN } from "../dataaccess/s3";
+import { BucketDM, ORIGINAL_IMAGE_S3_DM_TOKEN, THUMBNAIL_IMAGE_S3_DM_TOKEN } from "../dataaccess/s3";
 import { S3MigrationOperator, S3_MIGRATION_OPERATOR_TOKEN } from "../module/s3_migration/s3_migration_operator";
 
 export interface MigrateFilesToS3Job {
@@ -31,8 +31,8 @@ export class MigrateFilesToS3JobImpl {
 
 injected(
     MigrateFilesToS3JobImpl,
-    ORIGINAL_IMAGE_DM_TOKEN,
-    THUMBNAIL_IMAGE_DM_TOKEN,
+    ORIGINAL_IMAGE_S3_DM_TOKEN,
+    THUMBNAIL_IMAGE_S3_DM_TOKEN,
     S3_MIGRATION_OPERATOR_TOKEN,
     APPLICATION_CONFIG_TOKEN
 );
