@@ -2,29 +2,17 @@ import { injected, token } from "brandi";
 import { sendUnaryData, status } from "@grpc/grpc-js";
 import { ImageServiceHandlers } from "../proto/gen/ImageService";
 import { ErrorWithStatus } from "../utils";
-import {
-    ImageTypeManagementOperator,
-    IMAGE_TYPE_MANAGEMENT_OPERATOR_TOKEN,
-} from "../module/image_type";
+import { ImageTypeManagementOperator, IMAGE_TYPE_MANAGEMENT_OPERATOR_TOKEN } from "../module/image_type";
 import {
     ImageListManagementOperator,
     ImageManagementOperator,
     IMAGE_LIST_MANAGEMENT_OPERATOR_TOKEN,
     IMAGE_MANAGEMENT_OPERATOR_TOKEN,
 } from "../module/image";
-import {
-    ImageTagManagementOperator,
-    IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN,
-} from "../module/image_tag";
-import {
-    RegionManagementOperator,
-    REGION_MANAGEMENT_OPERATOR_TOKEN,
-} from "../module/region";
+import { ImageTagManagementOperator, IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN } from "../module/image_tag";
+import { RegionManagementOperator, REGION_MANAGEMENT_OPERATOR_TOKEN } from "../module/region";
 import { _ImageListSortOrder_Values } from "../proto/gen/ImageListSortOrder";
-import {
-    BookmarkManagementOperator,
-    BOOKMARK_MANAGEMENT_OPERATOR_TOKEN,
-} from "../module/bookmark";
+import { BookmarkManagementOperator, BOOKMARK_MANAGEMENT_OPERATOR_TOKEN } from "../module/bookmark";
 import {
     UserCanManageUserImageManagementOperator,
     USER_CAN_MANAGE_USER_IMAGE_MANAGEMENT_OPERATOR,
@@ -33,10 +21,17 @@ import {
     UserCanVerifyUserImageManagementOperator,
     USER_CAN_VERIFY_USER_IMAGE_MANAGEMENT_OPERATOR,
 } from "../module/user_can_verify_user_image";
+import { ImageType } from "../proto/gen/ImageType";
+import { ImageTypeList } from "../proto/gen/ImageTypeList";
+import { ImageTag } from "../proto/gen/ImageTag";
+import { ImageTagList } from "../proto/gen/ImageTagList";
+import { Region } from "../proto/gen/Region";
+import { RegionList } from "../proto/gen/RegionList";
+import { RegionLabel } from "../proto/gen/RegionLabel";
+import { RegionLabelList } from "../proto/gen/RegionLabelList";
 
 const DEFAULT_GET_IMAGE_LIST_LIMIT = 12;
-const DEFAULT_GET_IMAGE_LIST_SORT_ORDER =
-    _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING;
+const DEFAULT_GET_IMAGE_LIST_SORT_ORDER = _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING;
 
 const DEFAULT_GET_USER_CAN_MANAGE_USER_IMAGE_LIST_LIMIT = 100;
 const DEFAULT_GET_USER_CAN_VERIFY_USER_IMAGE_LIST_LIMIT = 100;
@@ -97,10 +92,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageManagementOperator.addImageTagToImage(
-                        req.imageId,
-                        req.imageTagId
-                    );
+                    await this.imageManagementOperator.addImageTagToImage(req.imageId, req.imageTagId);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -152,15 +144,14 @@ export class ImageServiceHandlersFactory {
                 const imageTagIdList = req.imageTagIdList || [];
 
                 try {
-                    const image =
-                        await this.imageManagementOperator.createImage(
-                            req.uploadedByUserId,
-                            originalFileName,
-                            req.imageData,
-                            description,
-                            req.imageTypeId,
-                            imageTagIdList
-                        );
+                    const image = await this.imageManagementOperator.createImage(
+                        req.uploadedByUserId,
+                        originalFileName,
+                        req.imageData,
+                        description,
+                        req.imageTypeId,
+                        imageTagIdList
+                    );
                     callback(null, { image });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -183,11 +174,10 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const imageTag =
-                        await this.imageTagManagementOperator.createImageTag(
-                            req.ofImageTagGroupId,
-                            req.displayName
-                        );
+                    const imageTag = await this.imageTagManagementOperator.createImageTag(
+                        req.ofImageTagGroupId,
+                        req.displayName
+                    );
                     callback(null, { imageTag });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -210,11 +200,10 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const imageTagGroup =
-                        await this.imageTagManagementOperator.createImageTagGroup(
-                            req.displayName,
-                            req.isSingleValue
-                        );
+                    const imageTagGroup = await this.imageTagManagementOperator.createImageTagGroup(
+                        req.displayName,
+                        req.isSingleValue
+                    );
                     callback(null, { imageTagGroup });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -237,11 +226,10 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const imageType =
-                        await this.imageTypeManagementOperator.createImageType(
-                            req.displayName,
-                            req.hasPredictiveModel
-                        );
+                    const imageType = await this.imageTypeManagementOperator.createImageType(
+                        req.displayName,
+                        req.hasPredictiveModel
+                    );
                     callback(null, { imageType });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -276,15 +264,14 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const region =
-                        await this.regionManagementOperator.createRegion(
-                            req.ofImageId,
-                            req.drawnByUserId,
-                            req.labeledByUserId,
-                            req.border,
-                            req.holes || [],
-                            req.labelId
-                        );
+                    const region = await this.regionManagementOperator.createRegion(
+                        req.ofImageId,
+                        req.drawnByUserId,
+                        req.labeledByUserId,
+                        req.border,
+                        req.holes || [],
+                        req.labelId
+                    );
                     callback(null, { region });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -313,12 +300,11 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const regionLabel =
-                        await this.imageTypeManagementOperator.createRegionLabel(
-                            req.ofImageTypeId,
-                            req.displayName,
-                            req.color
-                        );
+                    const regionLabel = await this.imageTypeManagementOperator.createRegionLabel(
+                        req.ofImageTypeId,
+                        req.displayName,
+                        req.color
+                    );
                     callback(null, { regionLabel });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -345,9 +331,7 @@ export class ImageServiceHandlersFactory {
             DeleteImageList: async (call, callback) => {
                 const req = call.request;
                 try {
-                    await this.imageListManagementOperator.deleteImageList(
-                        req.idList || []
-                    );
+                    await this.imageListManagementOperator.deleteImageList(req.idList || []);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -370,10 +354,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageTagManagementOperator.deleteImageTag(
-                        req.ofImageTagGroupId,
-                        req.id
-                    );
+                    await this.imageTagManagementOperator.deleteImageTag(req.ofImageTagGroupId, req.id);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -390,9 +371,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageTagManagementOperator.deleteImageTagGroup(
-                        req.id
-                    );
+                    await this.imageTagManagementOperator.deleteImageTagGroup(req.id);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -409,9 +388,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageTypeManagementOperator.deleteImageType(
-                        req.id
-                    );
+                    await this.imageTypeManagementOperator.deleteImageType(req.id);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -434,10 +411,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.regionManagementOperator.deleteRegion(
-                        req.ofImageId,
-                        req.regionId
-                    );
+                    await this.regionManagementOperator.deleteRegion(req.ofImageId, req.regionId);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -454,9 +428,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.regionManagementOperator.deleteRegionOfImage(
-                        req.ofImageId
-                    );
+                    await this.regionManagementOperator.deleteRegionOfImage(req.ofImageId);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -479,10 +451,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageTypeManagementOperator.deleteRegionLabel(
-                        req.ofImageTypeId,
-                        req.id
-                    );
+                    await this.imageTypeManagementOperator.deleteRegionLabel(req.ofImageTypeId, req.id);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -501,12 +470,11 @@ export class ImageServiceHandlersFactory {
                 const withRegion = req.withRegion || false;
 
                 try {
-                    const { image, imageTagList, regionList } =
-                        await this.imageManagementOperator.getImage(
-                            req.id,
-                            withImageTag,
-                            withRegion
-                        );
+                    const { image, imageTagList, regionList } = await this.imageManagementOperator.getImage(
+                        req.id,
+                        withImageTag,
+                        withRegion
+                    );
                     callback(null, { image, imageTagList, regionList });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -517,47 +485,32 @@ export class ImageServiceHandlersFactory {
                 const req = call.request;
                 const offset = req.offset || 0;
                 const limit = req.limit || DEFAULT_GET_IMAGE_LIST_LIMIT;
-                const sortOrder =
-                    req.sortOrder === undefined
-                        ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER
-                        : req.sortOrder;
+                const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;
 
                 try {
-                    const {
-                        totalImageCount,
-                        imageList,
-                        imageTagList,
-                        regionList,
-                    } = await this.imageListManagementOperator.getImageList(
-                        offset,
-                        limit,
-                        sortOrder,
-                        req.filterOptions,
-                        withImageTag,
-                        withRegion
-                    );
+                    const { totalImageCount, imageList, imageTagList, regionList } =
+                        await this.imageListManagementOperator.getImageList(
+                            offset,
+                            limit,
+                            sortOrder,
+                            req.filterOptions,
+                            withImageTag,
+                            withRegion
+                        );
 
                     let imageTagListOfImageList = undefined;
                     if (withImageTag) {
-                        imageTagListOfImageList = imageTagList?.map(
-                            (imageTagSublist) => {
-                                return {
-                                    imageTagList: imageTagSublist,
-                                };
-                            }
+                        imageTagListOfImageList = imageTagList?.map((imageTagSublist) =>
+                            this.getImageTagListProto(imageTagSublist)
                         );
                     }
 
                     let regionListOfImageList = undefined;
                     if (withRegion) {
-                        regionListOfImageList = regionList?.map(
-                            (regionSublist) => {
-                                return {
-                                    regionList: regionSublist,
-                                };
-                            }
+                        regionListOfImageList = regionList?.map((regionSublist) =>
+                            this.getRegionListProto(regionSublist)
                         );
                     }
 
@@ -580,22 +533,15 @@ export class ImageServiceHandlersFactory {
                         code: status.INVALID_ARGUMENT,
                     });
                 }
-                const sortOrder =
-                    req.sortOrder === undefined
-                        ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER
-                        : req.sortOrder;
+                const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
 
                 try {
-                    const {
-                        position,
-                        totalImageCount,
-                        prevImageId,
-                        nextImageId,
-                    } = await this.imageListManagementOperator.getImagePositionInList(
-                        req.id,
-                        sortOrder,
-                        req.filterOptions
-                    );
+                    const { position, totalImageCount, prevImageId, nextImageId } =
+                        await this.imageListManagementOperator.getImagePositionInList(
+                            req.id,
+                            sortOrder,
+                            req.filterOptions
+                        );
                     callback(null, {
                         position,
                         totalImageCount,
@@ -614,30 +560,19 @@ export class ImageServiceHandlersFactory {
 
                 try {
                     const { imageTagGroupList, imageTagList, imageTypeList } =
-                        await this.imageTagManagementOperator.getImageTagGroupList(
-                            withImageTag,
-                            withImageType
-                        );
+                        await this.imageTagManagementOperator.getImageTagGroupList(withImageTag, withImageType);
 
                     let imageTagListOfImageTagGroupList = undefined;
                     if (withImageTag) {
-                        imageTagListOfImageTagGroupList = imageTagList?.map(
-                            (imageTagSublist) => {
-                                return {
-                                    imageTagList: imageTagSublist,
-                                };
-                            }
+                        imageTagListOfImageTagGroupList = imageTagList?.map((imageTagSublist) =>
+                            this.getImageTagListProto(imageTagSublist)
                         );
                     }
 
                     let imageTypeListOfImageTagGroupList = undefined;
                     if (withImageType) {
-                        imageTypeListOfImageTagGroupList = imageTypeList?.map(
-                            (imageTypeSubList) => {
-                                return {
-                                    imageTypeList: imageTypeSubList,
-                                };
-                            }
+                        imageTypeListOfImageTagGroupList = imageTypeList?.map((imageTypeSubList) =>
+                            this.getImageTypeListProto(imageTypeSubList)
                         );
                     }
 
@@ -662,22 +597,13 @@ export class ImageServiceHandlersFactory {
 
                 try {
                     const { imageTagGroupList, imageTagList } =
-                        await this.imageTagManagementOperator.getImageTagGroupListOfImageType(
-                            req.imageTypeId
-                        );
+                        await this.imageTagManagementOperator.getImageTagGroupListOfImageType(req.imageTypeId);
 
-                    const imageTagListOfImageTagGroupList = imageTagList?.map(
-                        (imageTagSublist) => {
-                            return {
-                                imageTagList: imageTagSublist,
-                            };
-                        }
+                    const imageTagListOfImageTagGroupList = imageTagList?.map((imageTagSublist) =>
+                        this.getImageTagListProto(imageTagSublist)
                     );
 
-                    callback(null, {
-                        imageTagGroupList,
-                        imageTagListOfImageTagGroupList,
-                    });
+                    callback(null, { imageTagGroupList, imageTagListOfImageTagGroupList });
                 } catch (e) {
                     this.handleError(e, callback);
                 }
@@ -694,13 +620,16 @@ export class ImageServiceHandlersFactory {
 
                 try {
                     const imageTagGroupAndTagList =
-                        await this.imageTagManagementOperator.getImageTagGroupListOfImageTypeList(
-                            req.imageTypeIdList
+                        await this.imageTagManagementOperator.getImageTagGroupListOfImageTypeList(req.imageTypeIdList);
+                    const imageTagGroupAndTagListProto = imageTagGroupAndTagList.map((imageTagGroupAndTagSubList) => {
+                        const { imageTagGroupList, imageTagList } = imageTagGroupAndTagSubList;
+                        const imageTagListOfImageTagGroupList = imageTagList?.map((imageTagSublist) =>
+                            this.getImageTagListProto(imageTagSublist)
                         );
-
-                    callback(null, {
-                        imageTagGroupAndTagList: imageTagGroupAndTagList
+                        return { imageTagGroupList, imageTagListOfImageTagGroupList };
                     });
+
+                    callback(null, { imageTagGroupAndTagList: imageTagGroupAndTagListProto });
                 } catch (e) {
                     this.handleError(e, callback);
                 }
@@ -716,10 +645,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const { imageType, regionLabelList } =
-                        await this.imageTypeManagementOperator.getImageType(
-                            req.id
-                        );
+                    const { imageType, regionLabelList } = await this.imageTypeManagementOperator.getImageType(req.id);
                     callback(null, { imageType, regionLabelList });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -731,19 +657,14 @@ export class ImageServiceHandlersFactory {
                 const withRegionLabel = req.withRegionLabel || false;
 
                 try {
-                    const { imageTypeList, regionLabelList } =
-                        await this.imageTypeManagementOperator.getImageTypeList(
-                            withRegionLabel
-                        );
+                    const { imageTypeList, regionLabelList } = await this.imageTypeManagementOperator.getImageTypeList(
+                        withRegionLabel
+                    );
 
                     let regionLabelListOfImageTypeList = undefined;
                     if (withRegionLabel) {
-                        regionLabelListOfImageTypeList = regionLabelList?.map(
-                            (regionLabelSublist) => {
-                                return {
-                                    regionLabelList: regionLabelSublist,
-                                };
-                            }
+                        regionLabelListOfImageTypeList = regionLabelList?.map((regionLabelSublist) =>
+                            this.getRegionLabelListProto(regionLabelSublist)
                         );
                     }
 
@@ -772,11 +693,10 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const regionOperationLogList =
-                        await this.regionManagementOperator.getRegionOperationLogList(
-                            req.ofImageId,
-                            req.regionId
-                        );
+                    const regionOperationLogList = await this.regionManagementOperator.getRegionOperationLogList(
+                        req.ofImageId,
+                        req.regionId
+                    );
                     callback(null, { regionOperationLogList });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -799,11 +719,10 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const regionList =
-                        await this.imageManagementOperator.getRegionSnapshotListOfImage(
-                            req.ofImageId,
-                            req.atStatus
-                        );
+                    const regionList = await this.imageManagementOperator.getRegionSnapshotListOfImage(
+                        req.ofImageId,
+                        req.atStatus
+                    );
                     callback(null, { regionList });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -826,10 +745,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageManagementOperator.removeImageTagFromImage(
-                        req.imageId,
-                        req.imageTagId
-                    );
+                    await this.imageManagementOperator.removeImageTagFromImage(req.imageId, req.imageTagId);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -878,11 +794,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const image =
-                        await this.imageManagementOperator.updateImageImageType(
-                            req.id,
-                            req.imageTypeId
-                        );
+                    const image = await this.imageManagementOperator.updateImageImageType(req.id, req.imageTypeId);
                     callback(null, { image });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -900,10 +812,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    await this.imageListManagementOperator.updateImageListImageType(
-                        imageIdList,
-                        req.imageTypeId
-                    );
+                    await this.imageListManagementOperator.updateImageListImageType(imageIdList, req.imageTypeId);
                     callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -920,11 +829,7 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const image =
-                        await this.imageManagementOperator.updateImageMetadata(
-                            req.id,
-                            req.description
-                        );
+                    const image = await this.imageManagementOperator.updateImageMetadata(req.id, req.description);
                     callback(null, { image });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -953,12 +858,11 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const image =
-                        await this.imageManagementOperator.updateImageStatus(
-                            req.id,
-                            req.status,
-                            req.byUserId
-                        );
+                    const image = await this.imageManagementOperator.updateImageStatus(
+                        req.id,
+                        req.status,
+                        req.byUserId
+                    );
                     callback(null, { image });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -981,12 +885,11 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const imageTag =
-                        await this.imageTagManagementOperator.updateImageTag(
-                            req.ofImageTagGroupId,
-                            req.id,
-                            req.displayName
-                        );
+                    const imageTag = await this.imageTagManagementOperator.updateImageTag(
+                        req.ofImageTagGroupId,
+                        req.id,
+                        req.displayName
+                    );
                     callback(null, { imageTag });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1003,12 +906,11 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const imageTagGroup =
-                        await this.imageTagManagementOperator.updateImageTagGroup(
-                            req.id,
-                            req.displayName,
-                            req.isSingleValue
-                        );
+                    const imageTagGroup = await this.imageTagManagementOperator.updateImageTagGroup(
+                        req.id,
+                        req.displayName,
+                        req.isSingleValue
+                    );
                     callback(null, { imageTagGroup });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1025,12 +927,11 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const imageType =
-                        await this.imageTypeManagementOperator.updateImageType(
-                            req.id,
-                            req.displayName,
-                            req.hasPredictiveModel
-                        );
+                    const imageType = await this.imageTypeManagementOperator.updateImageType(
+                        req.id,
+                        req.displayName,
+                        req.hasPredictiveModel
+                    );
                     callback(null, { imageType });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1065,14 +966,13 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const region =
-                        await this.regionManagementOperator.updateRegionBoundary(
-                            req.ofImageId,
-                            req.regionId,
-                            req.drawnByUserId,
-                            req.border,
-                            req.holes || []
-                        );
+                    const region = await this.regionManagementOperator.updateRegionBoundary(
+                        req.ofImageId,
+                        req.regionId,
+                        req.drawnByUserId,
+                        req.border,
+                        req.holes || []
+                    );
                     callback(null, { region });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1095,13 +995,12 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const regionLabel =
-                        await this.imageTypeManagementOperator.updateRegionLabel(
-                            req.ofImageTypeId,
-                            req.id,
-                            req.displayName,
-                            req.color
-                        );
+                    const regionLabel = await this.imageTypeManagementOperator.updateRegionLabel(
+                        req.ofImageTypeId,
+                        req.id,
+                        req.displayName,
+                        req.color
+                    );
                     callback(null, { regionLabel });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1136,13 +1035,12 @@ export class ImageServiceHandlersFactory {
                 }
 
                 try {
-                    const region =
-                        await this.regionManagementOperator.updateRegionLabel(
-                            req.ofImageId,
-                            req.regionId,
-                            req.labeledByUserId,
-                            req.labelId
-                        );
+                    const region = await this.regionManagementOperator.updateRegionLabel(
+                        req.ofImageId,
+                        req.regionId,
+                        req.labeledByUserId,
+                        req.labelId
+                    );
                     callback(null, { region });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1165,12 +1063,11 @@ export class ImageServiceHandlersFactory {
                 }
                 const description = req.description || "";
                 try {
-                    const imageBookmark =
-                        await this.bookmarkManagementOperator.createImageBookmark(
-                            req.userId,
-                            req.imageId,
-                            description
-                        );
+                    const imageBookmark = await this.bookmarkManagementOperator.createImageBookmark(
+                        req.userId,
+                        req.imageId,
+                        description
+                    );
                     return callback(null, { imageBookmark });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1192,10 +1089,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.bookmarkManagementOperator.deleteImageBookmark(
-                        req.userId,
-                        req.imageId
-                    );
+                    await this.bookmarkManagementOperator.deleteImageBookmark(req.userId, req.imageId);
                     return callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1217,11 +1111,10 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    const imageBookmark =
-                        await this.bookmarkManagementOperator.getImageBookmark(
-                            req.userId,
-                            req.imageId
-                        );
+                    const imageBookmark = await this.bookmarkManagementOperator.getImageBookmark(
+                        req.userId,
+                        req.imageId
+                    );
                     return callback(null, { imageBookmark });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1244,12 +1137,11 @@ export class ImageServiceHandlersFactory {
                 }
                 const description = req.description || "";
                 try {
-                    const imageBookmark =
-                        await this.bookmarkManagementOperator.updateImageBookmark(
-                            req.userId,
-                            req.imageId,
-                            description
-                        );
+                    const imageBookmark = await this.bookmarkManagementOperator.updateImageBookmark(
+                        req.userId,
+                        req.imageId,
+                        description
+                    );
                     return callback(null, { imageBookmark });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1367,9 +1259,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 const offset = req.offset || 0;
-                const limit =
-                    req.limit ||
-                    DEFAULT_GET_USER_CAN_MANAGE_USER_IMAGE_LIST_LIMIT;
+                const limit = req.limit || DEFAULT_GET_USER_CAN_MANAGE_USER_IMAGE_LIST_LIMIT;
                 try {
                     const { totalUserCount, userList } =
                         await this.userCanManageUserImageOperator.getUserCanManageUserImageOfUserId(
@@ -1392,9 +1282,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 const offset = req.offset || 0;
-                const limit =
-                    req.limit ||
-                    DEFAULT_GET_USER_CAN_VERIFY_USER_IMAGE_LIST_LIMIT;
+                const limit = req.limit || DEFAULT_GET_USER_CAN_VERIFY_USER_IMAGE_LIST_LIMIT;
                 try {
                     const { totalUserCount, userList } =
                         await this.userCanVerifyUserImageOperator.getUserCanVerifyUserImageOfUserId(
@@ -1454,6 +1342,22 @@ export class ImageServiceHandlersFactory {
             });
         }
     }
+
+    private getImageTypeListProto(imageTypeList: ImageType[]): ImageTypeList {
+        return { imageTypeList };
+    }
+
+    private getImageTagListProto(imageTagList: ImageTag[]): ImageTagList {
+        return { imageTagList };
+    }
+
+    private getRegionListProto(regionList: Region[]): RegionList {
+        return { regionList };
+    }
+
+    private getRegionLabelListProto(regionLabelList: RegionLabel[]): RegionLabelList {
+        return { regionLabelList };
+    }
 }
 
 injected(
@@ -1468,5 +1372,4 @@ injected(
     USER_CAN_VERIFY_USER_IMAGE_MANAGEMENT_OPERATOR
 );
 
-export const IMAGE_SERVICE_HANDLERS_FACTORY_TOKEN =
-    token<ImageServiceHandlersFactory>("ImageServiceHandlersFactory");
+export const IMAGE_SERVICE_HANDLERS_FACTORY_TOKEN = token<ImageServiceHandlersFactory>("ImageServiceHandlersFactory");
