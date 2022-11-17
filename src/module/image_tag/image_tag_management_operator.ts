@@ -19,10 +19,7 @@ import { RegionLabel } from "../../proto/gen/RegionLabel";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
 
 export interface ImageTagManagementOperator {
-    createImageTagGroup(
-        displayName: string,
-        isSingleValue: boolean
-    ): Promise<ImageTagGroup>;
+    createImageTagGroup(displayName: string, isSingleValue: boolean): Promise<ImageTagGroup>;
     getImageTagGroupList(
         withImageTag: boolean,
         withImageType: boolean
@@ -37,33 +34,24 @@ export interface ImageTagManagementOperator {
         isSingleValue: boolean | undefined
     ): Promise<ImageTagGroup>;
     deleteImageTagGroup(id: number): Promise<void>;
-    createImageTag(
-        ofImageTypeId: number,
-        displayName: string
-    ): Promise<ImageTag>;
-    updateImageTag(
-        ofImageTypeId: number,
-        id: number,
-        displayName: string | undefined
-    ): Promise<ImageTag>;
+    createImageTag(ofImageTypeId: number, displayName: string): Promise<ImageTag>;
+    updateImageTag(ofImageTypeId: number, id: number, displayName: string | undefined): Promise<ImageTag>;
     deleteImageTag(ofImageTagGroupId: number, id: number): Promise<void>;
-    addImageTypeToImageTagGroup(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void>;
-    removeImageTypeFromImageTagGroup(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void>;
+    addImageTypeToImageTagGroup(imageTagGroupId: number, imageTypeId: number): Promise<void>;
+    removeImageTypeFromImageTagGroup(imageTagGroupId: number, imageTypeId: number): Promise<void>;
     getImageTagGroupListOfImageType(imageTypeId: number): Promise<{
         imageTagGroupList: ImageTagGroup[];
         imageTagList: ImageTag[][];
     }>;
+    getImageTagGroupListOfImageTypeList(imageTypeIdList: number[]): Promise<
+        {
+            imageTagGroupList: ImageTagGroup[];
+            imageTagList: ImageTag[][];
+        }[]
+    >;
 }
 
-export class ImageTagManagementOperatorImpl
-    implements ImageTagManagementOperator
-{
+export class ImageTagManagementOperatorImpl implements ImageTagManagementOperator {
     constructor(
         private readonly imageTagGroupDM: ImageTagGroupDataAccessor,
         private readonly imageTagDM: ImageTagDataAccessor,
@@ -72,24 +60,14 @@ export class ImageTagManagementOperatorImpl
         private readonly logger: Logger
     ) {}
 
-    public async createImageTagGroup(
-        displayName: string,
-        isSingleValue: boolean
-    ): Promise<ImageTagGroup> {
+    public async createImageTagGroup(displayName: string, isSingleValue: boolean): Promise<ImageTagGroup> {
         displayName = this.sanitizeImageTagGroupDisplayName(displayName);
         if (!this.isValidImageTagGroupDisplayName(displayName)) {
             this.logger.error("invalid display name", { displayName });
-            throw new ErrorWithStatus(
-                `invalid display name ${displayName}`,
-                status.INVALID_ARGUMENT
-            );
+            throw new ErrorWithStatus(`invalid display name ${displayName}`, status.INVALID_ARGUMENT);
         }
 
-        const createdImageTagGroupId =
-            await this.imageTagGroupDM.createImageTagGroup(
-                displayName,
-                isSingleValue
-            );
+        const createdImageTagGroupId = await this.imageTagGroupDM.createImageTagGroup(displayName, isSingleValue);
         return {
             id: createdImageTagGroupId,
             displayName: displayName,
@@ -105,26 +83,19 @@ export class ImageTagManagementOperatorImpl
         imageTagList: ImageTag[][] | null;
         imageTypeList: ImageType[][] | null;
     }> {
-        const imageTagGroupList =
-            await this.imageTagGroupDM.getImageTagGroupList();
-        const imageTagGroupIdList = imageTagGroupList.map(
-            (imageTagGroup) => imageTagGroup.id
-        );
+        const imageTagGroupList = await this.imageTagGroupDM.getImageTagGroupList();
+        const imageTagGroupIdList = imageTagGroupList.map((imageTagGroup) => imageTagGroup.id);
 
         let imageTagList: ImageTag[][] | null = null;
         if (withImageTag) {
-            imageTagList =
-                await this.imageTagDM.getImageTagListOfImageTagGroupIdList(
-                    imageTagGroupIdList
-                );
+            imageTagList = await this.imageTagDM.getImageTagListOfImageTagGroupIdList(imageTagGroupIdList);
         }
 
         let imageTypeList: ImageType[][] | null = null;
         if (withImageType) {
-            imageTypeList =
-                await this.imageTagGroupHasImageTypeDM.getImageTypeListOfImageTagGroupList(
-                    imageTagGroupIdList
-                );
+            imageTypeList = await this.imageTagGroupHasImageTypeDM.getImageTypeListOfImageTagGroupList(
+                imageTagGroupIdList
+            );
         }
 
         return { imageTagGroupList, imageTagList, imageTypeList };
@@ -139,24 +110,15 @@ export class ImageTagManagementOperatorImpl
             displayName = this.sanitizeImageTagGroupDisplayName(displayName);
             if (!this.isValidImageTagGroupDisplayName(displayName)) {
                 this.logger.error("invalid display name", { displayName });
-                throw new ErrorWithStatus(
-                    `invalid display name ${displayName}`,
-                    status.INVALID_ARGUMENT
-                );
+                throw new ErrorWithStatus(`invalid display name ${displayName}`, status.INVALID_ARGUMENT);
             }
         }
 
         return this.imageTagGroupDM.withTransaction(async (dm) => {
             const imageTagGroup = await dm.getImageTagGroupWithXLock(id);
             if (imageTagGroup === null) {
-                this.logger.error(
-                    "no image tag group with image_tag_group_id found",
-                    { imageTagGroupId: id }
-                );
-                throw new ErrorWithStatus(
-                    `no image tag group with image_tag_group_id ${id} found`,
-                    status.NOT_FOUND
-                );
+                this.logger.error("no image tag group with image_tag_group_id found", { imageTagGroupId: id });
+                throw new ErrorWithStatus(`no image tag group with image_tag_group_id ${id} found`, status.NOT_FOUND);
             }
 
             if (displayName !== undefined) {
@@ -175,37 +137,25 @@ export class ImageTagManagementOperatorImpl
         return this.imageTagGroupDM.deleteImageTagGroup(id);
     }
 
-    public async createImageTag(
-        ofImageTagGroupId: number,
-        displayName: string
-    ): Promise<RegionLabel> {
+    public async createImageTag(ofImageTagGroupId: number, displayName: string): Promise<RegionLabel> {
         displayName = this.sanitizeImageTagDisplayName(displayName);
         if (!this.isValidImageTagDisplayName(displayName)) {
             this.logger.error("invalid display name", { displayName });
-            throw new ErrorWithStatus(
-                `invalid display name ${displayName}`,
-                status.INVALID_ARGUMENT
-            );
+            throw new ErrorWithStatus(`invalid display name ${displayName}`, status.INVALID_ARGUMENT);
         }
 
-        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
-            ofImageTagGroupId
-        );
+        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(ofImageTagGroupId);
         if (imageTagGroup === null) {
-            this.logger.error(
-                "no image tag group with image_tag_group_id found",
-                { imageTagGroupId: ofImageTagGroupId }
-            );
+            this.logger.error("no image tag group with image_tag_group_id found", {
+                imageTagGroupId: ofImageTagGroupId,
+            });
             throw new ErrorWithStatus(
                 `no image tag group with image_tag_group_id ${ofImageTagGroupId} found`,
                 status.NOT_FOUND
             );
         }
 
-        const createdImageTagId = await this.imageTagDM.createImageTag(
-            ofImageTagGroupId,
-            displayName
-        );
+        const createdImageTagId = await this.imageTagDM.createImageTag(ofImageTagGroupId, displayName);
         return {
             id: createdImageTagId,
             displayName: displayName,
@@ -221,10 +171,7 @@ export class ImageTagManagementOperatorImpl
             displayName = this.sanitizeImageTagDisplayName(displayName);
             if (!this.isValidImageTagDisplayName(displayName)) {
                 this.logger.error("invalid display name", { displayName });
-                throw new ErrorWithStatus(
-                    `invalid display name ${displayName}`,
-                    status.INVALID_ARGUMENT
-                );
+                throw new ErrorWithStatus(`invalid display name ${displayName}`, status.INVALID_ARGUMENT);
             }
         }
 
@@ -234,17 +181,14 @@ export class ImageTagManagementOperatorImpl
                 this.logger.error("no image tag with image_tag_id found", {
                     imageTagId: id,
                 });
-                throw new ErrorWithStatus(
-                    `no region label with region_label_id ${id} found`,
-                    status.NOT_FOUND
-                );
+                throw new ErrorWithStatus(`no region label with region_label_id ${id} found`, status.NOT_FOUND);
             }
 
             if (imageTag.ofImageTagGroupId !== ofImageTagGroupId) {
-                this.logger.error(
-                    "image tag group with image_tag_group_id does not have image tag with image_tag_id",
-                    { imageTypeId: ofImageTagGroupId, imageTagId: id }
-                );
+                this.logger.error("image tag group with image_tag_group_id does not have image tag with image_tag_id", {
+                    imageTypeId: ofImageTagGroupId,
+                    imageTagId: id,
+                });
                 throw new ErrorWithStatus(
                     `image tag group with image_tag_group_id ${ofImageTagGroupId} does not have image tag with image_tag_id ${id}`,
                     status.NOT_FOUND
@@ -260,27 +204,21 @@ export class ImageTagManagementOperatorImpl
         });
     }
 
-    public async deleteImageTag(
-        ofImageTagGroupId: number,
-        id: number
-    ): Promise<void> {
+    public async deleteImageTag(ofImageTagGroupId: number, id: number): Promise<void> {
         return this.imageTagDM.withTransaction(async (dm) => {
             const imageTag = await dm.getImageTagWithXLock(id);
             if (imageTag === null) {
                 this.logger.error("no image tag with image_tag_id found", {
                     imageTagId: id,
                 });
-                throw new ErrorWithStatus(
-                    `no image tag with image_tag_id ${id} found`,
-                    status.NOT_FOUND
-                );
+                throw new ErrorWithStatus(`no image tag with image_tag_id ${id} found`, status.NOT_FOUND);
             }
 
             if (imageTag.ofImageTagGroupId !== ofImageTagGroupId) {
-                this.logger.error(
-                    "image tag group with image_tag_group_id does not have image tag with image_tag_id",
-                    { imageTypeId: ofImageTagGroupId, imageTagId: id }
-                );
+                this.logger.error("image tag group with image_tag_group_id does not have image tag with image_tag_id", {
+                    imageTypeId: ofImageTagGroupId,
+                    imageTagId: id,
+                });
                 throw new ErrorWithStatus(
                     `image type with image_type_id ${ofImageTagGroupId} does not have region label ${id}`,
                     status.NOT_FOUND
@@ -291,18 +229,10 @@ export class ImageTagManagementOperatorImpl
         });
     }
 
-    public async addImageTypeToImageTagGroup(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void> {
-        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
-            imageTagGroupId
-        );
+    public async addImageTypeToImageTagGroup(imageTagGroupId: number, imageTypeId: number): Promise<void> {
+        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(imageTagGroupId);
         if (imageTagGroup === null) {
-            this.logger.error(
-                "no image tag group with image_tag_group_id found",
-                { imageTagGroupId }
-            );
+            this.logger.error("no image tag group with image_tag_group_id found", { imageTagGroupId });
             throw new ErrorWithStatus(
                 `no image tag group with image_tag_group_id ${imageTagGroupId} found`,
                 status.NOT_FOUND
@@ -313,45 +243,28 @@ export class ImageTagManagementOperatorImpl
             this.logger.error("no image type with image_type_id found", {
                 imageTypeId,
             });
-            throw new ErrorWithStatus(
-                `no image type with image_type_id ${imageTypeId} found`,
-                status.NOT_FOUND
-            );
+            throw new ErrorWithStatus(`no image type with image_type_id ${imageTypeId} found`, status.NOT_FOUND);
         }
         return this.imageTagGroupHasImageTypeDM.withTransaction(async (dm) => {
-            const relation = await dm.getImageTagGroupHasImageTypeWithXLock(
-                imageTagGroupId,
-                imageTypeId
-            );
+            const relation = await dm.getImageTagGroupHasImageTypeWithXLock(imageTagGroupId, imageTypeId);
             if (relation !== null) {
-                this.logger.error(
-                    "image tag group with image_tag_group_id already has image type with image_type_id",
-                    { imageTagGroupId, imageTypeId }
-                );
+                this.logger.error("image tag group with image_tag_group_id already has image type with image_type_id", {
+                    imageTagGroupId,
+                    imageTypeId,
+                });
                 throw new ErrorWithStatus(
                     `image tag group with image_tag_group_id ${imageTagGroupId} already has image type with image_type_id ${imageTypeId}`,
                     status.ALREADY_EXISTS
                 );
             }
-            await dm.createImageTagGroupHasImageType(
-                imageTagGroupId,
-                imageTypeId
-            );
+            await dm.createImageTagGroupHasImageType(imageTagGroupId, imageTypeId);
         });
     }
 
-    public async removeImageTypeFromImageTagGroup(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void> {
-        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(
-            imageTagGroupId
-        );
+    public async removeImageTypeFromImageTagGroup(imageTagGroupId: number, imageTypeId: number): Promise<void> {
+        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(imageTagGroupId);
         if (imageTagGroup === null) {
-            this.logger.error(
-                "no image tag group with image_tag_group_id found",
-                { imageTagGroupId }
-            );
+            this.logger.error("no image tag group with image_tag_group_id found", { imageTagGroupId });
             throw new ErrorWithStatus(
                 `no image tag group with image_tag_group_id ${imageTagGroupId} found`,
                 status.NOT_FOUND
@@ -362,16 +275,10 @@ export class ImageTagManagementOperatorImpl
             this.logger.error("no image type with image_type_id found", {
                 imageTypeId,
             });
-            throw new ErrorWithStatus(
-                `no image type with image_type_id ${imageTypeId} found`,
-                status.NOT_FOUND
-            );
+            throw new ErrorWithStatus(`no image type with image_type_id ${imageTypeId} found`, status.NOT_FOUND);
         }
         return this.imageTagGroupHasImageTypeDM.withTransaction(async (dm) => {
-            const relation = await dm.getImageTagGroupHasImageTypeWithXLock(
-                imageTagGroupId,
-                imageTypeId
-            );
+            const relation = await dm.getImageTagGroupHasImageTypeWithXLock(imageTagGroupId, imageTypeId);
             if (relation === null) {
                 this.logger.error(
                     "image tag group with image_tag_group_id does not have image type with image_type_id",
@@ -382,10 +289,7 @@ export class ImageTagManagementOperatorImpl
                     status.FAILED_PRECONDITION
                 );
             }
-            await dm.deleteImageTagGroupHasImageType(
-                imageTagGroupId,
-                imageTypeId
-            );
+            await dm.deleteImageTagGroupHasImageType(imageTagGroupId, imageTypeId);
         });
     }
 
@@ -398,25 +302,23 @@ export class ImageTagManagementOperatorImpl
             this.logger.error("no image type with image_type_id found", {
                 imageTypeId,
             });
-            throw new ErrorWithStatus(
-                `no image type with image_type_id ${imageTypeId} found`,
-                status.NOT_FOUND
-            );
+            throw new ErrorWithStatus(`no image type with image_type_id ${imageTypeId} found`, status.NOT_FOUND);
         }
-        const imageTagGroupList =
-            await this.imageTagGroupHasImageTypeDM.getImageTagGroupOfImageType(
-                imageTypeId
-            );
+        const imageTagGroupList = await this.imageTagGroupHasImageTypeDM.getImageTagGroupOfImageType(imageTypeId);
 
-        const imageTagGroupIdList = imageTagGroupList.map(
-            (imageTagGroup) => imageTagGroup.id
-        );
-        const imageTagList =
-            await this.imageTagDM.getImageTagListOfImageTagGroupIdList(
-                imageTagGroupIdList
-            );
+        const imageTagGroupIdList = imageTagGroupList.map((imageTagGroup) => imageTagGroup.id);
+        const imageTagList = await this.imageTagDM.getImageTagListOfImageTagGroupIdList(imageTagGroupIdList);
 
         return { imageTagGroupList, imageTagList };
+    }
+
+    public async getImageTagGroupListOfImageTypeList(imageTypeIdList: number[]): Promise<
+        {
+            imageTagGroupList: ImageTagGroup[];
+            imageTagList: ImageTag[][];
+        }[]
+    > {
+        return Promise.all(imageTypeIdList.map((imageTypeId) => this.getImageTagGroupListOfImageType(imageTypeId)));
     }
 
     private sanitizeImageTagGroupDisplayName(displayName: string): string {
@@ -445,5 +347,4 @@ injected(
     LOGGER_TOKEN
 );
 
-export const IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN =
-    token<ImageTagManagementOperator>("ImageTagManagementOperator");
+export const IMAGE_TAG_MANAGEMENT_OPERATOR_TOKEN = token<ImageTagManagementOperator>("ImageTagManagementOperator");

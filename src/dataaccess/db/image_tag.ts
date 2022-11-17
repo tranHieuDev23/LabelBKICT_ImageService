@@ -7,20 +7,14 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { ImageTag } from "./models";
 
 export interface ImageTagDataAccessor {
-    createImageTag(
-        ofImageTagGroupId: number,
-        displayName: string
-    ): Promise<number>;
-    getImageTagListOfImageTagGroupIdList(
-        imageTagGroupIdList: number[]
-    ): Promise<ImageTag[][]>;
+    createImageTag(ofImageTagGroupId: number, displayName: string): Promise<number>;
+    getImageTagListOfImageTagGroupIdList(imageTagGroupIdList: number[]): Promise<ImageTag[][]>;
     getImageTag(id: number): Promise<ImageTag | null>;
+    getImageTagWithIdList(idList: number[]): Promise<(ImageTag | null)[]>;
     getImageTagWithXLock(id: number): Promise<ImageTag | null>;
     updateImageTag(imageTag: ImageTag): Promise<void>;
     deleteImageTag(id: number): Promise<void>;
-    withTransaction<T>(
-        executeFunc: (dataAccessor: ImageTagDataAccessor) => Promise<T>
-    ): Promise<T>;
+    withTransaction<T>(executeFunc: (dataAccessor: ImageTagDataAccessor) => Promise<T>): Promise<T>;
 }
 
 const TabNameImageServiceImageTag = "image_service_image_tag_tab";
@@ -29,20 +23,13 @@ const ColNameImageServiceImageTagOfImageTagGroupId = "of_image_tag_group_id";
 const ColNameImageServiceImageTagDisplayName = "display_name";
 
 export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
-    constructor(
-        private readonly knex: Knex<any, any[]>,
-        private readonly logger: Logger
-    ) {}
+    constructor(private readonly knex: Knex<any, any[]>, private readonly logger: Logger) {}
 
-    public async createImageTag(
-        ofImageTypeId: number,
-        displayName: string
-    ): Promise<number> {
+    public async createImageTag(ofImageTypeId: number, displayName: string): Promise<number> {
         try {
             const rows = await this.knex
                 .insert({
-                    [ColNameImageServiceImageTagOfImageTagGroupId]:
-                        ofImageTypeId,
+                    [ColNameImageServiceImageTagOfImageTagGroupId]: ofImageTypeId,
                     [ColNameImageServiceImageTagDisplayName]: displayName,
                 })
                 .returning(ColNameImageServiceImageTagId)
@@ -57,42 +44,29 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
         }
     }
 
-    public async getImageTagListOfImageTagGroupIdList(
-        imageTagGroupIdList: number[]
-    ): Promise<ImageTag[][]> {
+    public async getImageTagListOfImageTagGroupIdList(imageTagGroupIdList: number[]): Promise<ImageTag[][]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceImageTag)
-                .whereIn(
-                    ColNameImageServiceImageTagOfImageTagGroupId,
-                    imageTagGroupIdList
-                );
+                .whereIn(ColNameImageServiceImageTagOfImageTagGroupId, imageTagGroupIdList);
 
             const imageTagGroupIdToImageTagList = new Map<number, ImageTag[]>();
             for (const row of rows) {
-                const imageTagGroupId =
-                    +row[ColNameImageServiceImageTagOfImageTagGroupId];
+                const imageTagGroupId = +row[ColNameImageServiceImageTagOfImageTagGroupId];
                 if (!imageTagGroupIdToImageTagList.has(imageTagGroupId)) {
                     imageTagGroupIdToImageTagList.set(imageTagGroupId, []);
                 }
-                imageTagGroupIdToImageTagList
-                    .get(imageTagGroupId)
-                    ?.push(this.getImageTagFromRow(row));
+                imageTagGroupIdToImageTagList.get(imageTagGroupId)?.push(this.getImageTagFromRow(row));
             }
 
             const results: ImageTag[][] = [];
             for (const imageTagGroupId of imageTagGroupIdList) {
-                results.push(
-                    imageTagGroupIdToImageTagList.get(imageTagGroupId) || []
-                );
+                results.push(imageTagGroupIdToImageTagList.get(imageTagGroupId) || []);
             }
             return results;
         } catch (error) {
-            this.logger.error(
-                "failed to get image tag list of image tag group id list",
-                { error }
-            );
+            this.logger.error("failed to get image tag list of image tag group id list", { error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
@@ -120,16 +94,14 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
             return null;
         }
         if (rows.length > 1) {
-            this.logger.error(
-                "more than one image tag with image_tag_id found",
-                { imageTagId: id }
-            );
-            throw new ErrorWithStatus(
-                "more than one image tag was found",
-                status.INTERNAL
-            );
+            this.logger.error("more than one image tag with image_tag_id found", { imageTagId: id });
+            throw new ErrorWithStatus("more than one image tag was found", status.INTERNAL);
         }
         return this.getImageTagFromRow(rows[0]);
+    }
+
+    public async getImageTagWithIdList(idList: number[]): Promise<(ImageTag | null)[]> {
+        return Promise.all(idList.map((id) => this.getImageTag(id)));
     }
 
     public async getImageTagWithXLock(id: number): Promise<ImageTag | null> {
@@ -156,14 +128,8 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
             return null;
         }
         if (rows.length > 1) {
-            this.logger.error(
-                "more than one image tag with image_tag_id found",
-                { imageTagId: id }
-            );
-            throw new ErrorWithStatus(
-                "more than one image tag was found",
-                status.INTERNAL
-            );
+            this.logger.error("more than one image tag with image_tag_id found", { imageTagId: id });
+            throw new ErrorWithStatus("more than one image tag was found", status.INTERNAL);
         }
         return this.getImageTagFromRow(rows[0]);
     }
@@ -173,10 +139,8 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
             await this.knex
                 .table(TabNameImageServiceImageTag)
                 .update({
-                    [ColNameImageServiceImageTagOfImageTagGroupId]:
-                        regionLabel.ofImageTagGroupId,
-                    [ColNameImageServiceImageTagDisplayName]:
-                        regionLabel.displayName,
+                    [ColNameImageServiceImageTagOfImageTagGroupId]: regionLabel.ofImageTagGroupId,
+                    [ColNameImageServiceImageTagDisplayName]: regionLabel.displayName,
                 })
                 .where({
                     [ColNameImageServiceImageTagId]: regionLabel.id,
@@ -210,21 +174,13 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
             this.logger.error("no image tag with image_tag_id found", {
                 imageTagId: id,
             });
-            throw new ErrorWithStatus(
-                `no image tag with image_tag_id ${id} found`,
-                status.NOT_FOUND
-            );
+            throw new ErrorWithStatus(`no image tag with image_tag_id ${id} found`, status.NOT_FOUND);
         }
     }
 
-    public async withTransaction<T>(
-        executeFunc: (dataAccessor: ImageTagDataAccessor) => Promise<T>
-    ): Promise<T> {
+    public async withTransaction<T>(executeFunc: (dataAccessor: ImageTagDataAccessor) => Promise<T>): Promise<T> {
         return this.knex.transaction(async (tx) => {
-            const txDataAccessor = new ImageTagDataAccessorImpl(
-                tx,
-                this.logger
-            );
+            const txDataAccessor = new ImageTagDataAccessorImpl(tx, this.logger);
             return executeFunc(txDataAccessor);
         });
     }
@@ -240,6 +196,4 @@ export class ImageTagDataAccessorImpl implements ImageTagDataAccessor {
 
 injected(ImageTagDataAccessorImpl, KNEX_INSTANCE_TOKEN, LOGGER_TOKEN);
 
-export const IMAGE_TAG_DATA_ACCESSOR_TOKEN = token<ImageTagDataAccessor>(
-    "ImageTagDataAccessor"
-);
+export const IMAGE_TAG_DATA_ACCESSOR_TOKEN = token<ImageTagDataAccessor>("ImageTagDataAccessor");

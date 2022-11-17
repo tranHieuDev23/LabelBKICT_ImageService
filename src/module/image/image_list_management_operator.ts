@@ -21,6 +21,7 @@ import { _ImageListSortOrder_Values } from "../../proto/gen/ImageListSortOrder";
 import { ImageTag } from "../../proto/gen/ImageTag";
 import { Region } from "../../proto/gen/Region";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
+import { AddImageTagToImageOperator, ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN } from "./add_image_tag_to_image_operator";
 
 export interface ImageListManagementOperator {
     getImageList(
@@ -48,10 +49,12 @@ export interface ImageListManagementOperator {
     }>;
     updateImageListImageType(idList: number[], imageTypeId: number): Promise<void>;
     deleteImageList(idList: number[]): Promise<void>;
+    addImageTagListToImageList(imageIdList: number[], imageTagIdList: number[]): Promise<void>;
 }
 
 export class ImageListManagementOperatorImpl implements ImageListManagementOperator {
     constructor(
+        private readonly addImageTagToImageOperator: AddImageTagToImageOperator,
         private readonly imageDM: ImageDataAccessor,
         private readonly imageTypeDM: ImageTypeDataAccessor,
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
@@ -327,10 +330,15 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
     public async deleteImageList(idList: number[]): Promise<void> {
         return this.imageDM.deleteImageList(idList);
     }
+
+    public async addImageTagListToImageList(imageIdList: number[], imageTagIdList: number[]): Promise<void> {
+        await this.addImageTagToImageOperator.run(imageIdList, imageTagIdList);
+    }
 }
 
 injected(
     ImageListManagementOperatorImpl,
+    ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN,
     IMAGE_DATA_ACCESSOR_TOKEN,
     IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,

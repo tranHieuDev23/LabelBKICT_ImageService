@@ -7,14 +7,8 @@ import { KNEX_INSTANCE_TOKEN } from "./knex";
 import { ImageTagGroup, ImageType } from "./models";
 
 export interface ImageTagGroupHasImageTypeDataAccessor {
-    createImageTagGroupHasImageType(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void>;
-    deleteImageTagGroupHasImageType(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void>;
+    createImageTagGroupHasImageType(imageTagGroupId: number, imageTypeId: number): Promise<void>;
+    deleteImageTagGroupHasImageType(imageTagGroupId: number, imageTypeId: number): Promise<void>;
     getImageTagGroupHasImageType(
         imageTagGroupId: number,
         imageTypeId: number
@@ -29,21 +23,14 @@ export interface ImageTagGroupHasImageTypeDataAccessor {
         imageTagGroupId: number;
         imageTypeId: number;
     } | null>;
-    getImageTypeListOfImageTagGroupList(
-        imageTagGroupIdList: number[]
-    ): Promise<ImageType[][]>;
+    getImageTypeIdListOfImageTagGroupList(imageTagGroupIdList: number[]): Promise<number[][]>;
+    getImageTypeListOfImageTagGroupList(imageTagGroupIdList: number[]): Promise<ImageType[][]>;
     getImageTagGroupOfImageType(imageTypeId: number): Promise<ImageTagGroup[]>;
-    withTransaction<T>(
-        executeFunc: (
-            dataAccessor: ImageTagGroupHasImageTypeDataAccessor
-        ) => Promise<T>
-    ): Promise<T>;
+    withTransaction<T>(executeFunc: (dataAccessor: ImageTagGroupHasImageTypeDataAccessor) => Promise<T>): Promise<T>;
 }
 
-const TabNameImageServiceImageTagGroupHasImageType =
-    "image_service_image_tag_group_has_image_type_tab";
-const ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId =
-    "image_tag_group_id";
+const TabNameImageServiceImageTagGroupHasImageType = "image_service_image_tag_group_has_image_type_tab";
+const ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId = "image_tag_group_id";
 const ColNameImageServiceImageTagGroupHasImageTypeImageTypeId = "image_type_id";
 
 const TabNameImageServiceImageType = "image_service_image_type_tab";
@@ -55,63 +42,50 @@ const TabNameImageServiceImageTagGroup = "image_service_image_tag_group_tab";
 const ColNameImageServiceImageTagGroupId = "image_tag_group_id";
 const ColNameImageServiceImageTagGroupDisplayName = "display_name";
 const ColNameImageServiceImageTagGroupIsSingleValue = "is_single_value";
-export class ImageTagGroupHasImageTypeDataAccessorImpl
-    implements ImageTagGroupHasImageTypeDataAccessor
-{
-    constructor(
-        private readonly knex: Knex<any, any[]>,
-        private readonly logger: Logger
-    ) {}
+export class ImageTagGroupHasImageTypeDataAccessorImpl implements ImageTagGroupHasImageTypeDataAccessor {
+    constructor(private readonly knex: Knex<any, any[]>, private readonly logger: Logger) {}
 
-    public async createImageTagGroupHasImageType(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void> {
+    public async createImageTagGroupHasImageType(imageTagGroupId: number, imageTypeId: number): Promise<void> {
         try {
             await this.knex
                 .insert({
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]:
-                        imageTagGroupId,
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]:
-                        imageTypeId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]: imageTagGroupId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]: imageTypeId,
                 })
                 .into(TabNameImageServiceImageTagGroupHasImageType);
         } catch (error) {
-            this.logger.error(
-                "failed to create image type has image tag group relation",
-                { imageTagGroupId, imageTypeId, error }
-            );
+            this.logger.error("failed to create image type has image tag group relation", {
+                imageTagGroupId,
+                imageTypeId,
+                error,
+            });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 
-    public async deleteImageTagGroupHasImageType(
-        imageTagGroupId: number,
-        imageTypeId: number
-    ): Promise<void> {
+    public async deleteImageTagGroupHasImageType(imageTagGroupId: number, imageTypeId: number): Promise<void> {
         let deletedCount: number;
         try {
             deletedCount = await this.knex
                 .delete()
                 .from(TabNameImageServiceImageTagGroupHasImageType)
                 .where({
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]:
-                        imageTagGroupId,
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]:
-                        imageTypeId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]: imageTagGroupId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]: imageTypeId,
                 });
         } catch (error) {
-            this.logger.error(
-                "failed to delete image type has image tag group relation",
-                { imageTagGroupId, imageTypeId, error }
-            );
+            this.logger.error("failed to delete image type has image tag group relation", {
+                imageTagGroupId,
+                imageTypeId,
+                error,
+            });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (deletedCount === 0) {
-            this.logger.debug(
-                "no image type has user image tag group relation found",
-                { imageTagGroupId, imageTypeId }
-            );
+            this.logger.debug("no image type has user image tag group relation found", {
+                imageTagGroupId,
+                imageTypeId,
+            });
             throw new ErrorWithStatus(
                 `no image type has image tag group relation found with image_type_id ${imageTypeId}, image_tag_group_id ${imageTagGroupId}`,
                 status.NOT_FOUND
@@ -129,34 +103,30 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                 .select()
                 .from(TabNameImageServiceImageTagGroupHasImageType)
                 .where({
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]:
-                        imageTagGroupId,
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]:
-                        imageTypeId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]: imageTagGroupId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]: imageTypeId,
                 });
         } catch (error) {
-            this.logger.error(
-                "failed to get image tag group has image type relation",
-                { imageTagGroupId, imageTypeId, error }
-            );
+            this.logger.error("failed to get image tag group has image type relation", {
+                imageTagGroupId,
+                imageTypeId,
+                error,
+            });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
-            this.logger.info(
-                "no image tag group has image type relation found found",
-                { imageTagGroupId, imageTypeId }
-            );
+            this.logger.info("no image tag group has image type relation found found", {
+                imageTagGroupId,
+                imageTypeId,
+            });
             return null;
         }
         if (rows.length > 1) {
-            this.logger.info(
-                "more than one image tag group has image type relation found found",
-                { imageTagGroupId, imageTypeId }
-            );
-            throw new ErrorWithStatus(
-                "more than one relation was found",
-                status.INTERNAL
-            );
+            this.logger.info("more than one image tag group has image type relation found found", {
+                imageTagGroupId,
+                imageTypeId,
+            });
+            throw new ErrorWithStatus("more than one relation was found", status.INTERNAL);
         }
         return { imageTagGroupId, imageTypeId };
     }
@@ -171,42 +141,67 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                 .select()
                 .from(TabNameImageServiceImageTagGroupHasImageType)
                 .where({
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]:
-                        imageTagGroupId,
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]:
-                        imageTypeId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId]: imageTagGroupId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]: imageTypeId,
                 })
                 .forUpdate();
         } catch (error) {
-            this.logger.error(
-                "failed to get image tag group has image type relation",
-                { imageTagGroupId, imageTypeId, error }
-            );
+            this.logger.error("failed to get image tag group has image type relation", {
+                imageTagGroupId,
+                imageTypeId,
+                error,
+            });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
         if (rows.length === 0) {
-            this.logger.info(
-                "no image tag group has image type relation found found",
-                { imageTagGroupId, imageTypeId }
-            );
+            this.logger.info("no image tag group has image type relation found found", {
+                imageTagGroupId,
+                imageTypeId,
+            });
             return null;
         }
         if (rows.length > 1) {
-            this.logger.info(
-                "more than one image tag group has image type relation found found",
-                { imageTagGroupId, imageTypeId }
-            );
-            throw new ErrorWithStatus(
-                "more than one relation was found",
-                status.INTERNAL
-            );
+            this.logger.info("more than one image tag group has image type relation found found", {
+                imageTagGroupId,
+                imageTypeId,
+            });
+            throw new ErrorWithStatus("more than one relation was found", status.INTERNAL);
         }
         return { imageTagGroupId, imageTypeId };
     }
 
-    public async getImageTypeListOfImageTagGroupList(
-        imageTagGroupIdList: number[]
-    ): Promise<ImageType[][]> {
+    public async getImageTypeIdListOfImageTagGroupList(imageTagGroupIdList: number[]): Promise<number[][]> {
+        try {
+            const rows = await this.knex
+                .select()
+                .from(TabNameImageServiceImageTagGroupHasImageType)
+                .whereIn(ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId, imageTagGroupIdList)
+                .orderBy(ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId, "asc");
+
+            const imageTagGroupIdToImageTypeList = new Map<number, number[]>();
+            for (const row of rows) {
+                const imageTagGroupId = +row[ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId];
+                if (!imageTagGroupIdToImageTypeList.has(imageTagGroupId)) {
+                    imageTagGroupIdToImageTypeList.set(imageTagGroupId, []);
+                }
+                imageTagGroupIdToImageTypeList
+                    .get(imageTagGroupId)
+                    ?.push(+row[ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]);
+            }
+
+            const results: number[][] = [];
+            for (const imageTagGroupId of imageTagGroupIdList) {
+                results.push(imageTagGroupIdToImageTypeList.get(imageTagGroupId) || []);
+            }
+
+            return results;
+        } catch (error) {
+            this.logger.error("failed to get image type id list of image tag group id list", { error });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getImageTypeListOfImageTagGroupList(imageTagGroupIdList: number[]): Promise<ImageType[][]> {
         try {
             const rows = await this.knex
                 .select()
@@ -216,24 +211,12 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                     `${TabNameImageServiceImageTagGroupHasImageType}.${ColNameImageServiceImageTagGroupHasImageTypeImageTypeId}`,
                     `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeId}`
                 )
-                .whereIn(
-                    ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId,
-                    imageTagGroupIdList
-                )
-                .orderBy(
-                    ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId,
-                    "asc"
-                );
+                .whereIn(ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId, imageTagGroupIdList)
+                .orderBy(ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId, "asc");
 
-            const imageTagGroupIdToImageTypeList = new Map<
-                number,
-                ImageType[]
-            >();
+            const imageTagGroupIdToImageTypeList = new Map<number, ImageType[]>();
             for (const row of rows) {
-                const imageTagGroupId =
-                    +row[
-                        ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId
-                    ];
+                const imageTagGroupId = +row[ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId];
                 if (!imageTagGroupIdToImageTypeList.has(imageTagGroupId)) {
                     imageTagGroupIdToImageTypeList.set(imageTagGroupId, []);
                 }
@@ -241,9 +224,7 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                     .get(imageTagGroupId)
                     ?.push(
                         new ImageType(
-                            +row[
-                                ColNameImageServiceImageTagGroupHasImageTypeImageTypeId
-                            ],
+                            +row[ColNameImageServiceImageTagGroupHasImageTypeImageTypeId],
                             row[ColNameImageServiceImageTypeDisplayName],
                             row[ColNameImageServiceImageTypeHasPredictiveModel]
                         )
@@ -252,24 +233,17 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
 
             const results: ImageType[][] = [];
             for (const imageTagGroupId of imageTagGroupIdList) {
-                results.push(
-                    imageTagGroupIdToImageTypeList.get(imageTagGroupId) || []
-                );
+                results.push(imageTagGroupIdToImageTypeList.get(imageTagGroupId) || []);
             }
 
             return results;
         } catch (error) {
-            this.logger.error(
-                "failed to get image type list of image tag group id list",
-                { error }
-            );
+            this.logger.error("failed to get image type list of image tag group id list", { error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 
-    public async getImageTagGroupOfImageType(
-        imageTypeId: number
-    ): Promise<ImageTagGroup[]> {
+    public async getImageTagGroupOfImageType(imageTypeId: number): Promise<ImageTagGroup[]> {
         try {
             const rows = await this.knex
                 .select()
@@ -280,49 +254,35 @@ export class ImageTagGroupHasImageTypeDataAccessorImpl
                     `${TabNameImageServiceImageTagGroup}.${ColNameImageServiceImageTagGroupId}`
                 )
                 .where({
-                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]:
-                        imageTypeId,
+                    [ColNameImageServiceImageTagGroupHasImageTypeImageTypeId]: imageTypeId,
                 });
 
             return rows.map(
                 (row) =>
                     new ImageTagGroup(
-                        +row[
-                            ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId
-                        ],
+                        +row[ColNameImageServiceImageTagGroupHasImageTypeImageTagGroupId],
                         row[ColNameImageServiceImageTagGroupDisplayName],
                         row[ColNameImageServiceImageTagGroupIsSingleValue]
                     )
             );
         } catch (error) {
-            this.logger.error(
-                "failed to get image tag group list of image type id",
-                { imageTypeId, error }
-            );
+            this.logger.error("failed to get image tag group list of image type id", { imageTypeId, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 
     public async withTransaction<T>(
-        executeFunc: (
-            dataAccessor: ImageTagGroupHasImageTypeDataAccessor
-        ) => Promise<T>
+        executeFunc: (dataAccessor: ImageTagGroupHasImageTypeDataAccessor) => Promise<T>
     ): Promise<T> {
         return this.knex.transaction(async (tx) => {
-            const txDataAccessor =
-                new ImageTagGroupHasImageTypeDataAccessorImpl(tx, this.logger);
+            const txDataAccessor = new ImageTagGroupHasImageTypeDataAccessorImpl(tx, this.logger);
             return executeFunc(txDataAccessor);
         });
     }
 }
 
-injected(
-    ImageTagGroupHasImageTypeDataAccessorImpl,
-    KNEX_INSTANCE_TOKEN,
-    LOGGER_TOKEN
-);
+injected(ImageTagGroupHasImageTypeDataAccessorImpl, KNEX_INSTANCE_TOKEN, LOGGER_TOKEN);
 
-export const IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN =
-    token<ImageTagGroupHasImageTypeDataAccessor>(
-        "ImageTagGroupHasImageTypeDataAccessor"
-    );
+export const IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN = token<ImageTagGroupHasImageTypeDataAccessor>(
+    "ImageTagGroupHasImageTypeDataAccessor"
+);

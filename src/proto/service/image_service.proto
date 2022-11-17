@@ -23,6 +23,7 @@ service ImageService {
     rpc AddImageTypeToImageTagGroup(AddImageTypeToImageTagGroupRequest) returns (AddImageTypeToImageTagGroupResponse) {}
     rpc RemoveImageTypeFromImageTagGroup(RemoveImageTypeFromImageTagGroupRequest) returns (RemoveImageTypeFromImageTagGroupResponse) {}
     rpc GetImageTagGroupListOfImageType(GetImageTagGroupListOfImageTypeRequest) returns (GetImageTagGroupListOfImageTypeResponse) {}
+    rpc GetImageTagGroupListOfImageTypeList(GetImageTagGroupListOfImageTypeListRequest) returns (GetImageTagGroupListOfImageTypeListResponse) {}
 
     rpc CreateImage(CreateImageRequest) returns (CreateImageResponse) {}
     rpc GetImage(GetImageRequest) returns (GetImageResponse) {}
@@ -36,6 +37,7 @@ service ImageService {
     rpc DeleteImageList(DeleteImageListRequest) returns (DeleteImageListResponse) {}
 
     rpc AddImageTagToImage(AddImageTagToImageRequest) returns (AddImageTagToImageResponse) {}
+    rpc AddImageTagListToImageList(AddImageTagListToImageListRequest) returns (AddImageTagListToImageListResponse) {}
     rpc RemoveImageTagFromImage(RemoveImageTagFromImageRequest) returns (RemoveImageTagFromImageResponse) {}
 
     rpc CreateRegion(CreateRegionRequest) returns (CreateRegionResponse) {}
@@ -123,6 +125,11 @@ message Image {
     ImageStatus.Values status = 13;
 }
 
+message ImageTagGroupAndTagList {
+    repeated ImageTagGroup image_tag_group_list = 1;
+    repeated ImageTagList image_tag_list_of_image_tag_group_list = 2;
+}
+
 message Vertex {
     double x = 1;
     double y = 2;
@@ -147,8 +154,8 @@ message RegionList {
 
 message RegionOperationType {
     enum Values {
-        DRAW = 0;
-        LABEL = 1;
+        DRAW = 1;
+        LABEL = 2;
     }
 }
 
@@ -378,6 +385,14 @@ message GetImageTagGroupListOfImageTypeResponse {
     repeated ImageTagList image_tag_list_of_image_tag_group_list = 2;
 }
 
+message GetImageTagGroupListOfImageTypeListRequest {
+    repeated uint32 image_type_id_list = 1;
+}
+
+message GetImageTagGroupListOfImageTypeListResponse {
+    repeated ImageTagGroupAndTagList image_tag_group_and_tag_list = 1;
+}
+
 message CreateImageRequest {
     uint32 uploaded_by_user_id = 1;
     string original_file_name = 2;
@@ -485,6 +500,13 @@ message AddImageTagToImageRequest {
 }
 
 message AddImageTagToImageResponse {}
+
+message AddImageTagListToImageListRequest {
+    repeated uint32 image_id_list = 1;
+    repeated uint32 image_tag_id_list = 2;
+}
+
+message AddImageTagListToImageListResponse {}
 
 message RemoveImageTagFromImageRequest {
     uint32 image_id = 1;
