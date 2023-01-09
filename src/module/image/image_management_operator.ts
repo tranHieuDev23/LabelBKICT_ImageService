@@ -351,7 +351,14 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             }
 
             const regionListOfImage = await this.regionDM.getRegionListOfImage(id);
-            if (oldStatus === _ImageStatus_Values.UPLOADED && newStatus === _ImageStatus_Values.PUBLISHED) {
+            if (
+                (oldStatus === _ImageStatus_Values.UPLOADED && newStatus === _ImageStatus_Values.PUBLISHED) ||
+                (oldStatus === _ImageStatus_Values.PUBLISHED && newStatus === _ImageStatus_Values.VERIFIED)
+            ) {
+                if (!this.regionListHasLabeledRegion(regionListOfImage)) {
+                    this.logger.error("cannot publish image with no labeled regions");
+                    throw new ErrorWithStatus("invalid status transition", status.FAILED_PRECONDITION);
+                }
                 if (this.regionListHasUnlabeledRegion(regionListOfImage)) {
                     this.logger.error("cannot publish image with unlabeled regions");
                     throw new ErrorWithStatus("invalid status transition", status.FAILED_PRECONDITION);
@@ -426,6 +433,10 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             default:
                 return false;
         }
+    }
+
+    private regionListHasLabeledRegion(regionList: DMRegion[]): boolean {
+        return regionList.every((region) => region.label !== null);
     }
 
     private regionListHasUnlabeledRegion(regionList: DMRegion[]): boolean {
