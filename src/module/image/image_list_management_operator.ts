@@ -201,6 +201,16 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
                 imageIdSet = new Set(imageIdList);
             }
         }
+        if (this.shouldUseListFilterOptions(filterOptions.imageIdList)) {
+            const imageIdList = filterOptions.imageIdList || [];
+            if (dmFilterOptions.shouldFilterByImageIdList) {
+                const intersectedImageIdSet = new Set(imageIdList.filter((imageId) => imageIdSet.has(imageId)));
+                imageIdSet = intersectedImageIdSet;
+            } else {
+                dmFilterOptions.shouldFilterByImageIdList = true;
+                imageIdSet = new Set(imageIdList);
+            }
+        }
         dmFilterOptions.imageIdList = Array.from(imageIdSet);
 
         dmFilterOptions.mustHaveDescription = filterOptions.mustHaveDescription || false;
