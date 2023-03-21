@@ -436,7 +436,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }
 
     private regionListHasLabeledRegion(regionList: DMRegion[]): boolean {
-        return regionList.every((region) => region.label !== null);
+        return regionList.find((region) => region.label !== null) !== undefined;
     }
 
     private regionListHasUnlabeledRegion(regionList: DMRegion[]): boolean {
