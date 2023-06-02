@@ -366,8 +366,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             }
 
             return this.regionSnapshotDM.withTransaction(async (regionSnapshotDM) => {
-                if (this.isDowngradingStatusTransition(oldStatus, newStatus)) {
-                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(id, oldStatus);
+                if (this.shouldDeletePublishSnapshot(oldStatus, newStatus)) {
+                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(id, _ImageStatus_Values.PUBLISHED);
+                }
+
+                if (this.shouldDeleteVerifySnapshot(oldStatus, newStatus)) {
+                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(id, _ImageStatus_Values.VERIFIED);
                 }
 
                 image.status = newStatus;
@@ -424,15 +428,24 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         }
     }
 
-    private isDowngradingStatusTransition(oldStatus: _ImageStatus_Values, newStatus: _ImageStatus_Values): boolean {
-        switch (oldStatus) {
-            case _ImageStatus_Values.VERIFIED:
-                return newStatus === _ImageStatus_Values.PUBLISHED;
-            case _ImageStatus_Values.PUBLISHED:
-                return newStatus === _ImageStatus_Values.UPLOADED || newStatus == _ImageStatus_Values.EXCLUDED;
-            default:
-                return false;
+    private shouldDeletePublishSnapshot(oldStatus: _ImageStatus_Values, newStatus: _ImageStatus_Values): boolean {
+        if (oldStatus === _ImageStatus_Values.PUBLISHED && newStatus === _ImageStatus_Values.UPLOADED) {
+            return true;
         }
+        if (oldStatus === _ImageStatus_Values.EXCLUDED && newStatus === _ImageStatus_Values.UPLOADED) {
+            return true;
+        }
+        return false;
+    }
+
+    private shouldDeleteVerifySnapshot(oldStatus: _ImageStatus_Values, newStatus: _ImageStatus_Values): boolean {
+        if (oldStatus === _ImageStatus_Values.VERIFIED && newStatus === _ImageStatus_Values.PUBLISHED) {
+            return true;
+        }
+        if (oldStatus === _ImageStatus_Values.EXCLUDED && newStatus === _ImageStatus_Values.UPLOADED) {
+            return true;
+        }
+        return false;
     }
 
     private regionListHasLabeledRegion(regionList: DMRegion[]): boolean {
