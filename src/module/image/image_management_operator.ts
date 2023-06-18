@@ -29,6 +29,7 @@ import { Region } from "../../proto/gen/Region";
 import { ErrorWithStatus, IdGenerator, ID_GENERATOR_TOKEN, LOGGER_TOKEN, Timer, TIMER_TOKEN } from "../../utils";
 import { AddImageTagToImageOperator, ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN } from "./add_image_tag_to_image_operator";
 import { ImageProcessor, IMAGE_PROCESSOR_TOKEN } from "./image_processor";
+import { filterXSS } from "xss";
 
 export interface ImageManagementOperator {
     createImage(
@@ -203,7 +204,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }
 
     private sanitizeDescription(description: string): string {
-        return validator.escape(validator.trim(description));
+        return filterXSS(validator.trim(description));
     }
 
     private async generateOriginalImageFilename(uploadTime: number): Promise<string> {
