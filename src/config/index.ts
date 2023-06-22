@@ -4,6 +4,7 @@ import { ImageServiceConfig, IMAGE_SERVICE_CONFIG_TOKEN } from "./config";
 import { DATABASE_CONFIG_TOKEN } from "./database";
 import { DISTRIBUTED_CONFIG_TOKEN } from "./distributed";
 import { ELASTICSEARCH_CONFIG_TOKEN } from "./elasticsearch";
+import { MODEL_SERVICE_CONFIG_TOKEN } from "./model_service";
 import { GRPC_SERVER_CONFIG } from "./grpc_service";
 import { KAFKA_CONFIG_TOKEN } from "./kafka";
 import { LOG_CONFIG_TOKEN } from "./log";
@@ -15,6 +16,7 @@ export * from "./database";
 export * from "./kafka";
 export * from "./s3";
 export * from "./grpc_service";
+export * from "./model_service"
 export * from "./application";
 export * from "./elasticsearch";
 export * from "./config";
@@ -40,6 +42,10 @@ export function bindToContainer(container: Container): void {
     container
         .bind(S3_CONFIG_TOKEN)
         .toInstance(() => container.get(IMAGE_SERVICE_CONFIG_TOKEN).s3Config)
+        .inSingletonScope();
+        container
+        .bind(MODEL_SERVICE_CONFIG_TOKEN)
+        .toInstance(() => container.get(IMAGE_SERVICE_CONFIG_TOKEN).modelServiceConfig)
         .inSingletonScope();
     container
         .bind(GRPC_SERVER_CONFIG)

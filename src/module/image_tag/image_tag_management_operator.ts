@@ -11,22 +11,29 @@ import {
     IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN,
     IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
     IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    ImageTagGroupHasClassificationTypeDataAccessor,
+    IMAGE_TAG_GROUP_HAS_CLASSIFICATION_TYPE_DATA_ACCESSOR_TOKEN
 } from "../../dataaccess/db";
 import { ImageTag } from "../../proto/gen/ImageTag";
 import { ImageTagGroup } from "../../proto/gen/ImageTagGroup";
 import { ImageType } from "../../proto/gen/ImageType";
 import { RegionLabel } from "../../proto/gen/RegionLabel";
-import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
+import { ErrorWithStatus, LOGGER_TOKEN, promisifyGRPCCall } from "../../utils";
+import { ModelServiceClient } from "../../proto/gen/ModelService";
+import { MODEL_SERVICE_DM_TOKEN } from "../../dataaccess/grpc";
+import { ClassificationType } from "../../proto/gen/ClassificationType";
 
 export interface ImageTagManagementOperator {
     createImageTagGroup(displayName: string, isSingleValue: boolean): Promise<ImageTagGroup>;
     getImageTagGroupList(
         withImageTag: boolean,
-        withImageType: boolean
+        withImageType: boolean,
+        withClassificationType: boolean
     ): Promise<{
         imageTagGroupList: ImageTagGroup[];
         imageTagList: ImageTag[][] | null;
         imageTypeList: ImageType[][] | null;
+        classificationTypeList: ClassificationType[][] | null;
     }>;
     updateImageTagGroup(
         id: number,
@@ -49,6 +56,14 @@ export interface ImageTagManagementOperator {
             imageTagList: ImageTag[][];
         }[]
     >;
+    addClassificationTypeToImageTagGroup(
+        imageTagGroupId: number,
+        classificationTypeId: number
+    ): Promise<void>;
+    removeImageTagGroupHasClassificationType(
+        imageTagGroupId: number,
+        classificationTypeId: number
+    ): Promise<void>;
 }
 
 export class ImageTagManagementOperatorImpl implements ImageTagManagementOperator {
@@ -57,6 +72,8 @@ export class ImageTagManagementOperatorImpl implements ImageTagManagementOperato
         private readonly imageTagDM: ImageTagDataAccessor,
         private readonly imageTypeDM: ImageTypeDataAccessor,
         private readonly imageTagGroupHasImageTypeDM: ImageTagGroupHasImageTypeDataAccessor,
+        private readonly imageTagGroupHasClassificationTypeDM: ImageTagGroupHasClassificationTypeDataAccessor,
+        private readonly modelServiceDM: ModelServiceClient,
         private readonly logger: Logger
     ) {}
 
@@ -77,11 +94,13 @@ export class ImageTagManagementOperatorImpl implements ImageTagManagementOperato
 
     public async getImageTagGroupList(
         withImageTag: boolean,
-        withImageType: boolean
+        withImageType: boolean,
+        withClassificationType: boolean
     ): Promise<{
         imageTagGroupList: ImageTagGroup[];
         imageTagList: ImageTag[][] | null;
         imageTypeList: ImageType[][] | null;
+        classificationTypeList: ClassificationType[][] | null;
     }> {
         const imageTagGroupList = await this.imageTagGroupDM.getImageTagGroupList();
         const imageTagGroupIdList = imageTagGroupList.map((imageTagGroup) => imageTagGroup.id);
@@ -98,7 +117,39 @@ export class ImageTagManagementOperatorImpl implements ImageTagManagementOperato
             );
         }
 
-        return { imageTagGroupList, imageTagList, imageTypeList };
+        let classificationTypeList: ClassificationType[][] | null = [];
+        if (withClassificationType) {
+            let classificationTypeIdOfImageTagGroupId: number[][] | null = 
+                await this.imageTagGroupHasClassificationTypeDM.getImageTagGroupHasClassificationTypeList(imageTagGroupIdList);
+
+            if (classificationTypeIdOfImageTagGroupId.flat().length != 0) {
+                let distinctClassificationTypeId: number[] = classificationTypeIdOfImageTagGroupId.flat();
+                const classificationTypeListOfIdList = await this.getClassificationTypeList(distinctClassificationTypeId);
+
+                for (let index in classificationTypeIdOfImageTagGroupId) {
+                    const classificationTypeIdList = classificationTypeIdOfImageTagGroupId[index];
+                    const classificationTypeListOfImageTagGroup: ClassificationType[] = [];
+                    for (let classificationTypeId of classificationTypeIdList) {
+                        const classificationType: ClassificationType = classificationTypeListOfIdList.filter(
+                            (classificationType) => classificationType.classificationTypeId === classificationTypeId
+                        )[0];
+                        classificationTypeListOfImageTagGroup.push(
+                            this.imageTagGroupHasClassificationTypeDM.convertToClassificationTypeObject(
+                                classificationType.classificationTypeId || 0,
+                                classificationType.displayName || ""
+                            )
+                        );
+                    }
+                    classificationTypeList[index] = classificationTypeListOfImageTagGroup;
+                    
+                }
+            } else {
+                for (let index in classificationTypeIdOfImageTagGroupId) {
+                    classificationTypeList[index] = [];
+                }
+            }
+        }
+        return { imageTagGroupList, imageTagList, imageTypeList, classificationTypeList };
     }
 
     public async updateImageTagGroup(
@@ -321,6 +372,117 @@ export class ImageTagManagementOperatorImpl implements ImageTagManagementOperato
         return Promise.all(imageTypeIdList.map((imageTypeId) => this.getImageTagGroupListOfImageType(imageTypeId)));
     }
 
+    public async addClassificationTypeToImageTagGroup(
+        imageTagGroupId: number,
+        classificationTypeId: number
+    ): Promise<void> {
+        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(imageTagGroupId);
+        if (imageTagGroup === null) {
+            this.logger.error("no image tag group with image_tag_group_id found", { imageTagGroupId });
+            throw new ErrorWithStatus(
+                `no image tag group with image_tag_group_id ${imageTagGroupId} found`,
+                status.NOT_FOUND
+            );
+        }
+
+        //check classification type is exist
+        const { error: getClassificationTypeError, response: getClassificationTypeResponse } =
+            await promisifyGRPCCall(
+                this.modelServiceDM.getClassificationType.bind(this.modelServiceDM),
+                { classificationTypeId: classificationTypeId }
+            );
+        
+        if (getClassificationTypeError !== null) {
+            this.logger.error(
+                "no classification type with classification_type_id found",
+                { classificationTypeId },
+            );
+            throw new ErrorWithStatus(
+                `no classification type with classification_type_id ${classificationTypeId} found`,
+                status.NOT_FOUND
+            );
+        }
+        if (getClassificationTypeResponse?.classificationType === undefined) {
+            this.logger.error(
+                "invalid response from model_service.getClassificationType()"
+            );
+            throw new ErrorWithStatus(
+                "failed to get classification type by display name",
+                status.INTERNAL
+            );
+        }
+
+        return this.imageTagGroupHasClassificationTypeDM.withTransaction(async (dm) => {
+            const relation = await dm.getImageTagGroupHasClassificationTypeWithXLock(imageTagGroupId, classificationTypeId);
+            if (relation !== null) {
+                this.logger.error("image tag group with image_tag_group_id already has classification type with classification_type_id", {
+                    imageTagGroupId,
+                    classificationTypeId,
+                });
+                throw new ErrorWithStatus(
+                    `image tag group with image_tag_group_id ${imageTagGroupId} already has classification type with classification_type_id ${classificationTypeId}`,
+                    status.ALREADY_EXISTS
+                );
+            };
+            await dm.createImageTagGroupHasClassificationType(imageTagGroupId, classificationTypeId);
+        })
+    }
+
+    public async removeImageTagGroupHasClassificationType(
+        imageTagGroupId: number,
+        classificationTypeId: number
+    ): Promise<void> {
+        const imageTagGroup = await this.imageTagGroupDM.getImageTagGroup(imageTagGroupId);
+        if (imageTagGroup === null) {
+            this.logger.error("no image tag group with image_tag_group_id found", { imageTagGroupId });
+            throw new ErrorWithStatus(
+                `no image tag group with image_tag_group_id ${imageTagGroupId} found`,
+                status.NOT_FOUND
+            );
+        }
+
+        //check classification type is exist
+        const { error: getClassificationTypeError, response: getClassificationTypeResponse } =
+            await promisifyGRPCCall(
+                this.modelServiceDM.getClassificationType.bind(this.modelServiceDM),
+                { classificationTypeId: classificationTypeId }
+            );     
+        if (getClassificationTypeError !== null) {
+            this.logger.error(
+                "no classification type with classification_type_id found",
+                { classificationTypeId },
+            );
+            throw new ErrorWithStatus(
+                `no classification type with classification_type_id ${classificationTypeId} found`,
+                status.NOT_FOUND
+            );
+        }
+        if (getClassificationTypeResponse?.classificationType === undefined) {
+            this.logger.error(
+                "invalid response from model_service.getClassificationType()"
+            );
+            throw new ErrorWithStatus(
+                "failed to get classification type by display name",
+                status.INTERNAL
+            );
+        }
+
+        return this.imageTagGroupHasClassificationTypeDM.withTransaction(async (dm) => {
+            const relation = await dm.getImageTagGroupHasClassificationTypeWithXLock(imageTagGroupId, classificationTypeId);
+            if (relation === null) {
+                this.logger.error(
+                    "image tag group with image_tag_group_id does not have image type with classification_type_id",
+                    { imageTagGroupId, classificationTypeId }
+                );
+                throw new ErrorWithStatus(
+                    `image tag group with image_tag_group_id ${imageTagGroupId} does not have image type with classification_type_id ${classificationTypeId}`,
+                    status.FAILED_PRECONDITION
+                );
+            }
+            await dm.deleteImageTagGroupHasClassificationType(imageTagGroupId, classificationTypeId);
+        });
+    }
+
     private sanitizeImageTagGroupDisplayName(displayName: string): string {
         return validator.escape(validator.trim(displayName));
     }
@@ -336,6 +498,25 @@ export class ImageTagManagementOperatorImpl implements ImageTagManagementOperato
     private isValidImageTagDisplayName(displayName: string): boolean {
         return validator.isLength(displayName, { min: 1, max: 256 });
     }
+
+    private async getClassificationTypeList(classificationTypeIdList: number[]): Promise<ClassificationType[]> {
+        const { error: getClassificationTypeError, response: getClassificationTypeResponse } = await promisifyGRPCCall(
+            this.modelServiceDM.getClassificationTypeList.bind(this.modelServiceDM),
+            { classificationTypeIdList: classificationTypeIdList }
+        );
+        if (getClassificationTypeError !== null) {
+            this.logger.error(
+                "failed to call model_service.getClassificationTypeList()",
+                { error: getClassificationTypeError }
+            );
+            throw new ErrorWithStatus(
+                `Failed to get classification types`,
+                status.NOT_FOUND
+            );
+        }
+
+        return getClassificationTypeResponse?.classificationTypeList || [];
+    }
 }
 
 injected(
@@ -344,6 +525,8 @@ injected(
     IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
     IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
+    IMAGE_TAG_GROUP_HAS_CLASSIFICATION_TYPE_DATA_ACCESSOR_TOKEN,
+    MODEL_SERVICE_DM_TOKEN,
     LOGGER_TOKEN
 );
 

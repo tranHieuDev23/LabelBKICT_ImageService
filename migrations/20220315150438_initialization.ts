@@ -6,6 +6,8 @@ const TabNameImageServiceImageTagGroup = "image_service_image_tag_group_tab";
 const TabNameImageServiceImageTag = "image_service_image_tag_tab";
 const TabNameImageServiceImageTagGroupHasImageType =
     "image_service_image_tag_group_has_image_type_tab";
+const TabNameImageServiceImageTagGroupHasClassificationType =
+    "image_service_image_tag_group_has_classification_type_tab";
 const TabNameImageServiceImage = "image_service_image_tab";
 const TabNameImageServiceImageHasTag = "image_service_image_has_image_tag_tab";
 const TabNameImageServiceRegion = "image_service_region_tab";
@@ -290,6 +292,31 @@ export async function up(knex: Knex): Promise<void> {
             }
         );
     }
+
+    if (!(await knex.schema.hasTable(TabNameImageServiceImageTagGroupHasClassificationType))) {
+        await knex.schema.createTable(
+            TabNameImageServiceImageTagGroupHasClassificationType,
+            (tab) => {
+                tab.integer("image_tag_group_id").notNullable();
+                tab.string("classification_type_id").notNullable();
+
+                tab.foreign("image_tag_group_id")
+                    .references("image_tag_group_id")
+                    .inTable(TabNameImageServiceImageTagGroup)
+                    .onDelete("CASCADE");
+
+                tab.unique(["image_tag_group_id", "classification_type_id"], {
+                    indexName:
+                        "image_service_image_tag_group_has_classification_type_image_tag_group_id_classification_type_id_idx",
+                });
+
+                tab.index(
+                    ["classification_type_id"],
+                    "image_service_image_tag_group_has_classification_type_classification_type_id_idx"
+                );
+            }
+        )
+    }
 }
 
 export async function down(knex: Knex): Promise<void> {
@@ -306,6 +333,9 @@ export async function down(knex: Knex): Promise<void> {
     await knex.schema.dropTableIfExists(TabNameImageServiceImage);
     await knex.schema.dropTableIfExists(
         TabNameImageServiceImageTagGroupHasImageType
+    );
+    await knex.schema.dropTableIfExists(
+        TabNameImageServiceImageTagGroupHasClassificationType
     );
     await knex.schema.dropTableIfExists(TabNameImageServiceImageTag);
     await knex.schema.dropTableIfExists(TabNameImageServiceImageTagGroup);

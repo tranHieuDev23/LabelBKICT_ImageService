@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+service ModelService {
+    rpc CreateDetectionTask(CreateDetectionTaskRequest) returns (CreateDetectionTaskResponse) {}
+    rpc CreateDetectionTaskBatch(CreateDetectionTaskBatchRequest) returns (CreateDetectionTaskBatchResponse) {}
+    rpc CreateClassificationTask(CreateClassificationTaskRequest) returns (CreateClassificationTaskResponse) {}
+    rpc CreateClassificationTaskBatch(CreateClassificationTaskBatchRequest) returns (CreateClassificationTaskBatchResponse) {}
+    
+    rpc GetClassificationType(GetClassificationTypeRequest) returns (GetClassificationTypeResponse) {}
+    rpc GetClassificationTypeList(GetClassificationTypeListRequest) returns (GetClassificationTypeListResponse) {}
+    rpc GetClassificationTypeByDisplayName(GetClassificationTypeByDisplayNameRequest) returns (GetClassificationTypeByDisplayNameResponse) {}
+}
+
+// Business objects
+message ClassificationType {
+    uint32 classification_type_id = 1;
+    string display_name = 2;
+}
+
+message CreateDetectionTaskRequest {
+    uint32 image_id = 1;
+}
+
+message CreateDetectionTaskResponse {}
+
+message CreateDetectionTaskBatchRequest {
+    repeated uint32 image_id_list = 1;
+}
+
+message CreateDetectionTaskBatchResponse {} 
+
+message CreateClassificationTaskRequest {
+    uint32 image_id = 1;
+    uint32 classification_type_id = 2;
+}
+
+message CreateClassificationTaskResponse {}
+
+message CreateClassificationTaskBatchRequest {
+    repeated uint32 image_id_list = 1;
+    uint32 classification_type_id = 2;
+}
+
+message CreateClassificationTaskBatchResponse {}
+
+message GetClassificationTypeRequest {
+    uint32 classification_type_id = 1;
+}
+
+message GetClassificationTypeResponse {
+    ClassificationType classification_type = 1;
+}
+
+message GetClassificationTypeListRequest {}
+
+message GetClassificationTypeListResponse {
+    repeated ClassificationType classification_type_list = 1;
+}
+
+message GetClassificationTypeByDisplayNameRequest {
+    string display_name = 1;
+}
+
+message GetClassificationTypeByDisplayNameResponse {
+    ClassificationType classification_type = 1;
+}

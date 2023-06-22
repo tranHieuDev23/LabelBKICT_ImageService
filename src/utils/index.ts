@@ -11,6 +11,7 @@ export * from "./id";
 export * from "./time";
 export * from "./double";
 export * from "./binary_converter";
+export * from "./grpc";
 
 export function bindToContainer(container: Container): void {
     container.bind(LOGGER_TOKEN).toInstance(initializeLogger).inSingletonScope();

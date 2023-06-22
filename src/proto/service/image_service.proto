@@ -25,6 +25,9 @@ service ImageService {
     rpc GetImageTagGroupListOfImageType(GetImageTagGroupListOfImageTypeRequest) returns (GetImageTagGroupListOfImageTypeResponse) {}
     rpc GetImageTagGroupListOfImageTypeList(GetImageTagGroupListOfImageTypeListRequest) returns (GetImageTagGroupListOfImageTypeListResponse) {}
 
+    rpc AddClassificationTypeToImageTagGroup(AddClassificationTypeToImageTagGroupRequest) returns (AddClassificationTypeToImageTagGroupResponse) {}
+    rpc RemoveClassificationTypeFromImageTagGroup(RemoveClassificationTypeFromImageTagGroupRequest) returns (RemoveClassificationTypeFromImageTagGroupResponse) {}
+
     rpc CreateImage(CreateImageRequest) returns (CreateImageResponse) {}
     rpc GetImage(GetImageRequest) returns (GetImageResponse) {}
     rpc GetImageList(GetImageListRequest) returns (GetImageListResponse) {}
@@ -65,6 +68,15 @@ service ImageService {
 }
 
 // Business objects
+message ClassificationType {
+    uint32 classification_type_id = 1;
+    string display_name = 2;
+}
+
+message ClassificationTypeList {
+    repeated ClassificationType classification_type_list = 1;
+}
+
 message ImageType {
     uint32 id = 1;
     string display_name = 2;
@@ -313,12 +325,14 @@ message CreateImageTagGroupResponse {
 message GetImageTagGroupListRequest {
     bool with_image_tag = 1;
     bool with_image_type = 2;
+    bool with_classification_type = 3;
 }
 
 message GetImageTagGroupListResponse {
     repeated ImageTagGroup image_tag_group_list = 1;
     repeated ImageTagList image_tag_list_of_image_tag_group_list = 2;
     repeated ImageTypeList image_type_list_of_image_tag_group_list = 3;
+    repeated ClassificationTypeList classification_type_list_of_image_tag_group_list = 4;
 }
 
 message UpdateImageTagGroupRequest {
@@ -393,6 +407,20 @@ message GetImageTagGroupListOfImageTypeListRequest {
 message GetImageTagGroupListOfImageTypeListResponse {
     repeated ImageTagGroupAndTagList image_tag_group_and_tag_list = 1;
 }
+
+message AddClassificationTypeToImageTagGroupRequest {
+    uint32 image_tag_group_id = 1;
+    uint32 classification_type_id = 2;
+}
+
+message AddClassificationTypeToImageTagGroupResponse {}
+
+message RemoveClassificationTypeFromImageTagGroupRequest {
+    uint32 image_tag_group_id = 1;
+    uint32 classification_type_id = 2;
+}
+
+message RemoveClassificationTypeFromImageTagGroupResponse {}
 
 message CreateImageRequest {
     uint32 uploaded_by_user_id = 1;

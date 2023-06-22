@@ -13,6 +13,10 @@ import {
     IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN,
 } from "./image_tag_group";
 import {
+    ImageTagGroupHasClassificationTypeDataAccessorImpl,
+    IMAGE_TAG_GROUP_HAS_CLASSIFICATION_TYPE_DATA_ACCESSOR_TOKEN,
+} from "./image_tag_group_has_classification_type"
+import {
     ImageTagGroupHasImageTypeDataAccessorImpl,
     IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
 } from "./image_tag_group_has_image_type";
@@ -56,6 +60,7 @@ import {
 } from "./user_can_verify_user_image";
 
 export * from "./image_has_image_tag";
+export * from "./image_tag_group_has_classification_type";
 export * from "./image_tag_group_has_image_type";
 export * from "./image_tag_group";
 export * from "./image_tag";
@@ -80,6 +85,10 @@ export function bindToContainer(container: Container): void {
     container
         .bind(IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN)
         .toInstance(ImageHasImageTagDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(IMAGE_TAG_GROUP_HAS_CLASSIFICATION_TYPE_DATA_ACCESSOR_TOKEN)
+        .toInstance(ImageTagGroupHasClassificationTypeDataAccessorImpl)
         .inSingletonScope();
     container
         .bind(IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN)

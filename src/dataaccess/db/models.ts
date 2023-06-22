@@ -121,3 +121,10 @@ export class RegionSnapshot {
         public label: RegionLabel | null
     ) {}
 }
+
+export class ClassificationType {
+    constructor(
+        public classificationTypeId: number,
+        public displayName: string
+    ) {}
+}

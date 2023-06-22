@@ -29,6 +29,8 @@ import { Region } from "../proto/gen/Region";
 import { RegionList } from "../proto/gen/RegionList";
 import { RegionLabel } from "../proto/gen/RegionLabel";
 import { RegionLabelList } from "../proto/gen/RegionLabelList";
+import { ClassificationType } from "../proto/gen/ClassificationType";
+import { ClassificationTypeList } from "../proto/gen/ClassificationTypeList";
 
 const DEFAULT_GET_IMAGE_LIST_LIMIT = 12;
 const DEFAULT_GET_IMAGE_LIST_SORT_ORDER = _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING;
@@ -69,6 +71,32 @@ export class ImageServiceHandlersFactory {
                     await this.imageTagManagementOperator.addImageTypeToImageTagGroup(
                         req.imageTagGroupId,
                         req.imageTypeId
+                    );
+                    callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            AddClassificationTypeToImageTagGroup:async (call, callback) => {
+                const req = call.request;
+                if (req.imageTagGroupId === undefined) {
+                    return callback({
+                        message: "image_tag_group_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.classificationTypeId === undefined) {
+                    return callback({
+                        message: "classification_type_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    await this.imageTagManagementOperator.addClassificationTypeToImageTagGroup(
+                        req.imageTagGroupId,
+                        req.classificationTypeId
                     );
                     callback(null, {});
                 } catch (e) {
@@ -557,10 +585,11 @@ export class ImageServiceHandlersFactory {
                 const req = call.request;
                 const withImageTag = req.withImageTag || false;
                 const withImageType = req.withImageType || false;
+                const withClassificationType = req.withClassificationType || false;
 
                 try {
-                    const { imageTagGroupList, imageTagList, imageTypeList } =
-                        await this.imageTagManagementOperator.getImageTagGroupList(withImageTag, withImageType);
+                    const { imageTagGroupList, imageTagList, imageTypeList, classificationTypeList } =
+                        await this.imageTagManagementOperator.getImageTagGroupList(withImageTag, withImageType, withClassificationType);
 
                     let imageTagListOfImageTagGroupList = undefined;
                     if (withImageTag) {
@@ -576,10 +605,18 @@ export class ImageServiceHandlersFactory {
                         );
                     }
 
+                    let classificationTypeListOfImageTagGroupList = undefined;
+                    if (withClassificationType) {
+                        classificationTypeListOfImageTagGroupList = classificationTypeList?.map((classificationTypeSubList) =>
+                            this.getClassificationListProto(classificationTypeSubList)
+                        );
+                    }
+
                     callback(null, {
                         imageTagGroupList,
                         imageTagListOfImageTagGroupList,
                         imageTypeListOfImageTagGroupList,
+                        classificationTypeListOfImageTagGroupList
                     });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -771,6 +808,32 @@ export class ImageServiceHandlersFactory {
                     await this.imageTagManagementOperator.removeImageTypeFromImageTagGroup(
                         req.imageTagGroupId,
                         req.imageTypeId
+                    );
+                    callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            RemoveClassificationTypeFromImageTagGroup: async (call, callback) => {
+                const req = call.request;
+                if (req.imageTagGroupId === undefined) {
+                    return callback({
+                        message: "image_tag_group_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.classificationTypeId === undefined) {
+                    return callback({
+                        message: "classification_type_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    await this.imageTagManagementOperator.removeImageTagGroupHasClassificationType(
+                        req.imageTagGroupId,
+                        req.classificationTypeId
                     );
                     callback(null, {});
                 } catch (e) {
@@ -1357,6 +1420,10 @@ export class ImageServiceHandlersFactory {
 
     private getRegionLabelListProto(regionLabelList: RegionLabel[]): RegionLabelList {
         return { regionLabelList };
+    }
+
+    private getClassificationListProto(classificationTypeList: ClassificationType[]): ClassificationTypeList {
+        return { classificationTypeList };
     }
 }
 
