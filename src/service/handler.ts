@@ -142,6 +142,7 @@ export class ImageServiceHandlersFactory {
                 const originalFileName = req.originalFileName || "";
                 const description = req.description || "";
                 const imageTagIdList = req.imageTagIdList || [];
+                const shouldUseDetectionModel = req.shouldUseDetectionModel || false;
 
                 try {
                     const image = await this.imageManagementOperator.createImage(
@@ -150,7 +151,8 @@ export class ImageServiceHandlersFactory {
                         req.imageData,
                         description,
                         req.imageTypeId,
-                        imageTagIdList
+                        imageTagIdList,
+                        shouldUseDetectionModel
                     );
                     callback(null, { image });
                 } catch (e) {

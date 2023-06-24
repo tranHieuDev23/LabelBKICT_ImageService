@@ -20,7 +20,12 @@ import {
     Region as DMRegion,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
-import { ImageCreated, ImageCreatedProducer, IMAGE_CREATED_PRODUCER_TOKEN } from "../../dataaccess/kafka";
+import {
+    ImageCreated,
+    ImageCreatedProducer,
+    IMAGE_CREATED_PRODUCER_TOKEN,
+    ImageCreatedMetadata,
+} from "../../dataaccess/kafka";
 import { BucketDM, THUMBNAIL_IMAGE_S3_DM_TOKEN, ORIGINAL_IMAGE_S3_DM_TOKEN } from "../../dataaccess/s3";
 import { Image } from "../../proto/gen/Image";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
@@ -38,7 +43,8 @@ export interface ImageManagementOperator {
         imageData: Buffer,
         description: string | undefined,
         imageTypeId: number | undefined,
-        imageTagIdList: number[]
+        imageTagIdList: number[],
+        shouldUseDetectionModel: boolean
     ): Promise<Image>;
     getImage(
         id: number,
@@ -88,7 +94,8 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         imageData: Buffer,
         description: string,
         imageTypeId: number | undefined,
-        imageTagIdList: number[]
+        imageTagIdList: number[],
+        shouldUseDetectionModel: boolean
     ): Promise<Image> {
         originalFileName = this.sanitizeOriginalFileName(originalFileName);
         if (!this.isValidOriginalFileName(originalFileName)) {
@@ -190,7 +197,8 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             }
         });
 
-        await this.imageCreatedProducer.createImageCreatedMessage(new ImageCreated(uploadedImage));
+        const imageCreatedEvent = new ImageCreated(uploadedImage, new ImageCreatedMetadata(shouldUseDetectionModel));
+        await this.imageCreatedProducer.createImageCreatedMessage(imageCreatedEvent);
 
         return uploadedImage;
     }
