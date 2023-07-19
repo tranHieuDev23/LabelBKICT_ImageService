@@ -26,7 +26,7 @@ import { AddImageTagToImageOperator, ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN } fro
 export interface ImageListManagementOperator {
     getImageList(
         offset: number,
-        limit: number,
+        limit: number | undefined,
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
@@ -65,7 +65,7 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
 
     public async getImageList(
         offset: number,
-        limit: number,
+        limit: number | undefined,
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,

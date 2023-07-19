@@ -486,7 +486,7 @@ export class ImageServiceHandlersFactory {
             GetImageList: async (call, callback) => {
                 const req = call.request;
                 const offset = req.offset || 0;
-                const limit = req.limit || DEFAULT_GET_IMAGE_LIST_LIMIT;
+                const limit = req.limit;
                 const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;
