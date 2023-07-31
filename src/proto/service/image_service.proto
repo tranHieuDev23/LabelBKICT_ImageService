@@ -166,6 +166,7 @@ message RegionList {
 
 message RegionOperationType {
     enum Values {
+        UNDEFINED = 0;
         DRAW = 1;
         LABEL = 2;
     }
@@ -429,6 +430,7 @@ message CreateImageRequest {
     string description = 4;
     uint32 image_type_id = 5;
     repeated uint32 image_tag_id_list = 6;
+    bool should_use_detection_model = 7;
 }
 
 message CreateImageResponse {

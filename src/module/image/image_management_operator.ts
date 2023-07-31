@@ -20,7 +20,12 @@ import {
     Region as DMRegion,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
-import { ImageCreated, ImageCreatedProducer, IMAGE_CREATED_PRODUCER_TOKEN } from "../../dataaccess/kafka";
+import {
+    ImageCreated,
+    ImageCreatedProducer,
+    IMAGE_CREATED_PRODUCER_TOKEN,
+    ImageCreatedMetadata,
+} from "../../dataaccess/kafka";
 import { BucketDM, THUMBNAIL_IMAGE_S3_DM_TOKEN, ORIGINAL_IMAGE_S3_DM_TOKEN } from "../../dataaccess/s3";
 import { Image } from "../../proto/gen/Image";
 import { _ImageStatus_Values } from "../../proto/gen/ImageStatus";
@@ -29,6 +34,7 @@ import { Region } from "../../proto/gen/Region";
 import { ErrorWithStatus, IdGenerator, ID_GENERATOR_TOKEN, LOGGER_TOKEN, Timer, TIMER_TOKEN } from "../../utils";
 import { AddImageTagToImageOperator, ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN } from "./add_image_tag_to_image_operator";
 import { ImageProcessor, IMAGE_PROCESSOR_TOKEN } from "./image_processor";
+import { filterXSS } from "xss";
 
 export interface ImageManagementOperator {
     createImage(
@@ -37,7 +43,8 @@ export interface ImageManagementOperator {
         imageData: Buffer,
         description: string | undefined,
         imageTypeId: number | undefined,
-        imageTagIdList: number[]
+        imageTagIdList: number[],
+        shouldUseDetectionModel: boolean
     ): Promise<Image>;
     getImage(
         id: number,
@@ -87,7 +94,8 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         imageData: Buffer,
         description: string,
         imageTypeId: number | undefined,
-        imageTagIdList: number[]
+        imageTagIdList: number[],
+        shouldUseDetectionModel: boolean
     ): Promise<Image> {
         originalFileName = this.sanitizeOriginalFileName(originalFileName);
         if (!this.isValidOriginalFileName(originalFileName)) {
@@ -189,7 +197,8 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             }
         });
 
-        await this.imageCreatedProducer.createImageCreatedMessage(new ImageCreated(uploadedImage));
+        const imageCreatedEvent = new ImageCreated(uploadedImage, new ImageCreatedMetadata(shouldUseDetectionModel));
+        await this.imageCreatedProducer.createImageCreatedMessage(imageCreatedEvent);
 
         return uploadedImage;
     }
@@ -203,7 +212,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     }
 
     private sanitizeDescription(description: string): string {
-        return validator.escape(validator.trim(description));
+        return filterXSS(validator.trim(description));
     }
 
     private async generateOriginalImageFilename(uploadTime: number): Promise<string> {
@@ -366,8 +375,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             }
 
             return this.regionSnapshotDM.withTransaction(async (regionSnapshotDM) => {
-                if (this.isDowngradingStatusTransition(oldStatus, newStatus)) {
-                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(id, oldStatus);
+                if (this.shouldDeletePublishSnapshot(oldStatus, newStatus)) {
+                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(id, _ImageStatus_Values.PUBLISHED);
+                }
+
+                if (this.shouldDeleteVerifySnapshot(oldStatus, newStatus)) {
+                    await regionSnapshotDM.deleteRegionSnapshotListOfImageAtStatus(id, _ImageStatus_Values.VERIFIED);
                 }
 
                 image.status = newStatus;
@@ -424,19 +437,28 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         }
     }
 
-    private isDowngradingStatusTransition(oldStatus: _ImageStatus_Values, newStatus: _ImageStatus_Values): boolean {
-        switch (oldStatus) {
-            case _ImageStatus_Values.VERIFIED:
-                return newStatus === _ImageStatus_Values.PUBLISHED;
-            case _ImageStatus_Values.PUBLISHED:
-                return newStatus === _ImageStatus_Values.UPLOADED || newStatus == _ImageStatus_Values.EXCLUDED;
-            default:
-                return false;
+    private shouldDeletePublishSnapshot(oldStatus: _ImageStatus_Values, newStatus: _ImageStatus_Values): boolean {
+        if (oldStatus === _ImageStatus_Values.PUBLISHED && newStatus === _ImageStatus_Values.UPLOADED) {
+            return true;
         }
+        if (oldStatus === _ImageStatus_Values.EXCLUDED && newStatus === _ImageStatus_Values.UPLOADED) {
+            return true;
+        }
+        return false;
+    }
+
+    private shouldDeleteVerifySnapshot(oldStatus: _ImageStatus_Values, newStatus: _ImageStatus_Values): boolean {
+        if (oldStatus === _ImageStatus_Values.VERIFIED && newStatus === _ImageStatus_Values.PUBLISHED) {
+            return true;
+        }
+        if (oldStatus === _ImageStatus_Values.EXCLUDED && newStatus === _ImageStatus_Values.UPLOADED) {
+            return true;
+        }
+        return false;
     }
 
     private regionListHasLabeledRegion(regionList: DMRegion[]): boolean {
-        return regionList.every((region) => region.label !== null);
+        return regionList.find((region) => region.label !== null) !== undefined;
     }
 
     private regionListHasUnlabeledRegion(regionList: DMRegion[]): boolean {

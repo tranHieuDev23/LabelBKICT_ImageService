@@ -170,6 +170,7 @@ export class ImageServiceHandlersFactory {
                 const originalFileName = req.originalFileName || "";
                 const description = req.description || "";
                 const imageTagIdList = req.imageTagIdList || [];
+                const shouldUseDetectionModel = req.shouldUseDetectionModel || false;
 
                 try {
                     const image = await this.imageManagementOperator.createImage(
@@ -178,7 +179,8 @@ export class ImageServiceHandlersFactory {
                         req.imageData,
                         description,
                         req.imageTypeId,
-                        imageTagIdList
+                        imageTagIdList,
+                        shouldUseDetectionModel
                     );
                     callback(null, { image });
                 } catch (e) {
@@ -512,7 +514,7 @@ export class ImageServiceHandlersFactory {
             GetImageList: async (call, callback) => {
                 const req = call.request;
                 const offset = req.offset || 0;
-                const limit = req.limit || DEFAULT_GET_IMAGE_LIST_LIMIT;
+                const limit = req.limit;
                 const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;

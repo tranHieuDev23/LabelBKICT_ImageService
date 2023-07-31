@@ -59,7 +59,7 @@ export interface ImageDataAccessor {
     getImageWithXLock(id: number): Promise<Image | null>;
     getImageList(
         offset: number,
-        limit: number,
+        limit: number | undefined,
         sortOrder: ImageListSortOrder,
         filterOptions: ImageListFilterOptions
     ): Promise<Image[]>;
@@ -204,7 +204,7 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
 
     public async getImageList(
         offset: number,
-        limit: number,
+        limit: number | undefined,
         sortOrder: ImageListSortOrder,
         filterOptions: ImageListFilterOptions
     ): Promise<Image[]> {
@@ -217,8 +217,12 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
                     `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeId}`,
                     `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeId}`
                 )
-                .offset(offset)
-                .limit(limit);
+                .offset(offset);
+
+            if (limit !== undefined) {
+                queryBuilder = queryBuilder.limit(limit);
+            }
+
             queryBuilder = this.applyImageListOrderByClause(queryBuilder, sortOrder);
             queryBuilder = queryBuilder.where((qb) => this.getImageListFilterOptionsWhereClause(qb, filterOptions));
             const rows = await queryBuilder;
