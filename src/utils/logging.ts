@@ -16,12 +16,14 @@ export function initializeLogger(elasticsearchClient: Client, logConfig: LogConf
                 dirname: logConfig.logDir,
                 filename: "error-%DATE%.log",
                 datePattern: "YYYY-MM-DD-HH",
+                maxFiles: logConfig.maxFiles,
             }),
             new transports.DailyRotateFile({
                 level: "info",
                 dirname: logConfig.logDir,
                 filename: "info-%DATE%.log",
                 datePattern: "YYYY-MM-DD-HH",
+                maxFiles: logConfig.maxFiles,
             }),
             new ElasticsearchTransport({
                 level: "info",

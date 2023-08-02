@@ -3,16 +3,15 @@ import { injected, token } from "brandi";
 import { Producer } from "kafkajs";
 import { Logger } from "winston";
 import { Image } from "../../../proto/gen/Image";
-import {
-    BinaryConverter,
-    BINARY_CONVERTER_TOKEN,
-    ErrorWithStatus,
-    LOGGER_TOKEN,
-} from "../../../utils";
+import { BinaryConverter, BINARY_CONVERTER_TOKEN, ErrorWithStatus, LOGGER_TOKEN } from "../../../utils";
 import { KAFKA_PRODUCER_TOKEN } from "./producer";
 
+export class ImageCreatedMetadata {
+    constructor(public readonly shouldUseDetectionModel: boolean) {}
+}
+
 export class ImageCreated {
-    constructor(public image: Image) {}
+    constructor(public readonly image: Image, public readonly metadata: ImageCreatedMetadata) {}
 }
 
 export interface ImageCreatedProducer {
@@ -28,9 +27,7 @@ export class ImageCreatedProducerImpl implements ImageCreatedProducer {
         private readonly logger: Logger
     ) {}
 
-    public async createImageCreatedMessage(
-        message: ImageCreated
-    ): Promise<void> {
+    public async createImageCreatedMessage(message: ImageCreated): Promise<void> {
         try {
             await this.producer.connect();
             await this.producer.send({
@@ -38,22 +35,12 @@ export class ImageCreatedProducerImpl implements ImageCreatedProducer {
                 messages: [{ value: this.binaryConverter.toBuffer(message) }],
             });
         } catch (error) {
-            this.logger.error(
-                `failed to create ${TopicNameImageServiceImageCreated} message`,
-                { message, error }
-            );
+            this.logger.error(`failed to create ${TopicNameImageServiceImageCreated} message`, { message, error });
             throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
         }
     }
 }
 
-injected(
-    ImageCreatedProducerImpl,
-    KAFKA_PRODUCER_TOKEN,
-    BINARY_CONVERTER_TOKEN,
-    LOGGER_TOKEN
-);
+injected(ImageCreatedProducerImpl, KAFKA_PRODUCER_TOKEN, BINARY_CONVERTER_TOKEN, LOGGER_TOKEN);
 
-export const IMAGE_CREATED_PRODUCER_TOKEN = token<ImageCreatedProducer>(
-    "ImageCreatedProducer"
-);
+export const IMAGE_CREATED_PRODUCER_TOKEN = token<ImageCreatedProducer>("ImageCreatedProducer");
