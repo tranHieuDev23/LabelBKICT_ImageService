@@ -9,12 +9,66 @@ service ModelService {
     rpc GetClassificationType(GetClassificationTypeRequest) returns (GetClassificationTypeResponse) {}
     rpc GetClassificationTypeList(GetClassificationTypeListRequest) returns (GetClassificationTypeListResponse) {}
     rpc GetClassificationTypeByDisplayName(GetClassificationTypeByDisplayNameRequest) returns (GetClassificationTypeByDisplayNameResponse) {}
+    rpc GetClassificationTaskList(GetClassificationTaskListRequest) returns (GetClassificationTaskListResponse) {}
+
+    rpc GetDetectionTaskList(GetDetectionTaskListRequest) returns (GetDetectionTaskListResponse) {}
 }
 
 // Business objects
+message ClassificationTaskStatus {
+    enum Values {
+        REQUESTED = 0;
+        DONE = 2;
+    }
+}
+
 message ClassificationType {
     uint32 classification_type_id = 1;
     string display_name = 2;
+}
+
+message ClassificationTask {
+    uint32 id = 1;
+    uint32 of_image_id = 2;
+    uint32 of_classification_type_id = 3;
+    uint64 request_time = 4;
+    ClassificationTaskStatus.Values status = 5;
+}
+
+message ClassificationTaskListSortOrder {
+    enum Values {
+        ID_ASCENDING = 0;
+        ID_DESCENDING = 1;
+        REQUEST_TIME_ASCENDING = 2;
+        REQUEST_TIME_DESCENDING = 3;
+    }
+}
+
+message DetectionTaskStatus {
+    enum Values {
+        REQUESTED = 0;
+        PROCESSING = 1;
+        DONE = 2;
+    }
+}
+
+message DetectionTask {
+    uint32 id = 1;
+    uint32 of_image_id = 2;
+    uint64 request_time = 3;
+    DetectionTaskStatus.Values status = 4;
+    uint64 update_time = 5;
+}
+
+message DetectionTaskListSortOrder {
+    enum Values {
+        ID_ASCENDING = 0;
+        ID_DESCENDING = 1;
+        REQUEST_TIME_ASCENDING = 2;
+        REQUEST_TIME_DESCENDING = 3;
+        UPDATE_TIME_ASCENDING = 4;
+        UPDATE_TIME_DESCENDING = 5;
+    }
 }
 
 message CreateDetectionTaskRequest {
@@ -63,4 +117,31 @@ message GetClassificationTypeByDisplayNameRequest {
 
 message GetClassificationTypeByDisplayNameResponse {
     ClassificationType classification_type = 1;
+}
+
+message GetDetectionTaskListRequest {
+    uint32 offset = 1;
+    uint32 limit = 2;
+    repeated uint32 of_image_id_list = 3;
+    repeated DetectionTaskStatus.Values status_list = 4;
+    DetectionTaskListSortOrder.Values sort_order = 5;
+}
+
+message GetDetectionTaskListResponse {
+    uint32 total_detection_task_count = 1;
+    repeated DetectionTask detection_task_list = 2;
+}
+
+message GetClassificationTaskListRequest {
+    uint32 offset = 1;
+    uint32 limit = 2;
+    repeated uint32 of_image_id_list = 3;
+    repeated uint32 of_classification_type_id_list = 4;
+    repeated ClassificationTaskStatus.Values status_list = 5;
+    ClassificationTaskListSortOrder.Values sort_order = 6;
+}
+
+message GetClassificationTaskListResponse {
+    uint32 total_classification_task_count = 1;
+    repeated ClassificationTask classification_task_list = 2;
 }
