@@ -28,6 +28,7 @@ service ImageService {
     rpc CreateImage(CreateImageRequest) returns (CreateImageResponse) {}
     rpc GetImage(GetImageRequest) returns (GetImageResponse) {}
     rpc GetImageList(GetImageListRequest) returns (GetImageListResponse) {}
+    rpc GetImageIdList(GetImageIdListRequest) returns (GetImageIdListResponse) {}
     rpc GetImagePositionInList(GetImagePositionInListRequest) returns (GetImagePositionInListResponse) {}
     rpc UpdateImageMetadata(UpdateImageMetadataRequest) returns (UpdateImageMetadataResponse) {}
     rpc UpdateImageImageType(UpdateImageImageTypeRequest) returns (UpdateImageImageTypeResponse) {}
@@ -434,6 +435,18 @@ message GetImageListResponse {
     repeated Image image_list = 2;
     repeated ImageTagList image_tag_list_of_image_list = 3;
     repeated RegionList region_list_of_image_list = 4;
+}
+
+message GetImageIdListRequest {
+    uint32 offset = 1;
+    uint32 limit = 2;
+    ImageListSortOrder.Values sort_order = 3;
+    ImageListFilterOptions filter_options = 4;
+}
+
+message GetImageIdListResponse {
+    uint32 total_image_count = 1;
+    repeated uint32 image_id_list = 2;
 }
 
 message GetImagePositionInListRequest {

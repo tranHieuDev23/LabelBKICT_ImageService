@@ -527,6 +527,29 @@ export class ImageServiceHandlersFactory {
                 }
             },
 
+            GetImageIdList: async (call, callback) => {
+                const req = call.request;
+                const offset = req.offset || 0;
+                const limit = req.limit;
+                const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
+
+                try {
+                    const { totalImageCount, imageIdList } = await this.imageListManagementOperator.getImageIdList(
+                        offset,
+                        limit,
+                        sortOrder,
+                        req.filterOptions
+                    );
+
+                    callback(null, {
+                        totalImageCount,
+                        imageIdList,
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
             GetImagePositionInList: async (call, callback) => {
                 const req = call.request;
                 if (req.id === undefined) {

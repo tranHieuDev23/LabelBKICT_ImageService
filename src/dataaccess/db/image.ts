@@ -63,6 +63,12 @@ export interface ImageDataAccessor {
         sortOrder: ImageListSortOrder,
         filterOptions: ImageListFilterOptions
     ): Promise<Image[]>;
+    getImageIdList(
+        offset: number,
+        limit: number | undefined,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number[]>;
     getImageCount(filterOptions: ImageListFilterOptions): Promise<number>;
     getPrevImageCount(
         image: Image,
@@ -229,6 +235,43 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
             return rows.map((row) => this.getImageFrowJoinedRow(row));
         } catch (error) {
             this.logger.error("failed to get image list", {
+                offset,
+                limit,
+                sortOrder,
+                filterOptions,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getImageIdList(
+        offset: number,
+        limit: number | undefined,
+        sortOrder: ImageListSortOrder,
+        filterOptions: ImageListFilterOptions
+    ): Promise<number[]> {
+        try {
+            let queryBuilder = this.knex
+                .select([ColNameImageServiceImageId])
+                .from(TabNameImageServiceImage)
+                .leftOuterJoin(
+                    TabNameImageServiceImageType,
+                    `${TabNameImageServiceImage}.${ColNameImageServiceImageImageTypeId}`,
+                    `${TabNameImageServiceImageType}.${ColNameImageServiceImageTypeId}`
+                )
+                .offset(offset);
+
+            if (limit !== undefined) {
+                queryBuilder = queryBuilder.limit(limit);
+            }
+
+            queryBuilder = this.applyImageListOrderByClause(queryBuilder, sortOrder);
+            queryBuilder = queryBuilder.where((qb) => this.getImageListFilterOptionsWhereClause(qb, filterOptions));
+            const rows = await queryBuilder;
+            return rows.map((row) => +row[ColNameImageServiceImageId]);
+        } catch (error) {
+            this.logger.error("failed to get image id list", {
                 offset,
                 limit,
                 sortOrder,

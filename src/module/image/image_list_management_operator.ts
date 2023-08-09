@@ -37,6 +37,15 @@ export interface ImageListManagementOperator {
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
     }>;
+    getImageIdList(
+        offset: number,
+        limit: number | undefined,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined
+    ): Promise<{
+        totalImageCount: number;
+        imageIdList: number[];
+    }>;
     getImagePositionInList(
         id: number,
         sortOrder: _ImageListSortOrder_Values,
@@ -97,6 +106,27 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         }
 
         return { totalImageCount, imageList, imageTagList, regionList };
+    }
+
+    public async getImageIdList(
+        offset: number,
+        limit: number | undefined,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined
+    ): Promise<{
+        totalImageCount: number;
+        imageIdList: number[];
+    }> {
+        const dmFilterOptions = await this.getDMImageListFilterOptions(filterOptions);
+        const totalImageCount = await this.imageDM.getImageCount(dmFilterOptions);
+        const imageIdList = await this.imageDM.getImageIdList(
+            offset,
+            limit,
+            this.getDMImageListSortOrder(sortOrder),
+            dmFilterOptions
+        );
+
+        return { totalImageCount, imageIdList };
     }
 
     public async getImagePositionInList(
