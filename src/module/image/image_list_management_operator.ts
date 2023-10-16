@@ -193,6 +193,17 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         dmFilterOptions.imageStatusList = filterOptions.imageStatusList || [];
 
         let imageIdSet = new Set<number>();
+        if (this.shouldUseListFilterOptions(filterOptions.imageIdList)) {
+            if (dmFilterOptions.shouldFilterByImageIdList) {
+                const intersectedImageIdSet = new Set(
+                    filterOptions.imageIdList?.filter((imageId) => imageIdSet.has(imageId))
+                );
+                imageIdSet = intersectedImageIdSet;
+            } else {
+                dmFilterOptions.shouldFilterByImageIdList = true;
+                imageIdSet = new Set(filterOptions.imageIdList);
+            }
+        }
         if (this.shouldUseListFilterOptions(filterOptions.imageTagIdList)) {
             const imageIdList = await this.getImageIdListMatchingImageTagIdList(
                 filterOptions.imageTagIdList || [],

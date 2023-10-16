@@ -215,6 +215,7 @@ message ImageListFilterOptions {
     repeated uint32 bookmarked_by_user_id_list = 17;
     bool must_have_description = 18;
     repeated uint32 not_uploaded_by_user_id_list = 19;
+    repeated uint32 image_id_list = 20;
 }
 
 message ImageBookmark {
