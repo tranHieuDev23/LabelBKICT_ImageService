@@ -561,7 +561,11 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         }
         if (filterOptions.originalImageNameList.length !== 0) {
             queryCallbackList.push((qb) => {
-                qb.whereIn(ColNameImageServiceImageOriginalFileName, filterOptions.originalImageNameList);
+                qb.whereIn(ColNameImageServiceImageOriginalFileName, filterOptions.originalImageNameList).andWhere(
+                    ColNameImageServiceImageOriginalFileName,
+                    "!=",
+                    ""
+                );
             });
         }
 

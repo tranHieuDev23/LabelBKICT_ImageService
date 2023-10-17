@@ -30,7 +30,6 @@ import { RegionList } from "../proto/gen/RegionList";
 import { RegionLabel } from "../proto/gen/RegionLabel";
 import { RegionLabelList } from "../proto/gen/RegionLabelList";
 
-const DEFAULT_GET_IMAGE_LIST_LIMIT = 12;
 const DEFAULT_GET_IMAGE_LIST_SORT_ORDER = _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING;
 
 const DEFAULT_GET_USER_CAN_MANAGE_USER_IMAGE_LIST_LIMIT = 100;
