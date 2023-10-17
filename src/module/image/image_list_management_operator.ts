@@ -246,6 +246,10 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
 
         dmFilterOptions.mustHaveDescription = filterOptions.mustHaveDescription || false;
 
+        if (this.shouldUseListFilterOptions(filterOptions.originalFileNameList)) {
+            dmFilterOptions.originalImageNameList = filterOptions.originalFileNameList || [];
+        }
+
         return dmFilterOptions;
     }
 

@@ -24,6 +24,7 @@ export class ImageListFilterOptions {
     public originalFileNameQuery = "";
     public imageStatusList: _ImageStatus_Values[] = [];
     public mustHaveDescription = false;
+    public originalImageNameList: string[] = [];
 }
 
 export interface CreateImageArguments {
@@ -556,6 +557,11 @@ export class ImageDataAccessorImpl implements ImageDataAccessor {
         if (filterOptions.mustHaveDescription) {
             queryCallbackList.push((qb) => {
                 qb.where(ColNameImageServiceImageDescription, "!=", "");
+            });
+        }
+        if (filterOptions.originalImageNameList.length !== 0) {
+            queryCallbackList.push((qb) => {
+                qb.whereIn(ColNameImageServiceImageOriginalFileName, filterOptions.originalImageNameList);
             });
         }
 
