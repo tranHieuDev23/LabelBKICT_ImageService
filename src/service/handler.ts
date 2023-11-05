@@ -14,13 +14,13 @@ import { RegionManagementOperator, REGION_MANAGEMENT_OPERATOR_TOKEN } from "../m
 import { _ImageListSortOrder_Values } from "../proto/gen/ImageListSortOrder";
 import { BookmarkManagementOperator, BOOKMARK_MANAGEMENT_OPERATOR_TOKEN } from "../module/bookmark";
 import {
-    UserCanManageUserImageManagementOperator,
-    USER_CAN_MANAGE_USER_IMAGE_MANAGEMENT_OPERATOR,
-} from "../module/user_can_manage_user_image";
+    UserCanManageImageManagementOperator,
+    USER_CAN_MANAGE_IMAGE_MANAGEMENT_OPERATOR,
+} from "../module/user_can_manage_image";
 import {
     UserCanVerifyUserImageManagementOperator,
     USER_CAN_VERIFY_USER_IMAGE_MANAGEMENT_OPERATOR,
-} from "../module/user_can_verify_user_image";
+} from "../module/user_can_verify_image";
 import { ImageType } from "../proto/gen/ImageType";
 import { ImageTypeList } from "../proto/gen/ImageTypeList";
 import { ImageTag } from "../proto/gen/ImageTag";
@@ -43,7 +43,7 @@ export class ImageServiceHandlersFactory {
         private readonly imageListManagementOperator: ImageListManagementOperator,
         private readonly regionManagementOperator: RegionManagementOperator,
         private readonly bookmarkManagementOperator: BookmarkManagementOperator,
-        private readonly userCanManageUserImageOperator: UserCanManageUserImageManagementOperator,
+        private readonly userCanManageUserImageOperator: UserCanManageImageManagementOperator,
         private readonly userCanVerifyUserImageOperator: UserCanVerifyUserImageManagementOperator
     ) {}
 
@@ -1345,6 +1345,373 @@ export class ImageServiceHandlersFactory {
                     this.handleError(e, callback);
                 }
             },
+
+            CreateUserCanManageImage: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "imageId is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const canEdit = req.canEdit || false;
+                try {
+                    await this.userCanManageUserImageOperator.createUserCanManageImage(
+                        req.userId,
+                        req.imageId,
+                        canEdit
+                    );
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            CreateUserCanVerifyImage: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    await this.userCanVerifyUserImageOperator.createUserCanVerifyImage(req.userId, req.imageId);
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            DeleteUserCanManageImage: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "imageId is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    await this.userCanManageUserImageOperator.deleteUserCanManageImage(req.userId, req.imageId);
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            DeleteUserCanVerifyImage: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    await this.userCanVerifyUserImageOperator.deleteUserCanVerifyImage(req.userId, req.imageId);
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetImagePositionInManageableImageListOfUser: async (call, callback) => {
+                const req = call.request;
+                if (req.id === undefined) {
+                    return callback({
+                        message: "id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
+
+                try {
+                    const { position, totalImageCount, prevImageId, nextImageId } =
+                        await this.imageListManagementOperator.getImagePositionInManageableImageListOfUser(
+                            req.id,
+                            req.userId,
+                            sortOrder,
+                            req.filterOptions
+                        );
+                    callback(null, {
+                        position,
+                        totalImageCount,
+                        prevImageId,
+                        nextImageId,
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetImagePositionInVerifiableImageListOfUser: async (call, callback) => {
+                const req = call.request;
+                if (req.id === undefined) {
+                    return callback({
+                        message: "id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
+
+                try {
+                    const { position, totalImageCount, prevImageId, nextImageId } =
+                        await this.imageListManagementOperator.getImagePositionInVerifiableImageListOfUser(
+                            req.id,
+                            req.userId,
+                            sortOrder,
+                            req.filterOptions
+                        );
+                    callback(null, {
+                        position,
+                        totalImageCount,
+                        prevImageId,
+                        nextImageId,
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetManageableImageListOfUser: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const offset = req.offset || 0;
+                const limit = req.limit;
+                const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
+                const withImageTag = req.withImageTag || false;
+                const withRegion = req.withRegion || false;
+
+                try {
+                    const { totalImageCount, imageList, imageTagList, regionList } =
+                        await this.imageListManagementOperator.getManageableImageListOfUser(
+                            req.userId,
+                            offset,
+                            limit,
+                            sortOrder,
+                            req.filterOptions,
+                            withImageTag,
+                            withRegion
+                        );
+
+                    let imageTagListOfImageList = undefined;
+                    if (withImageTag) {
+                        imageTagListOfImageList = imageTagList?.map((imageTagSublist) =>
+                            this.getImageTagListProto(imageTagSublist)
+                        );
+                    }
+
+                    let regionListOfImageList = undefined;
+                    if (withRegion) {
+                        regionListOfImageList = regionList?.map((regionSublist) =>
+                            this.getRegionListProto(regionSublist)
+                        );
+                    }
+
+                    callback(null, {
+                        totalImageCount,
+                        imageList,
+                        imageTagListOfImageList,
+                        regionListOfImageList,
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetVerifiableImageListOfUser: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const offset = req.offset || 0;
+                const limit = req.limit;
+                const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
+                const withImageTag = req.withImageTag || false;
+                const withRegion = req.withRegion || false;
+
+                try {
+                    const { totalImageCount, imageList, imageTagList, regionList } =
+                        await this.imageListManagementOperator.getVerifiableImageListOfUser(
+                            req.userId,
+                            offset,
+                            limit,
+                            sortOrder,
+                            req.filterOptions,
+                            withImageTag,
+                            withRegion
+                        );
+
+                    let imageTagListOfImageList = undefined;
+                    if (withImageTag) {
+                        imageTagListOfImageList = imageTagList?.map((imageTagSublist) =>
+                            this.getImageTagListProto(imageTagSublist)
+                        );
+                    }
+
+                    let regionListOfImageList = undefined;
+                    if (withRegion) {
+                        regionListOfImageList = regionList?.map((regionSublist) =>
+                            this.getRegionListProto(regionSublist)
+                        );
+                    }
+
+                    callback(null, {
+                        totalImageCount,
+                        imageList,
+                        imageTagListOfImageList,
+                        regionListOfImageList,
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            UpdateUserCanManageImage: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    await this.userCanManageUserImageOperator.updateUserCanManageImage(
+                        req.userId,
+                        req.imageId,
+                        req.canEdit
+                    );
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            CheckUserCanManageImageList: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const imageIdList = req.imageIdList || [];
+                try {
+                    const { canManageList, canEditList } =
+                        await this.userCanManageUserImageOperator.checkUserCanManageImageList(req.userId, imageIdList);
+                    return callback(null, { canManageList, canEditList });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            CheckUserCanVerifyImageList: async (call, callback) => {
+                const req = call.request;
+                if (req.userId === undefined) {
+                    return callback({
+                        message: "user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                const imageIdList = req.imageIdList || [];
+                try {
+                    const canVerifyList = await this.userCanVerifyUserImageOperator.checkUserCanVerifyImageList(
+                        req.userId,
+                        imageIdList
+                    );
+                    return callback(null, { canVerifyList });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetUserCanManageImageListOfImageId: async (call, callback) => {
+                const req = call.request;
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    const userCanManageImageList =
+                        await this.userCanManageUserImageOperator.getUserCanManageImageListOfImageId(req.imageId);
+                    return callback(null, { userCanManageImageList });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            GetUserCanVerifyImageListOfImageId: async (call, callback) => {
+                const req = call.request;
+                if (req.imageId === undefined) {
+                    return callback({
+                        message: "image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                try {
+                    const userCanVerifyImageList =
+                        await this.userCanVerifyUserImageOperator.getUserCanVerifyImageListOfImageId(req.imageId);
+                    return callback(null, {
+                        userCanVerifyImageList: userCanVerifyImageList.map((userId) => {
+                            return { userId };
+                        }),
+                    });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
         };
         return handler;
     }
@@ -1392,7 +1759,7 @@ injected(
     IMAGE_LIST_MANAGEMENT_OPERATOR_TOKEN,
     REGION_MANAGEMENT_OPERATOR_TOKEN,
     BOOKMARK_MANAGEMENT_OPERATOR_TOKEN,
-    USER_CAN_MANAGE_USER_IMAGE_MANAGEMENT_OPERATOR,
+    USER_CAN_MANAGE_IMAGE_MANAGEMENT_OPERATOR,
     USER_CAN_VERIFY_USER_IMAGE_MANAGEMENT_OPERATOR
 );
 

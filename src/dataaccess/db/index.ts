@@ -1,35 +1,17 @@
 import { Container } from "brandi";
 import { ImageDataAccessorImpl, IMAGE_DATA_ACCESSOR_TOKEN } from "./image";
-import {
-    ImageHasImageTagDataAccessorImpl,
-    IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
-} from "./image_has_image_tag";
-import {
-    ImageTagDataAccessorImpl,
-    IMAGE_TAG_DATA_ACCESSOR_TOKEN,
-} from "./image_tag";
-import {
-    ImageTagGroupDataAccessorImpl,
-    IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN,
-} from "./image_tag_group";
+import { ImageHasImageTagDataAccessorImpl, IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN } from "./image_has_image_tag";
+import { ImageTagDataAccessorImpl, IMAGE_TAG_DATA_ACCESSOR_TOKEN } from "./image_tag";
+import { ImageTagGroupDataAccessorImpl, IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN } from "./image_tag_group";
 import {
     ImageTagGroupHasImageTypeDataAccessorImpl,
     IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
 } from "./image_tag_group_has_image_type";
-import {
-    IMAGE_TYPE_DATA_ACCESSOR_TOKEN,
-    ImageTypeDataAccessorImpl,
-} from "./image_type";
+import { IMAGE_TYPE_DATA_ACCESSOR_TOKEN, ImageTypeDataAccessorImpl } from "./image_type";
 import { KNEX_INSTANCE_TOKEN, newKnexInstance } from "./knex";
 import { RegionDataAccessorImpl, REGION_DATA_ACCESSOR_TOKEN } from "./region";
-import {
-    RegionLabelDataAccessorImpl,
-    REGION_LABEL_DATA_ACCESSOR_TOKEN,
-} from "./region_label";
-import {
-    RegionOperationLogDataAccessorImpl,
-    REGION_OPERATION_LOG_DATA_ACCESSOR_TOKEN,
-} from "./region_operation_log";
+import { RegionLabelDataAccessorImpl, REGION_LABEL_DATA_ACCESSOR_TOKEN } from "./region_label";
+import { RegionOperationLogDataAccessorImpl, REGION_OPERATION_LOG_DATA_ACCESSOR_TOKEN } from "./region_operation_log";
 import {
     RegionOperationLogDrawMetadataDataAccessorImpl,
     REGION_OPERATION_LOG_DRAW_METADATA_DATA_ACCESSOR_TOKEN,
@@ -38,14 +20,8 @@ import {
     RegionOperationLogLabelMetadataDataAccessorImpl,
     REGION_OPERATION_LOG_LABEL_METADATA_DATA_ACCESSOR_TOKEN,
 } from "./region_operation_log_label_metadata";
-import {
-    REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
-    RegionSnapshotDataAccessorImpl,
-} from "./region_snapshot";
-import {
-    UserBookmarksImageDataAccessorImpl,
-    USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
-} from "./user_bookmarks_image";
+import { REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN, RegionSnapshotDataAccessorImpl } from "./region_snapshot";
+import { UserBookmarksImageDataAccessorImpl, USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN } from "./user_bookmarks_image";
 import {
     UserCanManageUserImageDataAccessorImpl,
     USER_CAN_MANAGE_USER_IMAGE_DATA_ACCESSOR_TOKEN,
@@ -54,6 +30,8 @@ import {
     UserCanVerifyUserImageDataAccessorImpl,
     USER_CAN_VERIFY_USER_IMAGE_DATA_ACCESSOR_TOKEN,
 } from "./user_can_verify_user_image";
+import { USER_CAN_MANAGE_IMAGE_DATA_ACCESSOR_TOKEN, UserCanManageImageDataAccessorImpl } from "./user_can_manage_image";
+import { USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN, UserCanVerifyImageDataAccessorImpl } from "./user_can_verify_image";
 
 export * from "./image_has_image_tag";
 export * from "./image_tag_group_has_image_type";
@@ -71,12 +49,11 @@ export * from "./region";
 export * from "./user_bookmarks_image";
 export * from "./user_can_manage_user_image";
 export * from "./user_can_verify_user_image";
+export * from "./user_can_manage_image";
+export * from "./user_can_verify_image";
 
 export function bindToContainer(container: Container): void {
-    container
-        .bind(KNEX_INSTANCE_TOKEN)
-        .toInstance(newKnexInstance)
-        .inSingletonScope();
+    container.bind(KNEX_INSTANCE_TOKEN).toInstance(newKnexInstance).inSingletonScope();
     container
         .bind(IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN)
         .toInstance(ImageHasImageTagDataAccessorImpl)
@@ -85,26 +62,11 @@ export function bindToContainer(container: Container): void {
         .bind(IMAGE_TAG_GROUP_HAS_IMAGE_TYPE_DATA_ACCESSOR_TOKEN)
         .toInstance(ImageTagGroupHasImageTypeDataAccessorImpl)
         .inSingletonScope();
-    container
-        .bind(IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN)
-        .toInstance(ImageTagGroupDataAccessorImpl)
-        .inSingletonScope();
-    container
-        .bind(IMAGE_TAG_DATA_ACCESSOR_TOKEN)
-        .toInstance(ImageTagDataAccessorImpl)
-        .inSingletonScope();
-    container
-        .bind(IMAGE_TYPE_DATA_ACCESSOR_TOKEN)
-        .toInstance(ImageTypeDataAccessorImpl)
-        .inSingletonScope();
-    container
-        .bind(IMAGE_DATA_ACCESSOR_TOKEN)
-        .toInstance(ImageDataAccessorImpl)
-        .inSingletonScope();
-    container
-        .bind(REGION_LABEL_DATA_ACCESSOR_TOKEN)
-        .toInstance(RegionLabelDataAccessorImpl)
-        .inSingletonScope();
+    container.bind(IMAGE_TAG_GROUP_DATA_ACCESSOR_TOKEN).toInstance(ImageTagGroupDataAccessorImpl).inSingletonScope();
+    container.bind(IMAGE_TAG_DATA_ACCESSOR_TOKEN).toInstance(ImageTagDataAccessorImpl).inSingletonScope();
+    container.bind(IMAGE_TYPE_DATA_ACCESSOR_TOKEN).toInstance(ImageTypeDataAccessorImpl).inSingletonScope();
+    container.bind(IMAGE_DATA_ACCESSOR_TOKEN).toInstance(ImageDataAccessorImpl).inSingletonScope();
+    container.bind(REGION_LABEL_DATA_ACCESSOR_TOKEN).toInstance(RegionLabelDataAccessorImpl).inSingletonScope();
     container
         .bind(REGION_OPERATION_LOG_DRAW_METADATA_DATA_ACCESSOR_TOKEN)
         .toInstance(RegionOperationLogDrawMetadataDataAccessorImpl)
@@ -117,14 +79,8 @@ export function bindToContainer(container: Container): void {
         .bind(REGION_OPERATION_LOG_DATA_ACCESSOR_TOKEN)
         .toInstance(RegionOperationLogDataAccessorImpl)
         .inSingletonScope();
-    container
-        .bind(REGION_DATA_ACCESSOR_TOKEN)
-        .toInstance(RegionDataAccessorImpl)
-        .inSingletonScope();
-    container
-        .bind(REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN)
-        .toInstance(RegionSnapshotDataAccessorImpl)
-        .inSingletonScope();
+    container.bind(REGION_DATA_ACCESSOR_TOKEN).toInstance(RegionDataAccessorImpl).inSingletonScope();
+    container.bind(REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN).toInstance(RegionSnapshotDataAccessorImpl).inSingletonScope();
     container
         .bind(USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN)
         .toInstance(UserBookmarksImageDataAccessorImpl)
@@ -136,5 +92,13 @@ export function bindToContainer(container: Container): void {
     container
         .bind(USER_CAN_VERIFY_USER_IMAGE_DATA_ACCESSOR_TOKEN)
         .toInstance(UserCanVerifyUserImageDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(USER_CAN_MANAGE_IMAGE_DATA_ACCESSOR_TOKEN)
+        .toInstance(UserCanManageImageDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN)
+        .toInstance(UserCanVerifyImageDataAccessorImpl)
         .inSingletonScope();
 }

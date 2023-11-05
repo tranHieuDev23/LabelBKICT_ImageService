@@ -14,6 +14,10 @@ import {
     REGION_DATA_ACCESSOR_TOKEN,
     UserBookmarksImageDataAccessor,
     USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
+    UserCanManageImageDataAccessor,
+    UserCanVerifyImageDataAccessor,
+    USER_CAN_MANAGE_IMAGE_DATA_ACCESSOR_TOKEN,
+    USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -22,9 +26,38 @@ import { ImageTag } from "../../proto/gen/ImageTag";
 import { Region } from "../../proto/gen/Region";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
 import { AddImageTagToImageOperator, ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN } from "./add_image_tag_to_image_operator";
+import { IMAGE_PERMISSION_CHECKER_TOKEN, ImagePermissionChecker } from "./permission_checker";
 
 export interface ImageListManagementOperator {
     getImageList(
+        offset: number,
+        limit: number | undefined,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined,
+        withImageTag: boolean,
+        withRegion: boolean
+    ): Promise<{
+        totalImageCount: number;
+        imageList: Image[];
+        imageTagList: ImageTag[][] | undefined;
+        regionList: Region[][] | undefined;
+    }>;
+    getManageableImageListOfUser(
+        userId: number,
+        offset: number,
+        limit: number | undefined,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined,
+        withImageTag: boolean,
+        withRegion: boolean
+    ): Promise<{
+        totalImageCount: number;
+        imageList: Image[];
+        imageTagList: ImageTag[][] | undefined;
+        regionList: Region[][] | undefined;
+    }>;
+    getVerifiableImageListOfUser(
+        userId: number,
         offset: number,
         limit: number | undefined,
         sortOrder: _ImageListSortOrder_Values,
@@ -56,6 +89,28 @@ export interface ImageListManagementOperator {
         prevImageId: number | undefined;
         nextImageId: number | undefined;
     }>;
+    getImagePositionInManageableImageListOfUser(
+        id: number,
+        userId: number,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined
+    ): Promise<{
+        position: number;
+        totalImageCount: number;
+        prevImageId: number | undefined;
+        nextImageId: number | undefined;
+    }>;
+    getImagePositionInVerifiableImageListOfUser(
+        id: number,
+        userId: number,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined
+    ): Promise<{
+        position: number;
+        totalImageCount: number;
+        prevImageId: number | undefined;
+        nextImageId: number | undefined;
+    }>;
     updateImageListImageType(idList: number[], imageTypeId: number): Promise<void>;
     deleteImageList(idList: number[]): Promise<void>;
     addImageTagListToImageList(imageIdList: number[], imageTagIdList: number[]): Promise<void>;
@@ -69,6 +124,9 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
         private readonly userBookmarksImageDM: UserBookmarksImageDataAccessor,
+        private readonly userCanManageImageIdDM: UserCanManageImageDataAccessor,
+        private readonly userCanVerifyImageIdDM: UserCanVerifyImageDataAccessor,
+        private readonly imagePermissionChecker: ImagePermissionChecker,
         private readonly logger: Logger
     ) {}
 
@@ -129,6 +187,74 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         return { totalImageCount, imageIdList };
     }
 
+    public async getManageableImageListOfUser(
+        userId: number,
+        offset: number,
+        limit: number | undefined,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined,
+        withImageTag: boolean,
+        withRegion: boolean
+    ): Promise<{
+        totalImageCount: number;
+        imageList: Image[];
+        imageTagList: ImageTag[][] | undefined;
+        regionList: Region[][] | undefined;
+    }> {
+        if (await this.imagePermissionChecker.canUserManageAllImage(userId)) {
+            return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+        }
+
+        const manageableImageIdList = await this.userCanManageImageIdDM.getManageableImageIdListOfUserId(userId);
+        if (filterOptions === undefined) {
+            filterOptions = { imageIdList: manageableImageIdList };
+        } else {
+            if (filterOptions.imageIdList === undefined || filterOptions.imageIdList.length === 0) {
+                filterOptions.imageIdList = manageableImageIdList;
+            } else {
+                filterOptions.imageIdList = Array.from(
+                    new Set([...manageableImageIdList, ...filterOptions.imageIdList])
+                );
+            }
+        }
+
+        return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+    }
+
+    public async getVerifiableImageListOfUser(
+        userId: number,
+        offset: number,
+        limit: number | undefined,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined,
+        withImageTag: boolean,
+        withRegion: boolean
+    ): Promise<{
+        totalImageCount: number;
+        imageList: Image[];
+        imageTagList: ImageTag[][] | undefined;
+        regionList: Region[][] | undefined;
+    }> {
+        if (await this.imagePermissionChecker.canUserVerifyAllImage(userId)) {
+            return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+        }
+
+        const verifiableImageIdList = await this.userCanVerifyImageIdDM.getVerifiableImageIdListOfUserId(userId);
+        if (filterOptions === undefined) {
+            filterOptions = { imageIdList: verifiableImageIdList };
+        } else {
+            if (filterOptions.imageIdList === undefined || filterOptions.imageIdList.length === 0) {
+                filterOptions.imageIdList = verifiableImageIdList;
+            } else {
+                filterOptions.imageIdList = Array.from(
+                    new Set([...verifiableImageIdList, ...filterOptions.imageIdList])
+                );
+            }
+        }
+
+        return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+    }
+
     public async getImagePositionInList(
         id: number,
         sortOrder: _ImageListSortOrder_Values,
@@ -162,6 +288,78 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
             prevImageId: prevImageId === null ? undefined : prevImageId,
             nextImageId: nextImageId === null ? undefined : nextImageId,
         };
+    }
+
+    public async getImagePositionInManageableImageListOfUser(
+        id: number,
+        userId: number,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined
+    ): Promise<{
+        position: number;
+        totalImageCount: number;
+        prevImageId: number | undefined;
+        nextImageId: number | undefined;
+    }> {
+        const { canManageList } = await this.imagePermissionChecker.canUserManageImageList(userId, [id]);
+        if (!canManageList[0]) {
+            throw new ErrorWithStatus("user does not have permission to manage image", status.PERMISSION_DENIED);
+        }
+
+        if (await this.imagePermissionChecker.canUserManageAllImage(userId)) {
+            return this.getImagePositionInList(id, sortOrder, filterOptions);
+        }
+
+        const manageableImageIdList = await this.userCanManageImageIdDM.getManageableImageIdListOfUserId(userId);
+        if (filterOptions === undefined) {
+            filterOptions = { imageIdList: manageableImageIdList };
+        } else {
+            if (filterOptions.imageIdList === undefined || filterOptions.imageIdList.length === 0) {
+                filterOptions.imageIdList = manageableImageIdList;
+            } else {
+                filterOptions.imageIdList = Array.from(
+                    new Set([...manageableImageIdList, ...filterOptions.imageIdList])
+                );
+            }
+        }
+
+        return this.getImagePositionInList(id, sortOrder, filterOptions);
+    }
+
+    public async getImagePositionInVerifiableImageListOfUser(
+        id: number,
+        userId: number,
+        sortOrder: _ImageListSortOrder_Values,
+        filterOptions: ImageListFilterOptions | undefined
+    ): Promise<{
+        position: number;
+        totalImageCount: number;
+        prevImageId: number | undefined;
+        nextImageId: number | undefined;
+    }> {
+        const canVerifyList = await this.imagePermissionChecker.canUserVerifyImageList(userId, [id]);
+        if (!canVerifyList[0]) {
+            throw new ErrorWithStatus("user does not have permission to verify image", status.PERMISSION_DENIED);
+        }
+
+        if (await this.imagePermissionChecker.canUserVerifyAllImage(userId)) {
+            return this.getImagePositionInList(id, sortOrder, filterOptions);
+        }
+
+        const verifiableImageIdList = await this.userCanVerifyImageIdDM.getVerifiableImageIdListOfUserId(userId);
+        if (filterOptions === undefined) {
+            filterOptions = { imageIdList: verifiableImageIdList };
+        } else {
+            if (filterOptions.imageIdList === undefined || filterOptions.imageIdList.length === 0) {
+                filterOptions.imageIdList = verifiableImageIdList;
+            } else {
+                filterOptions.imageIdList = Array.from(
+                    new Set([...verifiableImageIdList, ...filterOptions.imageIdList])
+                );
+            }
+        }
+
+        return this.getImagePositionInList(id, sortOrder, filterOptions);
     }
 
     private async getDMImageListFilterOptions(
@@ -389,6 +587,9 @@ injected(
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
     USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
+    USER_CAN_MANAGE_IMAGE_DATA_ACCESSOR_TOKEN,
+    USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN,
+    IMAGE_PERMISSION_CHECKER_TOKEN,
     LOGGER_TOKEN
 );
 
