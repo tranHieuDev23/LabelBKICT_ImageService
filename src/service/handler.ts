@@ -1683,10 +1683,19 @@ export class ImageServiceHandlersFactory {
                         code: status.INVALID_ARGUMENT,
                     });
                 }
+                const offset = req.offset || 0;
+                const limit = req.limit || 0;
                 try {
-                    const userCanManageImageList =
-                        await this.userCanManageUserImageOperator.getUserCanManageImageListOfImageId(req.imageId);
-                    return callback(null, { userCanManageImageList });
+                    const { totalUserCount, userList } =
+                        await this.userCanManageUserImageOperator.getUserCanManageImageListOfImageId(
+                            req.imageId,
+                            offset,
+                            limit
+                        );
+                    return callback(null, {
+                        totalUserCount: totalUserCount,
+                        userCanManageImageList: userList,
+                    });
                 } catch (e) {
                     this.handleError(e, callback);
                 }
@@ -1700,13 +1709,18 @@ export class ImageServiceHandlersFactory {
                         code: status.INVALID_ARGUMENT,
                     });
                 }
+                const offset = req.offset || 0;
+                const limit = req.limit || 0;
                 try {
-                    const userCanVerifyImageList =
-                        await this.userCanVerifyUserImageOperator.getUserCanVerifyImageListOfImageId(req.imageId);
+                    const { totalUserCount, userList } =
+                        await this.userCanVerifyUserImageOperator.getUserCanVerifyImageListOfImageId(
+                            req.imageId,
+                            offset,
+                            limit
+                        );
                     return callback(null, {
-                        userCanVerifyImageList: userCanVerifyImageList.map((userId) => {
-                            return { userId };
-                        }),
+                        totalUserCount: totalUserCount,
+                        userCanVerifyImageList: userList,
                     });
                 } catch (e) {
                     this.handleError(e, callback);

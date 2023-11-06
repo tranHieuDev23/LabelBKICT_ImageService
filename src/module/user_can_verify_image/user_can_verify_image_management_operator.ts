@@ -26,7 +26,14 @@ export interface UserCanVerifyUserImageManagementOperator {
     deleteUserCanVerifyUserImage(userId: number, imageOfUserId: number): Promise<void>;
 
     createUserCanVerifyImage(userId: number, imageId: number): Promise<void>;
-    getUserCanVerifyImageListOfImageId(imageId: number): Promise<number[]>;
+    getUserCanVerifyImageListOfImageId(
+        imageId: number,
+        offset: number,
+        limit: number
+    ): Promise<{
+        totalUserCount: number;
+        userList: { userId: number }[];
+    }>;
     deleteUserCanVerifyImage(userId: number, imageId: number): Promise<void>;
 
     checkUserCanVerifyImageList(userId: number, imageIdList: number[]): Promise<boolean[]>;
@@ -81,12 +88,41 @@ export class UserCanVerifyUserImageManagementOperatorImpl implements UserCanVeri
             );
         }
 
-        await this.userCanVerifyImageDM.createUserCanVerifyImage(userId, imageId);
+        await this.userCanVerifyImageDM.withTransaction(async (userCanVerifyImageDM) => {
+            const userCanManageImage = await userCanVerifyImageDM.getUserCanVerifyImageWithXLock(userId, imageId);
+            if (userCanManageImage !== null) {
+                this.logger.error("user can verify image relation between user and image already found", {
+                    userId,
+                    imageId,
+                });
+                throw new ErrorWithStatus(
+                    "user can verify image relation between user and image already found",
+                    status.FAILED_PRECONDITION
+                );
+            }
+
+            await userCanVerifyImageDM.createUserCanVerifyImage(userId, imageId);
+        });
     }
 
-    public async getUserCanVerifyImageListOfImageId(imageId: number): Promise<number[]> {
-        const userCanVerifyImageList = await this.userCanVerifyImageDM.getUserCanVerifyImageListOfImageId(imageId);
-        return userCanVerifyImageList.map((item) => item.userId);
+    public async getUserCanVerifyImageListOfImageId(
+        imageId: number,
+        offset: number,
+        limit: number
+    ): Promise<{
+        totalUserCount: number;
+        userList: { userId: number }[];
+    }> {
+        const [totalUserCount, userCanVerifyImageList] = await Promise.all([
+            this.userCanVerifyImageDM.getUserCanVerifyImageCountOfImageId(imageId),
+            this.userCanVerifyImageDM.getUserCanVerifyImageListOfImageId(imageId, offset, limit),
+        ]);
+        return {
+            totalUserCount: totalUserCount,
+            userList: userCanVerifyImageList.map((item) => {
+                return { userId: item.userId };
+            }),
+        };
     }
 
     public async deleteUserCanVerifyImage(userId: number, imageId: number): Promise<void> {

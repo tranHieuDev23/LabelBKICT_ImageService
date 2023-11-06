@@ -27,7 +27,14 @@ export interface UserCanManageImageManagementOperator {
     deleteUserCanManageUserImage(userId: number, imageOfUserId: number): Promise<void>;
 
     createUserCanManageImage(userId: number, imageId: number, canEdit: boolean): Promise<void>;
-    getUserCanManageImageListOfImageId(imageId: number): Promise<{ userId: number; canEdit: boolean }[]>;
+    getUserCanManageImageListOfImageId(
+        imageId: number,
+        offset: number,
+        limit: number
+    ): Promise<{
+        totalUserCount: number;
+        userList: { userId: number; canEdit: boolean }[];
+    }>;
     updateUserCanManageImage(userId: number, imageId: number, canEdit: boolean | undefined): Promise<void>;
     deleteUserCanManageImage(userId: number, imageId: number): Promise<void>;
 
@@ -117,14 +124,41 @@ export class UserCanManageImageManagementOperatorImpl implements UserCanManageIm
             );
         }
 
-        await this.userCanManageImageDM.createUserCanManageImage(userId, imageId, canEdit);
+        await this.userCanManageImageDM.withTransaction(async (userCanManageImageDM) => {
+            const userCanManageImage = await userCanManageImageDM.getUserCanManageImageWithXLock(userId, imageId);
+            if (userCanManageImage !== null) {
+                this.logger.error("user can manage image relation between user and image already found", {
+                    userId,
+                    imageId,
+                });
+                throw new ErrorWithStatus(
+                    "user can manage image relation between user and image already found",
+                    status.FAILED_PRECONDITION
+                );
+            }
+
+            await userCanManageImageDM.createUserCanManageImage(userId, imageId, canEdit);
+        });
     }
 
-    public async getUserCanManageImageListOfImageId(imageId: number): Promise<{ userId: number; canEdit: boolean }[]> {
-        const userCanManageImageList = await this.userCanManageImageDM.getUserCanManageImageListOfImageId(imageId);
-        return userCanManageImageList.map((item) => {
-            return { userId: item.userId, canEdit: item.canEdit };
-        });
+    public async getUserCanManageImageListOfImageId(
+        imageId: number,
+        offset: number,
+        limit: number
+    ): Promise<{
+        totalUserCount: number;
+        userList: { userId: number; canEdit: boolean }[];
+    }> {
+        const [totalUserCount, userCanManageImageList] = await Promise.all([
+            this.userCanManageImageDM.getUserCanManageImageCountOfImageId(imageId),
+            this.userCanManageImageDM.getUserCanManageImageListOfImageId(imageId, offset, limit),
+        ]);
+        return {
+            totalUserCount: totalUserCount,
+            userList: userCanManageImageList.map((item) => {
+                return { userId: item.userId, canEdit: item.canEdit };
+            }),
+        };
     }
 
     public async updateUserCanManageImage(
@@ -146,7 +180,7 @@ export class UserCanManageImageManagementOperatorImpl implements UserCanManageIm
                 userCanManageImage.canEdit = canEdit;
             }
 
-            await this.userCanManageImageDM.updateUserCanManageImage(userCanManageImage);
+            await userCanManageImageDM.updateUserCanManageImage(userCanManageImage);
         });
     }
 

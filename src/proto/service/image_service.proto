@@ -762,10 +762,13 @@ message CreateUserCanManageImageResponse {}
 
 message GetUserCanManageImageListOfImageIdRequest {
     uint32 image_id = 1;
+    uint32 offset = 2;
+    uint32 limit = 3;
 }
 
 message GetUserCanManageImageListOfImageIdResponse {
     repeated UserCanManageImage user_can_manage_image_list = 1;
+    uint32 total_user_count = 2;
 }
 
 message UpdateUserCanManageImageRequest {
@@ -792,10 +795,13 @@ message CreateUserCanVerifyImageResponse {}
 
 message GetUserCanVerifyImageListOfImageIdRequest {
     uint32 image_id = 1;
+    uint32 offset = 2;
+    uint32 limit = 3;
 }
 
 message GetUserCanVerifyImageListOfImageIdResponse {
     repeated UserCanVerifyImage user_can_verify_image_list = 1;
+    uint32 total_user_count = 2;
 }
 
 message DeleteUserCanVerifyImageRequest {

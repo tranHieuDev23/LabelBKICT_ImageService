@@ -17,7 +17,8 @@ export interface UserCanManageImageDataAccessor {
     getUserCanManageImageWithXLock(userId: number, imageId: number): Promise<UserCanManageImage | null>;
     updateUserCanManageImage(userCanManageImage: UserCanManageImage): Promise<void>;
     deleteUserCanManageImage(userId: number, imageId: number): Promise<void>;
-    getUserCanManageImageListOfImageId(imageId: number): Promise<UserCanManageImage[]>;
+    getUserCanManageImageCountOfImageId(imageId: number): Promise<number>;
+    getUserCanManageImageListOfImageId(imageId: number, offset: number, limit: number): Promise<UserCanManageImage[]>;
     withTransaction<T>(executeFunc: (dataAccessor: UserCanManageImageDataAccessor) => Promise<T>): Promise<T>;
 }
 
@@ -188,14 +189,39 @@ export class UserCanManageImageDataAccessorImpl implements UserCanManageImageDat
         }
     }
 
-    public async getUserCanManageImageListOfImageId(imageId: number): Promise<UserCanManageImage[]> {
+    public async getUserCanManageImageCountOfImageId(imageId: number): Promise<number> {
+        try {
+            const rows = await this.knex
+                .count()
+                .from(TabNameImageServiceUserCanManageImage)
+                .where({
+                    [ColNameImageServiceUserCanManageImageImageId]: imageId,
+                });
+            return +(rows[0] as any)["count"];
+        } catch (error) {
+            this.logger.error("failed to count user can manage image relation of image id", {
+                imageId,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getUserCanManageImageListOfImageId(
+        imageId: number,
+        offset: number,
+        limit: number
+    ): Promise<UserCanManageImage[]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceUserCanManageImage)
                 .where({
                     [ColNameImageServiceUserCanManageImageImageId]: imageId,
-                });
+                })
+                .orderBy(ColNameImageServiceUserCanManageImageUserId)
+                .offset(offset)
+                .limit(limit);
             return rows.map((row) => this.getUserCanManageImageFromRow(row));
         } catch (error) {
             this.logger.error("failed to get user can manage image relation of image id", {

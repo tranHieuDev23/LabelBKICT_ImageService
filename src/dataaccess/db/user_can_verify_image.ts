@@ -17,7 +17,8 @@ export interface UserCanVerifyImageDataAccessor {
     getUserCanVerifyImage(userId: number, imageId: number): Promise<UserCanVerifyImage | null>;
     getUserCanVerifyImageWithXLock(userId: number, imageId: number): Promise<UserCanVerifyImage | null>;
     deleteUserCanVerifyImage(userId: number, imageId: number): Promise<void>;
-    getUserCanVerifyImageListOfImageId(imageId: number): Promise<UserCanVerifyImage[]>;
+    getUserCanVerifyImageCountOfImageId(imageId: number): Promise<number>;
+    getUserCanVerifyImageListOfImageId(imageId: number, offset: number, limit: number): Promise<UserCanVerifyImage[]>;
     withTransaction<T>(executeFunc: (dataAccessor: UserCanVerifyImageDataAccessor) => Promise<T>): Promise<T>;
 }
 
@@ -166,14 +167,39 @@ export class UserCanVerifyImageDataAccessorImpl implements UserCanVerifyImageDat
         }
     }
 
-    public async getUserCanVerifyImageListOfImageId(imageId: number): Promise<UserCanVerifyImage[]> {
+    public async getUserCanVerifyImageCountOfImageId(imageId: number): Promise<number> {
+        try {
+            const rows = await this.knex
+                .count()
+                .from(TabNameImageServiceUserCanVerifyImage)
+                .where({
+                    [ColNameImageServiceUserCanVerifyImageImageId]: imageId,
+                });
+            return +(rows[0] as any)["count"];
+        } catch (error) {
+            this.logger.error("failed to count user can verify image relation of image id", {
+                imageId,
+                error,
+            });
+            throw ErrorWithStatus.wrapWithStatus(error, status.INTERNAL);
+        }
+    }
+
+    public async getUserCanVerifyImageListOfImageId(
+        imageId: number,
+        offset: number,
+        limit: number
+    ): Promise<UserCanVerifyImage[]> {
         try {
             const rows = await this.knex
                 .select()
                 .from(TabNameImageServiceUserCanVerifyImage)
                 .where({
                     [ColNameImageServiceUserCanVerifyImageImageId]: imageId,
-                });
+                })
+                .orderBy(ColNameImageServiceUserCanVerifyImageUserId)
+                .offset(offset)
+                .limit(limit);
             return rows.map((row) => this.getUserCanVerifyImageFromRow(row));
         } catch (error) {
             this.logger.error("failed to get user can verify image relation of image id", {

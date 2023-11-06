@@ -72,17 +72,13 @@ export class ImagePermissionCheckerImpl implements ImagePermissionChecker {
             return { canManage: true, canEdit: true };
         }
 
-        const userCanManageUserImage = await this.userCanManageUserImageDM.getUserCanManageUserImage(
-            userId,
-            image.uploadedByUserId
-        );
-        if (userCanManageUserImage !== null) {
-            return { canManage: true, canEdit: userCanManageUserImage.canEdit };
-        }
-
-        const userCanManageImage = await this.userCanManageImageDM.getUserCanManageImage(userId, imageId);
-        if (userCanManageImage !== null) {
-            return { canManage: true, canEdit: userCanManageImage.canEdit };
+        const [userCanManageUserImage, userCanManageImage] = await Promise.all([
+            this.userCanManageUserImageDM.getUserCanManageUserImage(userId, image.uploadedByUserId),
+            this.userCanManageImageDM.getUserCanManageImage(userId, imageId),
+        ]);
+        if (userCanManageUserImage !== null || userCanManageImage !== null) {
+            const canEdit = userCanManageUserImage?.canEdit || userCanManageImage?.canEdit || false;
+            return { canManage: true, canEdit: canEdit };
         }
 
         return { canManage: false, canEdit: false };
