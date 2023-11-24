@@ -18,6 +18,8 @@ import {
     UserCanVerifyImageDataAccessor,
     USER_CAN_MANAGE_IMAGE_DATA_ACCESSOR_TOKEN,
     USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN,
+    PointOfInterestDataAccessor,
+    POINT_OF_INTEREST_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import { Image } from "../../proto/gen/Image";
 import { ImageListFilterOptions } from "../../proto/gen/ImageListFilterOptions";
@@ -27,6 +29,7 @@ import { Region } from "../../proto/gen/Region";
 import { ErrorWithStatus, LOGGER_TOKEN } from "../../utils";
 import { AddImageTagToImageOperator, ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN } from "./add_image_tag_to_image_operator";
 import { IMAGE_PERMISSION_CHECKER_TOKEN, ImagePermissionChecker } from "./permission_checker";
+import { PointOfInterest } from "../../proto/gen/PointOfInterest";
 
 export interface ImageListManagementOperator {
     getImageList(
@@ -35,12 +38,14 @@ export interface ImageListManagementOperator {
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         totalImageCount: number;
         imageList: Image[];
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
+        pointOfInterestList: PointOfInterest[][] | undefined;
     }>;
     getManageableImageListOfUser(
         userId: number,
@@ -49,12 +54,14 @@ export interface ImageListManagementOperator {
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         totalImageCount: number;
         imageList: Image[];
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
+        pointOfInterestList: PointOfInterest[][] | undefined;
     }>;
     getVerifiableImageListOfUser(
         userId: number,
@@ -63,12 +70,14 @@ export interface ImageListManagementOperator {
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         totalImageCount: number;
         imageList: Image[];
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
+        pointOfInterestList: PointOfInterest[][] | undefined;
     }>;
     getImageIdList(
         offset: number,
@@ -126,6 +135,7 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         private readonly userBookmarksImageDM: UserBookmarksImageDataAccessor,
         private readonly userCanManageImageIdDM: UserCanManageImageDataAccessor,
         private readonly userCanVerifyImageIdDM: UserCanVerifyImageDataAccessor,
+        private readonly pointOfInterestDM: PointOfInterestDataAccessor,
         private readonly imagePermissionChecker: ImagePermissionChecker,
         private readonly logger: Logger
     ) {}
@@ -136,12 +146,14 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         totalImageCount: number;
         imageList: Image[];
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
+        pointOfInterestList: PointOfInterest[][] | undefined;
     }> {
         const dmFilterOptions = await this.getDMImageListFilterOptions(filterOptions);
         const totalImageCount = await this.imageDM.getImageCount(dmFilterOptions);
@@ -163,7 +175,12 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
             regionList = await this.regionDM.getRegionListOfImageList(imageIdList);
         }
 
-        return { totalImageCount, imageList, imageTagList, regionList };
+        let pointOfInterestList: PointOfInterest[][] | undefined = undefined;
+        if (withPointOfInterest) {
+            pointOfInterestList = await this.pointOfInterestDM.getPointOfInterestListOfImageList(imageIdList);
+        }
+
+        return { totalImageCount, imageList, imageTagList, regionList, pointOfInterestList };
     }
 
     public async getImageIdList(
@@ -194,15 +211,25 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         totalImageCount: number;
         imageList: Image[];
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
+        pointOfInterestList: PointOfInterest[][] | undefined;
     }> {
         if (await this.imagePermissionChecker.canUserManageAllImage(userId)) {
-            return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+            return this.getImageList(
+                offset,
+                limit,
+                sortOrder,
+                filterOptions,
+                withImageTag,
+                withRegion,
+                withPointOfInterest
+            );
         }
 
         const manageableImageIdList = await this.userCanManageImageIdDM.getManageableImageIdListOfUserId(userId);
@@ -218,7 +245,15 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
             }
         }
 
-        return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+        return this.getImageList(
+            offset,
+            limit,
+            sortOrder,
+            filterOptions,
+            withImageTag,
+            withRegion,
+            withPointOfInterest
+        );
     }
 
     public async getVerifiableImageListOfUser(
@@ -228,15 +263,25 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
         sortOrder: _ImageListSortOrder_Values,
         filterOptions: ImageListFilterOptions | undefined,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         totalImageCount: number;
         imageList: Image[];
         imageTagList: ImageTag[][] | undefined;
         regionList: Region[][] | undefined;
+        pointOfInterestList: PointOfInterest[][] | undefined;
     }> {
         if (await this.imagePermissionChecker.canUserVerifyAllImage(userId)) {
-            return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+            return this.getImageList(
+                offset,
+                limit,
+                sortOrder,
+                filterOptions,
+                withImageTag,
+                withRegion,
+                withPointOfInterest
+            );
         }
 
         const verifiableImageIdList = await this.userCanVerifyImageIdDM.getVerifiableImageIdListOfUserId(userId);
@@ -252,7 +297,15 @@ export class ImageListManagementOperatorImpl implements ImageListManagementOpera
             }
         }
 
-        return this.getImageList(offset, limit, sortOrder, filterOptions, withImageTag, withRegion);
+        return this.getImageList(
+            offset,
+            limit,
+            sortOrder,
+            filterOptions,
+            withImageTag,
+            withRegion,
+            withPointOfInterest
+        );
     }
 
     public async getImagePositionInList(
@@ -589,6 +642,7 @@ injected(
     USER_BOOKMARKS_IMAGE_DATA_ACCESSOR_TOKEN,
     USER_CAN_MANAGE_IMAGE_DATA_ACCESSOR_TOKEN,
     USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN,
+    POINT_OF_INTEREST_DATA_ACCESSOR_TOKEN,
     IMAGE_PERMISSION_CHECKER_TOKEN,
     LOGGER_TOKEN
 );

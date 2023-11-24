@@ -19,6 +19,8 @@ import {
     RegionSnapshotDataAccessor,
     Region as DMRegion,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
+    PointOfInterestDataAccessor,
+    POINT_OF_INTEREST_DATA_ACCESSOR_TOKEN,
 } from "../../dataaccess/db";
 import {
     ImageCreated,
@@ -35,6 +37,7 @@ import { ErrorWithStatus, IdGenerator, ID_GENERATOR_TOKEN, LOGGER_TOKEN, Timer, 
 import { AddImageTagToImageOperator, ADD_IMAGE_TAG_TO_IMAGE_OPERATOR_TOKEN } from "./add_image_tag_to_image_operator";
 import { ImageProcessor, IMAGE_PROCESSOR_TOKEN } from "./image_processor";
 import { filterXSS } from "xss";
+import { PointOfInterest } from "../../proto/gen/PointOfInterest";
 
 export interface ImageManagementOperator {
     createImage(
@@ -49,11 +52,13 @@ export interface ImageManagementOperator {
     getImage(
         id: number,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         image: Image;
         imageTagList: ImageTag[] | undefined;
         regionList: Region[] | undefined;
+        pointOfInterestList: PointOfInterest[] | undefined;
     }>;
     updateImageMetadata(id: number, description: string | undefined): Promise<Image>;
     updateImageImageType(id: number, imageTypeId: number): Promise<Image>;
@@ -79,6 +84,7 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
         private readonly imageHasImageTagDM: ImageHasImageTagDataAccessor,
         private readonly regionDM: RegionDataAccessor,
         private readonly regionSnapshotDM: RegionSnapshotDataAccessor,
+        private readonly pointOfInterestDM: PointOfInterestDataAccessor,
         private readonly imageCreatedProducer: ImageCreatedProducer,
         private readonly originalImageS3DM: BucketDM,
         private readonly thumbnailImageS3DM: BucketDM,
@@ -246,11 +252,13 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
     public async getImage(
         id: number,
         withImageTag: boolean,
-        withRegion: boolean
+        withRegion: boolean,
+        withPointOfInterest: boolean
     ): Promise<{
         image: Image;
         imageTagList: ImageTag[] | undefined;
         regionList: Region[] | undefined;
+        pointOfInterestList: PointOfInterest[] | undefined;
     }> {
         const image = await this.imageDM.getImage(id);
         if (image === null) {
@@ -268,7 +276,12 @@ export class ImageManagementOperatorImpl implements ImageManagementOperator {
             regionList = await this.regionDM.getRegionListOfImage(id);
         }
 
-        return { image, imageTagList, regionList };
+        let pointOfInterestList: PointOfInterest[] | undefined = undefined;
+        if (withPointOfInterest) {
+            pointOfInterestList = await this.pointOfInterestDM.getPointOfInterestListOfImage(id);
+        }
+
+        return { image, imageTagList, regionList, pointOfInterestList };
     }
 
     public async updateImageMetadata(id: number, description: string | undefined): Promise<Image> {
@@ -549,6 +562,7 @@ injected(
     IMAGE_HAS_IMAGE_TAG_DATA_ACCESSOR_TOKEN,
     REGION_DATA_ACCESSOR_TOKEN,
     REGION_SNAPSHOT_DATA_ACCESSOR_TOKEN,
+    POINT_OF_INTEREST_DATA_ACCESSOR_TOKEN,
     IMAGE_CREATED_PRODUCER_TOKEN,
     ORIGINAL_IMAGE_S3_DM_TOKEN,
     THUMBNAIL_IMAGE_S3_DM_TOKEN,

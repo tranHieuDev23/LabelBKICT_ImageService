@@ -29,6 +29,12 @@ import { Region } from "../proto/gen/Region";
 import { RegionList } from "../proto/gen/RegionList";
 import { RegionLabel } from "../proto/gen/RegionLabel";
 import { RegionLabelList } from "../proto/gen/RegionLabelList";
+import {
+    POINT_OF_INTEREST_MANAGEMENT_OPERATOR_TOKEN,
+    PointOfInterestManagementOperator,
+} from "../module/point_of_interest/point_of_interest_management_operator";
+import { PointOfInterest } from "../proto/gen/PointOfInterest";
+import { PointOfInterestList } from "../proto/gen/PointOfInterestList";
 
 const DEFAULT_GET_IMAGE_LIST_SORT_ORDER = _ImageListSortOrder_Values.UPLOAD_TIME_DESCENDING;
 
@@ -44,7 +50,8 @@ export class ImageServiceHandlersFactory {
         private readonly regionManagementOperator: RegionManagementOperator,
         private readonly bookmarkManagementOperator: BookmarkManagementOperator,
         private readonly userCanManageUserImageOperator: UserCanManageImageManagementOperator,
-        private readonly userCanVerifyUserImageOperator: UserCanVerifyUserImageManagementOperator
+        private readonly userCanVerifyUserImageOperator: UserCanVerifyUserImageManagementOperator,
+        private readonly pointOfInterestManagementOperator: PointOfInterestManagementOperator
     ) {}
 
     public getImageServiceHandlers(): ImageServiceHandlers {
@@ -469,14 +476,17 @@ export class ImageServiceHandlersFactory {
                 }
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;
+                const withPointOfInterest = req.withPointOfInterest || false;
 
                 try {
-                    const { image, imageTagList, regionList } = await this.imageManagementOperator.getImage(
-                        req.id,
-                        withImageTag,
-                        withRegion
-                    );
-                    callback(null, { image, imageTagList, regionList });
+                    const { image, imageTagList, regionList, pointOfInterestList } =
+                        await this.imageManagementOperator.getImage(
+                            req.id,
+                            withImageTag,
+                            withRegion,
+                            withPointOfInterest
+                        );
+                    callback(null, { image, imageTagList, regionList, pointOfInterestList });
                 } catch (e) {
                     this.handleError(e, callback);
                 }
@@ -489,16 +499,18 @@ export class ImageServiceHandlersFactory {
                 const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;
+                const withPointOfInterest = req.withPointOfInterest || false;
 
                 try {
-                    const { totalImageCount, imageList, imageTagList, regionList } =
+                    const { totalImageCount, imageList, imageTagList, regionList, pointOfInterestList } =
                         await this.imageListManagementOperator.getImageList(
                             offset,
                             limit,
                             sortOrder,
                             req.filterOptions,
                             withImageTag,
-                            withRegion
+                            withRegion,
+                            withPointOfInterest
                         );
 
                     let imageTagListOfImageList = undefined;
@@ -512,6 +524,13 @@ export class ImageServiceHandlersFactory {
                     if (withRegion) {
                         regionListOfImageList = regionList?.map((regionSublist) =>
                             this.getRegionListProto(regionSublist)
+                        );
+                    }
+
+                    let pointOfInterestListOfImageList = undefined;
+                    if (withPointOfInterest) {
+                        pointOfInterestListOfImageList = pointOfInterestList?.map((pointOfInterestSubList) =>
+                            this.getPointOfInterestListProto(pointOfInterestSubList)
                         );
                     }
 
@@ -1522,9 +1541,10 @@ export class ImageServiceHandlersFactory {
                 const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;
+                const withPointOfInterest = req.withPointOfInterest || false;
 
                 try {
-                    const { totalImageCount, imageList, imageTagList, regionList } =
+                    const { totalImageCount, imageList, imageTagList, regionList, pointOfInterestList } =
                         await this.imageListManagementOperator.getManageableImageListOfUser(
                             req.userId,
                             offset,
@@ -1532,7 +1552,8 @@ export class ImageServiceHandlersFactory {
                             sortOrder,
                             req.filterOptions,
                             withImageTag,
-                            withRegion
+                            withRegion,
+                            withPointOfInterest
                         );
 
                     let imageTagListOfImageList = undefined;
@@ -1549,11 +1570,19 @@ export class ImageServiceHandlersFactory {
                         );
                     }
 
+                    let pointOfInterestListOfImageList = undefined;
+                    if (withPointOfInterest) {
+                        pointOfInterestListOfImageList = pointOfInterestList?.map((pointOfInterestSubList) =>
+                            this.getPointOfInterestListProto(pointOfInterestSubList)
+                        );
+                    }
+
                     callback(null, {
                         totalImageCount,
                         imageList,
                         imageTagListOfImageList,
                         regionListOfImageList,
+                        pointOfInterestListOfImageList,
                     });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1573,9 +1602,10 @@ export class ImageServiceHandlersFactory {
                 const sortOrder = req.sortOrder === undefined ? DEFAULT_GET_IMAGE_LIST_SORT_ORDER : req.sortOrder;
                 const withImageTag = req.withImageTag || false;
                 const withRegion = req.withRegion || false;
+                const withPointOfInterest = req.withPointOfInterest || false;
 
                 try {
-                    const { totalImageCount, imageList, imageTagList, regionList } =
+                    const { totalImageCount, imageList, imageTagList, regionList, pointOfInterestList } =
                         await this.imageListManagementOperator.getVerifiableImageListOfUser(
                             req.userId,
                             offset,
@@ -1583,7 +1613,8 @@ export class ImageServiceHandlersFactory {
                             sortOrder,
                             req.filterOptions,
                             withImageTag,
-                            withRegion
+                            withRegion,
+                            withPointOfInterest
                         );
 
                     let imageTagListOfImageList = undefined;
@@ -1600,11 +1631,19 @@ export class ImageServiceHandlersFactory {
                         );
                     }
 
+                    let pointOfInterestListOfImageList = undefined;
+                    if (withPointOfInterest) {
+                        pointOfInterestListOfImageList = pointOfInterestList?.map((pointOfInterestSubList) =>
+                            this.getPointOfInterestListProto(pointOfInterestSubList)
+                        );
+                    }
+
                     callback(null, {
                         totalImageCount,
                         imageList,
                         imageTagListOfImageList,
                         regionListOfImageList,
+                        pointOfInterestListOfImageList,
                     });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1726,6 +1765,102 @@ export class ImageServiceHandlersFactory {
                     this.handleError(e, callback);
                 }
             },
+
+            CreatePointOfInterest: async (call, callback) => {
+                const req = call.request;
+                if (req.ofImageId === undefined) {
+                    return callback({
+                        message: "of_image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.createdByUserId === undefined) {
+                    return callback({
+                        message: "created_by_user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    const poi = await this.pointOfInterestManagementOperator.createPointOfInterest(
+                        req.ofImageId,
+                        req.createdByUserId,
+                        req.coordinate || {},
+                        req.description || ""
+                    );
+                    return callback(null, { poi });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            UpdatePointOfInterest: async (call, callback) => {
+                const req = call.request;
+                if (req.id === undefined) {
+                    return callback({
+                        message: "id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.ofImageId === undefined) {
+                    return callback({
+                        message: "of_image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.createdByUserId === undefined) {
+                    return callback({
+                        message: "created_by_user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    const poi = await this.pointOfInterestManagementOperator.updatePointOfInterest(
+                        req.id,
+                        req.ofImageId,
+                        req.createdByUserId,
+                        req.coordinate || {},
+                        req.description || ""
+                    );
+                    return callback(null, { poi });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            DeletePointOfInterest: async (call, callback) => {
+                const req = call.request;
+                if (req.id === undefined) {
+                    return callback({
+                        message: "id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.ofImageId === undefined) {
+                    return callback({
+                        message: "of_image_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+                if (req.createdByUserId === undefined) {
+                    return callback({
+                        message: "created_by_user_id is required",
+                        code: status.INVALID_ARGUMENT,
+                    });
+                }
+
+                try {
+                    const poi = await this.pointOfInterestManagementOperator.deletePointOfInterest(
+                        req.id,
+                        req.ofImageId,
+                        req.createdByUserId
+                    );
+                    return callback(null, { poi });
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
         };
         return handler;
     }
@@ -1763,6 +1898,10 @@ export class ImageServiceHandlersFactory {
     private getRegionLabelListProto(regionLabelList: RegionLabel[]): RegionLabelList {
         return { regionLabelList };
     }
+
+    private getPointOfInterestListProto(pointOfInterestList: PointOfInterest[]): PointOfInterestList {
+        return { pointOfInterestList };
+    }
 }
 
 injected(
@@ -1774,7 +1913,8 @@ injected(
     REGION_MANAGEMENT_OPERATOR_TOKEN,
     BOOKMARK_MANAGEMENT_OPERATOR_TOKEN,
     USER_CAN_MANAGE_IMAGE_MANAGEMENT_OPERATOR,
-    USER_CAN_VERIFY_USER_IMAGE_MANAGEMENT_OPERATOR
+    USER_CAN_VERIFY_USER_IMAGE_MANAGEMENT_OPERATOR,
+    POINT_OF_INTEREST_MANAGEMENT_OPERATOR_TOKEN
 );
 
 export const IMAGE_SERVICE_HANDLERS_FACTORY_TOKEN = token<ImageServiceHandlersFactory>("ImageServiceHandlersFactory");

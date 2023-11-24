@@ -82,6 +82,10 @@ service ImageService {
     rpc GetImagePositionInVerifiableImageListOfUser(GetImagePositionInVerifiableImageListOfUserRequest) returns (GetImagePositionInVerifiableImageListOfUserResponse) {}
 
     rpc CheckUserCanVerifyImageList(CheckUserCanVerifyImageListRequest) returns (CheckUserCanVerifyImageListResponse) {}
+
+    rpc CreatePointOfInterest(CreatePointOfInterestRequest) returns (CreatePointOfInterestResponse) {}
+    rpc UpdatePointOfInterest(UpdatePointOfInterestRequest) returns (UpdatePointOfInterestResponse) {}
+    rpc DeletePointOfInterest(DeletePointOfInterestRequest) returns (DeletePointOfInterestResponse) {}
 }
 
 // Business objects
@@ -258,6 +262,19 @@ message UserCanManageImage {
 
 message UserCanVerifyImage {
     uint32 user_id = 1;
+}
+
+message PointOfInterest {
+    uint32 id = 1;
+    uint32 created_by_user_id = 2;
+    uint64 created_time = 3;
+    uint64 updated_time = 4;
+    Vertex coordinate = 5;
+    string description = 6;
+}
+
+message PointOfInterestList {
+    repeated PointOfInterest point_of_interest_list = 1;
 }
 
 // Request and response bodies of API calls
@@ -443,12 +460,14 @@ message GetImageRequest {
     uint32 id = 1;
     bool with_image_tag = 2;
     bool with_region= 3;
+    bool with_point_of_interest = 4;
 }
 
 message GetImageResponse {
     Image image = 1;
     repeated ImageTag image_tag_list = 2;
     repeated Region region_list = 3;
+    repeated PointOfInterest point_of_interest_list = 4;
 }
 
 message GetImageListRequest {
@@ -458,6 +477,7 @@ message GetImageListRequest {
     ImageListFilterOptions filter_options = 4;
     bool with_image_tag = 5;
     bool with_region= 6;
+    bool with_point_of_interest = 7;
 }
 
 message GetImageListResponse {
@@ -465,6 +485,7 @@ message GetImageListResponse {
     repeated Image image_list = 2;
     repeated ImageTagList image_tag_list_of_image_list = 3;
     repeated RegionList region_list_of_image_list = 4;
+    repeated PointOfInterestList point_of_interest_list_of_image_list = 5;
 }
 
 message GetImageIdListRequest {
@@ -705,6 +726,7 @@ message GetManageableImageListOfUserRequest {
     ImageListFilterOptions filter_options = 5;
     bool with_image_tag = 6;
     bool with_region= 7;
+    bool with_point_of_interest = 8;
 }
 
 message GetManageableImageListOfUserResponse {
@@ -712,6 +734,7 @@ message GetManageableImageListOfUserResponse {
     repeated Image image_list = 2;
     repeated ImageTagList image_tag_list_of_image_list = 3;
     repeated RegionList region_list_of_image_list = 4;
+    repeated PointOfInterestList point_of_interest_list_of_image_list = 5;
 }
 
 message GetImagePositionInManageableImageListOfUserRequest {
@@ -830,6 +853,7 @@ message GetVerifiableImageListOfUserRequest {
     ImageListFilterOptions filter_options = 5;
     bool with_image_tag = 6;
     bool with_region= 7;
+    bool with_point_of_interest = 8;
 }
 
 message GetVerifiableImageListOfUserResponse {
@@ -837,6 +861,7 @@ message GetVerifiableImageListOfUserResponse {
     repeated Image image_list = 2;
     repeated ImageTagList image_tag_list_of_image_list = 3;
     repeated RegionList region_list_of_image_list = 4;
+    repeated PointOfInterestList point_of_interest_list_of_image_list = 5;
 }
 
 message GetImagePositionInVerifiableImageListOfUserRequest {
@@ -861,3 +886,34 @@ message CheckUserCanVerifyImageListRequest {
 message CheckUserCanVerifyImageListResponse {
     repeated bool can_verify_list = 1;
 }
+
+message CreatePointOfInterestRequest {
+    uint32 of_image_id = 1;
+    uint32 created_by_user_id = 2;
+    Vertex coordinate = 3;
+    string description = 4;
+}
+
+message CreatePointOfInterestResponse {
+    PointOfInterest poi = 1;
+}
+
+message UpdatePointOfInterestRequest {    
+    uint32 id = 1;
+    uint32 of_image_id = 2;
+    uint32 created_by_user_id = 3;
+    Vertex coordinate = 4;
+    string description = 5;
+}
+
+message UpdatePointOfInterestResponse {
+    PointOfInterest poi = 1;
+}
+
+message DeletePointOfInterestRequest {
+    uint32 id = 1;
+    uint32 of_image_id = 2;
+    uint32 created_by_user_id = 3;
+}
+
+message DeletePointOfInterestResponse {}

@@ -32,6 +32,7 @@ import {
 } from "./user_can_verify_user_image";
 import { USER_CAN_MANAGE_IMAGE_DATA_ACCESSOR_TOKEN, UserCanManageImageDataAccessorImpl } from "./user_can_manage_image";
 import { USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN, UserCanVerifyImageDataAccessorImpl } from "./user_can_verify_image";
+import { POINT_OF_INTEREST_DATA_ACCESSOR_TOKEN, PointOfInterestDataAccessorImpl } from "./point_of_interest";
 
 export * from "./image_has_image_tag";
 export * from "./image_tag_group_has_image_type";
@@ -51,6 +52,7 @@ export * from "./user_can_manage_user_image";
 export * from "./user_can_verify_user_image";
 export * from "./user_can_manage_image";
 export * from "./user_can_verify_image";
+export * from "./point_of_interest";
 
 export function bindToContainer(container: Container): void {
     container.bind(KNEX_INSTANCE_TOKEN).toInstance(newKnexInstance).inSingletonScope();
@@ -100,5 +102,9 @@ export function bindToContainer(container: Container): void {
     container
         .bind(USER_CAN_VERIFY_IMAGE_DATA_ACCESSOR_TOKEN)
         .toInstance(UserCanVerifyImageDataAccessorImpl)
+        .inSingletonScope();
+    container
+        .bind(POINT_OF_INTEREST_DATA_ACCESSOR_TOKEN)
+        .toInstance(PointOfInterestDataAccessorImpl)
         .inSingletonScope();
 }
