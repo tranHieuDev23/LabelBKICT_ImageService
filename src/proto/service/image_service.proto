@@ -60,6 +60,7 @@ service ImageService {
     rpc DeleteUserCanManageUserImage(DeleteUserCanManageUserImageRequest) returns (DeleteUserCanManageUserImageResponse) {}
 
     rpc CreateUserCanManageImage(CreateUserCanManageImageRequest) returns (CreateUserCanManageImageResponse) {}
+    rpc CreateUserListCanManageImageList(CreateUserListCanManageImageListRequest) returns (CreateUserListCanManageImageListResponse) {}
     rpc GetUserCanManageImageListOfImageId(GetUserCanManageImageListOfImageIdRequest) returns (GetUserCanManageImageListOfImageIdResponse) {}
     rpc UpdateUserCanManageImage(UpdateUserCanManageImageRequest) returns (UpdateUserCanManageImageResponse) {}
     rpc DeleteUserCanManageImage(DeleteUserCanManageImageRequest) returns (DeleteUserCanManageImageResponse) {}
@@ -75,6 +76,7 @@ service ImageService {
     rpc DeleteUserCanVerifyUserImage(DeleteUserCanVerifyUserImageRequest) returns (DeleteUserCanVerifyUserImageResponse) {}
 
     rpc CreateUserCanVerifyImage(CreateUserCanVerifyImageRequest) returns (CreateUserCanVerifyImageResponse) {}
+    rpc CreateUserListCanVerifyImageList(CreateUserListCanVerifyImageListRequest) returns (CreateUserListCanVerifyImageListResponse) {}
     rpc DeleteUserCanVerifyImage(DeleteUserCanVerifyImageRequest) returns (DeleteUserCanVerifyImageResponse) {}
 
     rpc GetUserCanVerifyUserImageOfUserId(GetUserCanVerifyUserImageOfUserIdRequest) returns (GetUserCanVerifyUserImageOfUserIdResponse) {}
@@ -783,6 +785,14 @@ message CreateUserCanManageImageRequest {
 
 message CreateUserCanManageImageResponse {}
 
+message CreateUserListCanManageImageListRequest {
+    repeated uint32 user_id_list = 1;
+    repeated uint32 image_id_list = 2;
+    bool can_edit = 3;
+}
+
+message CreateUserListCanManageImageListResponse {}
+
 message GetUserCanManageImageListOfImageIdRequest {
     uint32 image_id = 1;
     uint32 offset = 2;
@@ -815,6 +825,13 @@ message CreateUserCanVerifyImageRequest {
 }
 
 message CreateUserCanVerifyImageResponse {}
+
+message CreateUserListCanVerifyImageListRequest {
+    repeated uint32 user_id_list = 1;
+    repeated uint32 image_id_list = 2;
+}
+
+message CreateUserListCanVerifyImageListResponse {}
 
 message GetUserCanVerifyImageListOfImageIdRequest {
     uint32 image_id = 1;

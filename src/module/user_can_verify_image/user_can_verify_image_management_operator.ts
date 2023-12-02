@@ -26,6 +26,7 @@ export interface UserCanVerifyUserImageManagementOperator {
     deleteUserCanVerifyUserImage(userId: number, imageOfUserId: number): Promise<void>;
 
     createUserCanVerifyImage(userId: number, imageId: number): Promise<void>;
+    createUserListCanVerifyImageList(userIdList: number[], imageIdList: number[]): Promise<void>;
     getUserCanVerifyImageListOfImageId(
         imageId: number,
         offset: number,
@@ -77,17 +78,6 @@ export class UserCanVerifyUserImageManagementOperatorImpl implements UserCanVeri
             throw new ErrorWithStatus("cannot find image with the provided id", status.NOT_FOUND);
         }
 
-        if (image.uploadedByUserId === userId) {
-            this.logger.error(
-                "trying to create user can manage image relation between an image and its uploader, not necessary",
-                { userId, imageId }
-            );
-            throw new ErrorWithStatus(
-                "trying to create user can manage image relation between an image and its uploader, not necessary",
-                status.FAILED_PRECONDITION
-            );
-        }
-
         await this.userCanVerifyImageDM.withTransaction(async (userCanVerifyImageDM) => {
             const userCanManageImage = await userCanVerifyImageDM.getUserCanVerifyImageWithXLock(userId, imageId);
             if (userCanManageImage !== null) {
@@ -102,6 +92,37 @@ export class UserCanVerifyUserImageManagementOperatorImpl implements UserCanVeri
             }
 
             await userCanVerifyImageDM.createUserCanVerifyImage(userId, imageId);
+        });
+    }
+
+    public async createUserListCanVerifyImageList(userIdList: number[], imageIdList: number[]): Promise<void> {
+        await this.userCanVerifyImageDM.withTransaction(async (userCanVerifyImageDM) => {
+            for (const imageId of imageIdList) {
+                const image = await this.imageDM.getImage(imageId);
+                if (image === null) {
+                    this.logger.error("cannot find image with the provided id", { imageId });
+                    throw new ErrorWithStatus("cannot find image with the provided id", status.NOT_FOUND);
+                }
+
+                for (const userId of userIdList) {
+                    const userCanManageImage = await userCanVerifyImageDM.getUserCanVerifyImageWithXLock(
+                        userId,
+                        imageId
+                    );
+                    if (userCanManageImage !== null) {
+                        this.logger.error("user can verify image relation between user and image already found", {
+                            userId,
+                            imageId,
+                        });
+                        throw new ErrorWithStatus(
+                            "user can verify image relation between user and image already found",
+                            status.FAILED_PRECONDITION
+                        );
+                    }
+
+                    await userCanVerifyImageDM.createUserCanVerifyImage(userId, imageId);
+                }
+            }
         });
     }
 

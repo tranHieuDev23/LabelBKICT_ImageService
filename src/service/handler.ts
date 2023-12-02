@@ -49,8 +49,8 @@ export class ImageServiceHandlersFactory {
         private readonly imageListManagementOperator: ImageListManagementOperator,
         private readonly regionManagementOperator: RegionManagementOperator,
         private readonly bookmarkManagementOperator: BookmarkManagementOperator,
-        private readonly userCanManageUserImageOperator: UserCanManageImageManagementOperator,
-        private readonly userCanVerifyUserImageOperator: UserCanVerifyUserImageManagementOperator,
+        private readonly userCanManageImageOperator: UserCanManageImageManagementOperator,
+        private readonly userCanVerifyImageOperator: UserCanVerifyUserImageManagementOperator,
         private readonly pointOfInterestManagementOperator: PointOfInterestManagementOperator
     ) {}
 
@@ -539,6 +539,7 @@ export class ImageServiceHandlersFactory {
                         imageList,
                         imageTagListOfImageList,
                         regionListOfImageList,
+                        pointOfInterestListOfImageList,
                     });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1207,7 +1208,7 @@ export class ImageServiceHandlersFactory {
                 }
                 const canEdit = req.canEdit || false;
                 try {
-                    await this.userCanManageUserImageOperator.createUserCanManageUserImage(
+                    await this.userCanManageImageOperator.createUserCanManageUserImage(
                         req.userId,
                         req.imageOfUserId,
                         canEdit
@@ -1233,10 +1234,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanVerifyUserImageOperator.createUserCanVerifyUserImage(
-                        req.userId,
-                        req.imageOfUserId
-                    );
+                    await this.userCanVerifyImageOperator.createUserCanVerifyUserImage(req.userId, req.imageOfUserId);
                     return callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1258,10 +1256,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanManageUserImageOperator.deleteUserCanManageUserImage(
-                        req.userId,
-                        req.imageOfUserId
-                    );
+                    await this.userCanManageImageOperator.deleteUserCanManageUserImage(req.userId, req.imageOfUserId);
                     return callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1283,10 +1278,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanVerifyUserImageOperator.deleteUserCanVerifyUserImage(
-                        req.userId,
-                        req.imageOfUserId
-                    );
+                    await this.userCanVerifyImageOperator.deleteUserCanVerifyUserImage(req.userId, req.imageOfUserId);
                     return callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1305,7 +1297,7 @@ export class ImageServiceHandlersFactory {
                 const limit = req.limit || DEFAULT_GET_USER_CAN_MANAGE_USER_IMAGE_LIST_LIMIT;
                 try {
                     const { totalUserCount, userList } =
-                        await this.userCanManageUserImageOperator.getUserCanManageUserImageOfUserId(
+                        await this.userCanManageImageOperator.getUserCanManageUserImageOfUserId(
                             req.userId,
                             offset,
                             limit
@@ -1328,7 +1320,7 @@ export class ImageServiceHandlersFactory {
                 const limit = req.limit || DEFAULT_GET_USER_CAN_VERIFY_USER_IMAGE_LIST_LIMIT;
                 try {
                     const { totalUserCount, userList } =
-                        await this.userCanVerifyUserImageOperator.getUserCanVerifyUserImageOfUserId(
+                        await this.userCanVerifyImageOperator.getUserCanVerifyUserImageOfUserId(
                             req.userId,
                             offset,
                             limit
@@ -1354,7 +1346,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanManageUserImageOperator.updateUserCanManageUserImage(
+                    await this.userCanManageImageOperator.updateUserCanManageUserImage(
                         req.userId,
                         req.imageOfUserId,
                         req.canEdit
@@ -1381,10 +1373,20 @@ export class ImageServiceHandlersFactory {
                 }
                 const canEdit = req.canEdit || false;
                 try {
-                    await this.userCanManageUserImageOperator.createUserCanManageImage(
-                        req.userId,
-                        req.imageId,
-                        canEdit
+                    await this.userCanManageImageOperator.createUserCanManageImage(req.userId, req.imageId, canEdit);
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            CreateUserListCanManageImageList: async (call, callback) => {
+                const req = call.request;
+                try {
+                    await this.userCanManageImageOperator.createUserListCanManageImageList(
+                        req.userIdList || [],
+                        req.imageIdList || [],
+                        req.canEdit || false
                     );
                     return callback(null, {});
                 } catch (e) {
@@ -1407,7 +1409,20 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanVerifyUserImageOperator.createUserCanVerifyImage(req.userId, req.imageId);
+                    await this.userCanVerifyImageOperator.createUserCanVerifyImage(req.userId, req.imageId);
+                    return callback(null, {});
+                } catch (e) {
+                    this.handleError(e, callback);
+                }
+            },
+
+            CreateUserListCanVerifyImageList: async (call, callback) => {
+                const req = call.request;
+                try {
+                    await this.userCanVerifyImageOperator.createUserListCanVerifyImageList(
+                        req.userIdList || [],
+                        req.imageIdList || []
+                    );
                     return callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1429,7 +1444,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanManageUserImageOperator.deleteUserCanManageImage(req.userId, req.imageId);
+                    await this.userCanManageImageOperator.deleteUserCanManageImage(req.userId, req.imageId);
                     return callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1451,7 +1466,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanVerifyUserImageOperator.deleteUserCanVerifyImage(req.userId, req.imageId);
+                    await this.userCanVerifyImageOperator.deleteUserCanVerifyImage(req.userId, req.imageId);
                     return callback(null, {});
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1665,7 +1680,7 @@ export class ImageServiceHandlersFactory {
                     });
                 }
                 try {
-                    await this.userCanManageUserImageOperator.updateUserCanManageImage(
+                    await this.userCanManageImageOperator.updateUserCanManageImage(
                         req.userId,
                         req.imageId,
                         req.canEdit
@@ -1687,7 +1702,7 @@ export class ImageServiceHandlersFactory {
                 const imageIdList = req.imageIdList || [];
                 try {
                     const { canManageList, canEditList } =
-                        await this.userCanManageUserImageOperator.checkUserCanManageImageList(req.userId, imageIdList);
+                        await this.userCanManageImageOperator.checkUserCanManageImageList(req.userId, imageIdList);
                     return callback(null, { canManageList, canEditList });
                 } catch (e) {
                     this.handleError(e, callback);
@@ -1704,7 +1719,7 @@ export class ImageServiceHandlersFactory {
                 }
                 const imageIdList = req.imageIdList || [];
                 try {
-                    const canVerifyList = await this.userCanVerifyUserImageOperator.checkUserCanVerifyImageList(
+                    const canVerifyList = await this.userCanVerifyImageOperator.checkUserCanVerifyImageList(
                         req.userId,
                         imageIdList
                     );
@@ -1726,7 +1741,7 @@ export class ImageServiceHandlersFactory {
                 const limit = req.limit || 0;
                 try {
                     const { totalUserCount, userList } =
-                        await this.userCanManageUserImageOperator.getUserCanManageImageListOfImageId(
+                        await this.userCanManageImageOperator.getUserCanManageImageListOfImageId(
                             req.imageId,
                             offset,
                             limit
@@ -1752,7 +1767,7 @@ export class ImageServiceHandlersFactory {
                 const limit = req.limit || 0;
                 try {
                     const { totalUserCount, userList } =
-                        await this.userCanVerifyUserImageOperator.getUserCanVerifyImageListOfImageId(
+                        await this.userCanVerifyImageOperator.getUserCanVerifyImageListOfImageId(
                             req.imageId,
                             offset,
                             limit

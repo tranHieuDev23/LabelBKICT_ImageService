@@ -27,6 +27,7 @@ export interface UserCanManageImageManagementOperator {
     deleteUserCanManageUserImage(userId: number, imageOfUserId: number): Promise<void>;
 
     createUserCanManageImage(userId: number, imageId: number, canEdit: boolean): Promise<void>;
+    createUserListCanManageImageList(userIdList: number[], imageIdList: number[], canEdit: boolean): Promise<void>;
     getUserCanManageImageListOfImageId(
         imageId: number,
         offset: number,
@@ -104,6 +105,52 @@ export class UserCanManageImageManagementOperatorImpl implements UserCanManageIm
 
     public async deleteUserCanManageUserImage(userId: number, imageOfUserId: number): Promise<void> {
         await this.userCanManageUserImageDM.deleteUserCanManageUserImage(userId, imageOfUserId);
+    }
+
+    public async createUserListCanManageImageList(
+        userIdList: number[],
+        imageIdList: number[],
+        canEdit: boolean
+    ): Promise<void> {
+        await this.userCanManageImageDM.withTransaction(async (userCanManageImageDM) => {
+            for (const imageId of imageIdList) {
+                const image = await this.imageDM.getImage(imageId);
+                if (image === null) {
+                    this.logger.error("cannot find image with the provided id", { imageId });
+                    throw new ErrorWithStatus("cannot find image with the provided id", status.NOT_FOUND);
+                }
+
+                for (const userId of userIdList) {
+                    if (image.uploadedByUserId === userId) {
+                        this.logger.error(
+                            "trying to create user can manage image relation between an image and its uploader, not necessary",
+                            { userId, imageId }
+                        );
+                        throw new ErrorWithStatus(
+                            "trying to create user can manage image relation between an image and its uploader, not necessary",
+                            status.FAILED_PRECONDITION
+                        );
+                    }
+
+                    const userCanManageImage = await userCanManageImageDM.getUserCanManageImageWithXLock(
+                        userId,
+                        imageId
+                    );
+                    if (userCanManageImage !== null) {
+                        this.logger.error("user can manage image relation between user and image already found", {
+                            userId,
+                            imageId,
+                        });
+                        throw new ErrorWithStatus(
+                            "user can manage image relation between user and image already found",
+                            status.FAILED_PRECONDITION
+                        );
+                    }
+
+                    await userCanManageImageDM.createUserCanManageImage(userId, imageId, canEdit);
+                }
+            }
+        });
     }
 
     public async createUserCanManageImage(userId: number, imageId: number, canEdit: boolean): Promise<void> {
